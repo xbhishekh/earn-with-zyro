@@ -13,10 +13,9 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isOwner: boolean;
-  signUp: (email: string, password: string, metadata?: { username?: string; displayName?: string; referredBy?: string }) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  sendOtp: (email: string, metadata?: { username?: string; displayName?: string; referredBy?: string }) => Promise<{ error: Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   refreshRole: () => Promise<void>;
 }
 
@@ -88,33 +87,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (
+  // Send OTP to email (works for both login and signup)
+  const sendOtp = async (
     email: string, 
-    password: string, 
     metadata?: { username?: string; displayName?: string; referredBy?: string }
   ) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
       options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          username: metadata?.username,
-          displayName: metadata?.displayName,
-          referredBy: metadata?.referredBy,
-        },
+        shouldCreateUser: true,
+        data: metadata ? {
+          username: metadata.username,
+          displayName: metadata.displayName,
+          referredBy: metadata.referredBy,
+        } : undefined,
       },
     });
     
     return { error: error as Error | null };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+  // Verify OTP code
+  const verifyOtp = async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
       email,
-      password,
+      token,
+      type: 'email',
     });
     
     return { error: error as Error | null };
@@ -123,14 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
-  };
-
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`,
-    });
-    
-    return { error: error as Error | null };
   };
 
   // Derived admin states
@@ -147,10 +137,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin,
       isSuperAdmin,
       isOwner,
-      signUp, 
-      signIn, 
+      sendOtp,
+      verifyOtp,
       signOut, 
-      resetPassword,
       refreshRole
     }}>
       {children}
