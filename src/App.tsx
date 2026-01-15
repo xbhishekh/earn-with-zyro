@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import SuspensionGuard from "@/components/SuspensionGuard";
+import SupportChatWidget from "@/components/SupportChatWidget";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SuspensionGuard>
+          <SupportChatWidget />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
