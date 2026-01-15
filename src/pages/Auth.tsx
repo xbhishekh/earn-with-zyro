@@ -17,7 +17,7 @@ const usernameSchema = z.string().min(3, "Username must be at least 3 characters
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading, signUp, signIn, resetPassword } = useAuth();
+  const { user, loading: authLoading, isAdmin, isOwner, signUp, signIn, resetPassword } = useAuth();
   
   const [mode, setMode] = useState<"login" | "signup" | "forgot">(
     searchParams.get("mode") === "signup" ? "signup" : "login"
@@ -31,12 +31,16 @@ const Auth = () => {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
 
-  // Redirect if already logged in
+  // Redirect if already logged in - owner/admin goes to admin panel
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/dashboard", { replace: true });
+      if (isOwner || isAdmin) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, isAdmin, isOwner, navigate]);
 
   const validateForm = () => {
     try {
@@ -91,7 +95,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Welcome back!");
-          navigate("/dashboard");
+          // Redirect will be handled by useEffect based on role
         }
       } else if (mode === "forgot") {
         const { error } = await resetPassword(email);
