@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, UserPlus, Mail, Clock, CheckCircle, XCircle } from "lucide-react";
+import { UserPlus, Mail, Clock, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,11 +41,10 @@ interface Invite {
   created_at: string;
 }
 
-// Placeholder component - admin_invites table needs to be created
 const AdminInvites = () => {
   const { user } = useAuth();
   const [invites, setInvites] = useState<Invite[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,23 +52,26 @@ const AdminInvites = () => {
     invite_type: "normal_admin",
   });
 
-  // Placeholder data
-  const placeholderInvites = [
-    {
-      id: "1",
-      email: "admin@example.com",
-      invite_code: "ABC123",
-      invite_type: "normal_admin",
-      status: "pending",
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date().toISOString(),
-    },
-  ];
-
   useEffect(() => {
-    setInvites(placeholderInvites);
-    setLoading(false);
+    fetchInvites();
   }, []);
+
+  const fetchInvites = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_invites")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setInvites(data || []);
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to load invites");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!formData.email.trim()) {
@@ -76,7 +79,6 @@ const AdminInvites = () => {
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Invalid email format");
@@ -85,19 +87,48 @@ const AdminInvites = () => {
 
     setSubmitting(true);
     try {
-      // In a real app, this would call an edge function to send the invite
-      toast.success(`Invite sent to ${formData.email}!`);
+      const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      const { error } = await supabase.from("admin_invites").insert({
+        email: formData.email,
+        invite_code: inviteCode,
+        invite_type: formData.invite_type as "normal_admin" | "admin" | "super_admin",
+        invited_by: user?.id!,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Invite created! Code: ${inviteCode}`);
       setIsModalOpen(false);
       setFormData({ email: "", invite_type: "normal_admin" });
-    } catch (error) {
-      console.error("Error sending invite:", error);
-      toast.error("Failed to send invite");
+      fetchInvites();
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error(error.message || "Failed to create invite");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this invite?")) return;
+    
+    try {
+      const { error } = await supabase.from("admin_invites").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Deleted");
+      fetchInvites();
+    } catch (error) {
+      toast.error("Failed to delete");
+    }
+  };
+
+  const getStatusBadge = (status: string, expiresAt: string) => {
+    const isExpired = new Date(expiresAt) < new Date();
+    if (isExpired && status === "pending") {
+      return <Badge variant="outline" className="text-destructive border-destructive">Expired</Badge>;
+    }
     switch (status) {
       case "pending":
         return <Badge variant="outline" className="text-warning border-warning">Pending</Badge>;
@@ -114,6 +145,8 @@ const AdminInvites = () => {
     switch (type) {
       case "super_admin":
         return <Badge className="bg-destructive text-white">Super Admin</Badge>;
+      case "admin":
+        return <Badge className="bg-primary text-white">Admin</Badge>;
       case "normal_admin":
         return <Badge variant="outline" className="text-primary border-primary">Normal Admin</Badge>;
       default:
@@ -136,29 +169,37 @@ const AdminInvites = () => {
           <h1 className="font-display text-2xl font-bold mb-1">Admin Invites</h1>
           <p className="text-muted-foreground">Invite new administrators to the platform</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" />
-          Invite Admin
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={fetchInvites}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Invite Admin
+          </Button>
+        </div>
       </div>
 
-      {/* Info Card */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="glass-card rounded-xl p-4 border-l-4 border-l-primary"
-      >
-        <p className="text-sm text-muted-foreground">
-          <strong>Note:</strong> Admin invites table needs to be created. This UI shows how invites will work:
-        </p>
-        <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside">
-          <li>Send invites to email addresses</li>
-          <li>Invites expire after 7 days</li>
-          <li>Users join via unique invite link</li>
-        </ul>
-      </motion.div>
+      <div className="grid grid-cols-3 gap-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Total Invites</p>
+          <p className="font-display text-2xl font-bold">{invites.length}</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Pending</p>
+          <p className="font-display text-2xl font-bold text-warning">
+            {invites.filter(i => i.status === "pending").length}
+          </p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
+          <p className="text-sm text-muted-foreground">Accepted</p>
+          <p className="font-display text-2xl font-bold text-success">
+            {invites.filter(i => i.status === "accepted").length}
+          </p>
+        </motion.div>
+      </div>
 
-      {/* Table */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -168,16 +209,17 @@ const AdminInvites = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Email</TableHead>
+              <TableHead>Code</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Expires</TableHead>
-              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {invites.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No pending invites
                 </TableCell>
               </TableRow>
@@ -190,15 +232,29 @@ const AdminInvites = () => {
                       {invite.email}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <code className="bg-muted px-2 py-1 rounded text-xs">{invite.invite_code}</code>
+                  </TableCell>
                   <TableCell>{getTypeBadge(invite.invite_type)}</TableCell>
-                  <TableCell>{getStatusBadge(invite.status)}</TableCell>
+                  <TableCell>{getStatusBadge(invite.status, invite.expires_at)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Clock className="w-4 h-4" />
                       {format(new Date(invite.expires_at), "dd MMM yyyy")}
                     </div>
                   </TableCell>
-                  <TableCell>{format(new Date(invite.created_at), "dd MMM yyyy")}</TableCell>
+                  <TableCell className="text-right">
+                    {invite.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => handleDelete(invite.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -206,7 +262,6 @@ const AdminInvites = () => {
         </Table>
       </motion.div>
 
-      {/* Invite Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -233,6 +288,7 @@ const AdminInvites = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="normal_admin">Normal Admin</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -241,7 +297,8 @@ const AdminInvites = () => {
               <p className="font-medium mb-1">Role Permissions:</p>
               <ul className="text-muted-foreground space-y-1">
                 <li><strong>Normal Admin:</strong> Limited to assigned campaigns only</li>
-                <li><strong>Super Admin:</strong> Full access to all admin features</li>
+                <li><strong>Admin:</strong> Full admin access except sensitive areas</li>
+                <li><strong>Super Admin:</strong> Full access including user management</li>
               </ul>
             </div>
           </div>
@@ -250,7 +307,7 @@ const AdminInvites = () => {
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? "Sending..." : "Send Invite"}
+              {submitting ? "Sending..." : "Create Invite"}
             </Button>
           </DialogFooter>
         </DialogContent>
