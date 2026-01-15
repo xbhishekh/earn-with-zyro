@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import SuspensionGuard from "@/components/SuspensionGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -30,24 +31,26 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/campaigns/:id" element={<CampaignDetail />} />
-            <Route path="/balance" element={<Balance />} />
-            <Route path="/suspended" element={<Suspended />} />
-            <Route path="/affiliate" element={<Affiliate />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <SuspensionGuard>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/campaigns" element={<Campaigns />} />
+              <Route path="/campaigns/:id" element={<CampaignDetail />} />
+              <Route path="/balance" element={<Balance />} />
+              <Route path="/suspended" element={<Suspended />} />
+              <Route path="/affiliate" element={<Affiliate />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </SuspensionGuard>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

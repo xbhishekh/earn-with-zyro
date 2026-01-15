@@ -15,7 +15,8 @@ import {
   CreditCard,
   Shield,
   Bell,
-  Loader2
+  Loader2,
+  Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
 
 interface ProfileData {
   id: string;
@@ -325,10 +327,14 @@ const Profile = () => {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
                 Profile
+              </TabsTrigger>
+              <TabsTrigger value="social" className="gap-2">
+                <Share2 className="w-4 h-4" />
+                Social
               </TabsTrigger>
               <TabsTrigger value="payment" className="gap-2">
                 <CreditCard className="w-4 h-4" />
@@ -406,6 +412,11 @@ const Profile = () => {
                   Save Profile
                 </Button>
               </div>
+            </TabsContent>
+
+            {/* Social Tab */}
+            <TabsContent value="social" className="space-y-6">
+              <LinkedSocialAccounts isOwnProfile={true} />
             </TabsContent>
 
             {/* Payment Tab */}
