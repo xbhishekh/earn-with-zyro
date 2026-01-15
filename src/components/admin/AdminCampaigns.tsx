@@ -329,7 +329,7 @@ const AdminCampaigns = () => {
                 rows={3}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">Reward per 1K Views (₹)</label>
                 <Input
@@ -347,6 +347,16 @@ const AdminCampaigns = () => {
                   value={formData.max_payout}
                   onChange={(e) => setFormData({ ...formData, max_payout: parseFloat(e.target.value) || 0 })}
                 />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Total Budget (₹)</label>
+                <Input
+                  type="number"
+                  placeholder="10000"
+                  value={formData.budget_total}
+                  onChange={(e) => setFormData({ ...formData, budget_total: parseFloat(e.target.value) || 0 })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Campaign pauses when depleted</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
