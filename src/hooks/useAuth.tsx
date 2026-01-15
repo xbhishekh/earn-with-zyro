@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { User, Session, type EmailOtpType } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,8 +13,11 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isOwner: boolean;
-  sendOtp: (email: string, metadata?: { username?: string; displayName?: string; referredBy?: string }) => Promise<{ error: Error | null }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
+  sendOtp: (
+    email: string,
+    metadata?: { username?: string; displayName?: string; referredBy?: string },
+  ) => Promise<{ error: Error | null; otpType?: EmailOtpType }>;
+  verifyOtp: (email: string, token: string, type?: EmailOtpType) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
@@ -56,22 +59,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
 
-        // Fetch role after auth state change (deferred to avoid deadlock)
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        } else {
-          setRole(null);
-        }
+      // Fetch role after auth state change (deferred to avoid deadlock)
+      if (session?.user) {
+        setTimeout(() => {
+          fetchUserRole(session.user.id);
+        }, 0);
+      } else {
+        setRole(null);
       }
-    );
+    });
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -87,34 +90,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Send OTP to email (works for both login and signup)
+  // Send OTP to email (custom email via backend function, NOT magic-link template)
   const sendOtp = async (
-    email: string, 
-    metadata?: { username?: string; displayName?: string; referredBy?: string }
+    email: string,
+    metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        data: metadata ? {
-          username: metadata.username,
-          displayName: metadata.displayName,
-          referredBy: metadata.referredBy,
-        } : undefined,
+    const isSignup = !!metadata;
+
+    const { data, error } = await supabase.functions.invoke("auth-send-code", {
+      body: {
+        email,
+        isSignup,
+        metadata: metadata
+          ? {
+              username: metadata.username,
+              displayName: metadata.displayName,
+              referredBy: metadata.referredBy,
+            }
+          : {},
+        redirectTo: `${window.location.origin}/`,
       },
     });
-    
-    return { error: error as Error | null };
+
+    return {
+      error: (error as Error | null) ?? null,
+      otpType: (data?.otpType as EmailOtpType | undefined) ?? (isSignup ? "signup" : "magiclink"),
+    };
   };
 
   // Verify OTP code
-  const verifyOtp = async (email: string, token: string) => {
+  const verifyOtp = async (email: string, token: string, type?: EmailOtpType) => {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: 'email',
+      type: (type ?? "magiclink") as EmailOtpType,
     });
-    
+
     return { error: error as Error | null };
   };
 
@@ -129,19 +140,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isOwner = role === "owner";
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      loading, 
-      role,
-      isAdmin,
-      isSuperAdmin,
-      isOwner,
-      sendOtp,
-      verifyOtp,
-      signOut, 
-      refreshRole
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        role,
+        isAdmin,
+        isSuperAdmin,
+        isOwner,
+        sendOtp,
+        verifyOtp,
+        signOut,
+        refreshRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -154,3 +167,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

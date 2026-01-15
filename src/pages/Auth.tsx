@@ -18,13 +18,16 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin, isOwner, sendOtp, verifyOtp } = useAuth();
-  
+
   const [step, setStep] = useState<"email" | "otp" | "signup-info">(
-    searchParams.get("mode") === "signup" ? "email" : "email"
+    searchParams.get("mode") === "signup" ? "email" : "email",
   );
   const [isSignup, setIsSignup] = useState(searchParams.get("mode") === "signup");
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // Auth state for OTP verification
+  const [otpType, setOtpType] = useState<any>(undefined);
+
   // Form fields
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
@@ -51,7 +54,7 @@ const Auth = () => {
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
+
     try {
       emailSchema.parse(email);
     } catch (error) {
@@ -72,18 +75,24 @@ const Auth = () => {
         return;
       }
     }
-    
+
     setIsLoading(true);
 
     try {
-      const { error } = await sendOtp(email, isSignup ? { 
-        username, 
-        displayName: displayName || username 
-      } : undefined);
-      
+      const { error, otpType } = await sendOtp(
+        email,
+        isSignup
+          ? {
+              username,
+              displayName: displayName || username,
+            }
+          : undefined,
+      );
+
       if (error) {
         toast.error(error.message);
       } else {
+        setOtpType(otpType);
         toast.success("Verification code sent to your email!");
         setStep("otp");
       }
@@ -99,12 +108,12 @@ const Auth = () => {
       toast.error("Please enter the complete 6-digit code");
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
-      const { error } = await verifyOtp(email, otpCode);
-      
+      const { error } = await verifyOtp(email, otpCode, otpType);
+
       if (error) {
         if (error.message.includes("Invalid") || error.message.includes("expired")) {
           toast.error("Code mismatch! Please check and try again.");
@@ -126,7 +135,7 @@ const Auth = () => {
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       emailSchema.parse(email);
     } catch (error) {
