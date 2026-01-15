@@ -209,7 +209,7 @@ const Auth = () => {
             )}
             {step === "signup-info" && "Choose a unique username for your profile"}
             {step === "otp" && (
-              <>We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span></>
+              <>We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>. Check your inbox (and spam folder) for the code.</>
             )}
           </p>
 
