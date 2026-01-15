@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Campaigns from "./pages/Campaigns";
+import CampaignDetail from "./pages/CampaignDetail";
+import Balance from "./pages/Balance";
+import Suspended from "./pages/Suspended";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Terms from "./pages/Terms";
@@ -31,6 +34,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/campaigns/:id" element={<CampaignDetail />} />
+            <Route path="/balance" element={<Balance />} />
+            <Route path="/suspended" element={<Suspended />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
@@ -38,8 +44,6 @@ const App = () => (
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
