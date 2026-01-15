@@ -1,6 +1,8 @@
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
+const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,10 +20,35 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload = await req.json();
-    console.log("Email hook payload received:", JSON.stringify(payload, null, 2));
+    const payload = await req.text();
+    const headers = Object.fromEntries(req.headers);
+    
+    console.log("Received email hook request");
+    
+    // Verify the webhook signature
+    const wh = new Webhook(hookSecret);
+    let data: {
+      user: { email: string };
+      email_data: {
+        token: string;
+        token_hash: string;
+        redirect_to: string;
+        email_action_type: string;
+      };
+    };
+    
+    try {
+      data = wh.verify(payload, headers) as typeof data;
+      console.log("Webhook verified successfully");
+    } catch (verifyError) {
+      console.error("Webhook verification failed:", verifyError);
+      return new Response(
+        JSON.stringify({ error: { message: "Invalid webhook signature" } }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const { user, email_data } = payload;
+    const { user, email_data } = data;
     
     if (!user?.email) {
       console.error("No user email found in payload");
@@ -35,13 +62,13 @@ Deno.serve(async (req) => {
     
     console.log("Email data:", { 
       email: user.email, 
-      token: token ? "exists" : "missing",
+      token: token ? `exists (${token.length} chars)` : "missing",
       email_action_type,
       redirect_to 
     });
 
     // Get the 6-digit OTP code
-    const otpCode = token || "";
+    const otpCode = token || "------";
     
     // Build the magic link URL (optional fallback)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -108,7 +135,7 @@ Deno.serve(async (req) => {
               <!-- Divider -->
               <div style="height: 1px; background: #2a2a2a; margin: 24px 0;"></div>
               
-              <!-- Alternative Link (hidden but available) -->
+              <!-- Alternative Link -->
               ${magicLink ? `
               <p style="margin: 0; font-size: 13px; color: #666666; text-align: center;">
                 Or <a href="${magicLink}" style="color: #ff6b35; text-decoration: none;">click here</a> to sign in directly
@@ -137,7 +164,7 @@ Deno.serve(async (req) => {
     `;
 
     // Send email via Resend
-    const { data, error } = await resend.emails.send({
+    const { data: emailData, error } = await resend.emails.send({
       from: "Zyrozo <onboarding@resend.dev>",
       to: [user.email],
       subject: subject,
@@ -155,7 +182,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Email sent successfully:", data);
+    console.log("Email sent successfully:", emailData);
 
     return new Response(JSON.stringify({}), {
       status: 200,
