@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import NotificationsBell from "@/components/NotificationsBell";
 
 interface DashboardStats {
   totalEarnings: number;
@@ -167,6 +168,7 @@ const Dashboard = () => {
             </nav>
 
             <div className="flex items-center gap-3">
+              <NotificationsBell />
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/profile">
                   <User className="w-4 h-4 mr-2" />
