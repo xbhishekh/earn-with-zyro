@@ -11,7 +11,9 @@ import {
   XCircle,
   Trash2,
   Copy,
-  Check
+  Check,
+  AlertCircle,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ interface SocialAccount {
   is_verified: boolean;
   verification_code: string | null;
   admin_code: string | null;
+  admin_notes: string | null;
   created_at: string;
 }
 
@@ -118,10 +121,6 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
     return match ? match[1] : null;
   };
 
-  const generateVerificationCode = (): string => {
-    return `ZYROZO_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-  };
-
   const handleAddAccount = async () => {
     if (!selectedPlatform || !profileUrl.trim()) {
       toast.error("Please select a platform and enter your profile URL");
@@ -143,20 +142,17 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
 
     setSubmitting(true);
     try {
-      const verificationCode = generateVerificationCode();
-      
       const { error } = await supabase.from("social_accounts").insert({
         user_id: user!.id,
         platform: selectedPlatform,
         username: username,
         profile_url: profileUrl,
         status: "pending_link",
-        verification_code: verificationCode,
       });
 
       if (error) throw error;
 
-      toast.success("Account added! Complete verification to link it.");
+      toast.success("Account added! Waiting for admin to send verification code.");
       setIsAddModalOpen(false);
       setSelectedPlatform("");
       setProfileUrl("");
@@ -169,19 +165,19 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
     }
   };
 
-  const handleRequestVerification = async (accountId: string) => {
+  const handleConfirmCodeAdded = async (accountId: string) => {
     try {
       const { error } = await supabase
         .from("social_accounts")
-        .update({ status: "awaiting_code" })
+        .update({ status: "pending_verification" })
         .eq("id", accountId);
 
       if (error) throw error;
-      toast.success("Verification requested! Admin will provide a code.");
+      toast.success("Great! Admin will verify your account shortly.");
       fetchAccounts();
     } catch (error) {
-      console.error("Error requesting verification:", error);
-      toast.error("Failed to request verification");
+      console.error("Error confirming code:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -206,24 +202,26 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
   const copyCode = async (code: string) => {
     await navigator.clipboard.writeText(code);
     setCopiedCode(code);
-    toast.success("Code copied!");
+    toast.success("Code copied! Add it to your bio.");
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const getStatusBadge = (status: string, isVerified: boolean) => {
-    if (isVerified) {
+  const getStatusBadge = (account: SocialAccount) => {
+    if (account.is_verified) {
       return <Badge className="bg-green-500/10 text-green-500 border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" />Verified</Badge>;
     }
     
-    switch (status) {
+    switch (account.status) {
       case "pending_link":
-        return <Badge variant="outline" className="text-yellow-500 border-yellow-500/50"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return <Badge variant="outline" className="text-yellow-500 border-yellow-500/50"><Clock className="w-3 h-3 mr-1" />Pending Review</Badge>;
       case "awaiting_code":
-        return <Badge variant="outline" className="text-blue-500 border-blue-500/50"><Clock className="w-3 h-3 mr-1" />Awaiting Code</Badge>;
+        return <Badge variant="outline" className="text-blue-500 border-blue-500/50"><AlertCircle className="w-3 h-3 mr-1" />Code Ready</Badge>;
+      case "pending_verification":
+        return <Badge variant="outline" className="text-purple-500 border-purple-500/50"><Clock className="w-3 h-3 mr-1" />Verifying</Badge>;
       case "rejected":
         return <Badge variant="outline" className="text-destructive border-destructive/50"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{account.status}</Badge>;
     }
   };
 
@@ -278,75 +276,105 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
             return (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
+                className="flex flex-col gap-3 p-4 bg-muted/30 rounded-lg"
               >
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${config?.color || ""}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{config?.name || account.platform}</span>
-                      {getStatusBadge(account.status, account.is_verified)}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${config?.color || ""}`}>
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <p className="text-sm text-muted-foreground">@{account.username}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{config?.name || account.platform}</span>
+                        {getStatusBadge(account)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">@{account.username}</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Show verification code if pending */}
-                  {isOwnProfile && account.status === "pending_link" && account.verification_code && (
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs bg-muted px-2 py-1 rounded">{account.verification_code}</code>
+                  <div className="flex items-center gap-2">
+                    {/* External link */}
+                    {account.profile_url && (
+                      <Button variant="ghost" size="icon" asChild>
+                        <a href={account.profile_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    )}
+
+                    {/* Delete button */}
+                    {isOwnProfile && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => copyCode(account.verification_code!)}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteAccount(account.id)}
                       >
-                        {copiedCode === account.verification_code ? (
-                          <Check className="w-4 h-4 text-green-500" />
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status-specific content */}
+                {isOwnProfile && account.status === "pending_link" && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                      <Clock className="w-4 h-4 inline mr-2" />
+                      Waiting for admin to send verification code...
+                    </p>
+                  </div>
+                )}
+
+                {/* Show admin code when awaiting_code */}
+                {isOwnProfile && account.status === "awaiting_code" && account.admin_code && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                      Add this code to your bio:
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <code className="flex-1 text-lg font-mono font-bold bg-background px-4 py-2 rounded-lg">
+                        {account.admin_code}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyCode(account.admin_code!)}
+                      >
+                        {copiedCode === account.admin_code ? (
+                          <><Check className="w-4 h-4 mr-1 text-green-500" />Copied</>
                         ) : (
-                          <Copy className="w-4 h-4" />
+                          <><Copy className="w-4 h-4 mr-1" />Copy</>
                         )}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRequestVerification(account.id)}
-                      >
-                        I Added the Code
-                      </Button>
                     </div>
-                  )}
-
-                  {/* Show admin code if awaiting */}
-                  {isOwnProfile && account.status === "awaiting_code" && account.admin_code && (
-                    <div className="text-sm text-muted-foreground">
-                      Admin Code: <code className="bg-muted px-2 py-1 rounded">{account.admin_code}</code>
-                    </div>
-                  )}
-
-                  {/* External link */}
-                  {account.profile_url && (
-                    <Button variant="ghost" size="icon" asChild>
-                      <a href={account.profile_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  )}
-
-                  {/* Delete button */}
-                  {isOwnProfile && (
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteAccount(account.id)}
+                      className="w-full"
+                      onClick={() => handleConfirmCodeAdded(account.id)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Send className="w-4 h-4 mr-2" />
+                      I Added the Code to My Bio
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Show pending verification status */}
+                {isOwnProfile && account.status === "pending_verification" && (
+                  <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                    <p className="text-sm text-purple-600 dark:text-purple-400">
+                      <Clock className="w-4 h-4 inline mr-2" />
+                      Admin is verifying your account. This may take a few hours.
+                    </p>
+                  </div>
+                )}
+
+                {/* Show rejection reason */}
+                {isOwnProfile && account.status === "rejected" && account.admin_notes && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                    <p className="text-sm text-destructive font-medium mb-1">Rejection Reason:</p>
+                    <p className="text-sm text-muted-foreground">{account.admin_notes}</p>
+                  </div>
+                )}
               </div>
             );
           })}
