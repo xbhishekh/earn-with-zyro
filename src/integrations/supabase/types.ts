@@ -14,6 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          admin_id: string
+          created_at: string | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          admin_id: string
+          created_at?: string | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          admin_id?: string
+          created_at?: string | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      admin_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invite_code: string
+          invite_type: Database["public"]["Enums"]["app_role"]
+          invited_by: string
+          status: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invite_code: string
+          invite_type?: Database["public"]["Enums"]["app_role"]
+          invited_by: string
+          status?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          invite_type?: Database["public"]["Enums"]["app_role"]
+          invited_by?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_links: {
+        Row: {
+          campaign_id: string | null
+          clicks: number | null
+          code: string
+          conversions: number | null
+          created_at: string | null
+          id: string
+          signups: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicks?: number | null
+          code: string
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          signups?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          clicks?: number | null
+          code?: string
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          signups?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          admin_id: string
+          campaign_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          campaign_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          campaign_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       balance_transactions: {
         Row: {
           amount: number
@@ -146,6 +297,165 @@ export type Database = {
         }
         Relationships: []
       }
+      company_pages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_published: boolean | null
+          last_updated_by: string | null
+          meta_description: string | null
+          page_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_updated_by?: string | null
+          meta_description?: string | null
+          page_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_updated_by?: string | null
+          meta_description?: string | null
+          page_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          question: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      footer_settings: {
+        Row: {
+          about_url: string | null
+          careers_url: string | null
+          contact_url: string | null
+          created_at: string | null
+          description: string | null
+          facebook_url: string | null
+          id: string
+          instagram_url: string | null
+          linkedin_url: string | null
+          logo_url: string | null
+          privacy_url: string | null
+          terms_url: string | null
+          tiktok_url: string | null
+          twitter_url: string | null
+          updated_at: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          about_url?: string | null
+          careers_url?: string | null
+          contact_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          privacy_url?: string | null
+          terms_url?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          about_url?: string | null
+          careers_url?: string | null
+          contact_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          privacy_url?: string | null
+          terms_url?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      legal_pages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          last_updated_by: string | null
+          page_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          last_updated_by?: string | null
+          page_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          last_updated_by?: string | null
+          page_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -204,6 +514,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_accounts: {
+        Row: {
+          admin_code: string | null
+          admin_notes: string | null
+          created_at: string | null
+          id: string
+          is_verified: boolean | null
+          platform: string
+          profile_url: string | null
+          status: Database["public"]["Enums"]["social_account_status"] | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+          verification_code: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          admin_code?: string | null
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          platform: string
+          profile_url?: string | null
+          status?: Database["public"]["Enums"]["social_account_status"] | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+          verification_code?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          admin_code?: string | null
+          admin_notes?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          platform?: string
+          profile_url?: string | null
+          status?: Database["public"]["Enums"]["social_account_status"] | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+          verification_code?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       submissions: {
         Row: {
@@ -271,6 +629,116 @@ export type Database = {
           },
         ]
       }
+      support_chats: {
+        Row: {
+          admin_unread_count: number | null
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          priority: string | null
+          status: string | null
+          unread_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_unread_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          priority?: string | null
+          status?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_unread_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          priority?: string | null
+          status?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_config: {
+        Row: {
+          active_hours_end: string | null
+          active_hours_start: string | null
+          auto_replies: Json | null
+          created_at: string | null
+          id: string
+          offline_message: string | null
+          updated_at: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          active_hours_end?: string | null
+          active_hours_start?: string | null
+          auto_replies?: Json | null
+          created_at?: string | null
+          id?: string
+          offline_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          active_hours_end?: string | null
+          active_hours_start?: string | null
+          auto_replies?: Json | null
+          created_at?: string | null
+          id?: string
+          offline_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "support_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -297,6 +765,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_support_chat: { Args: { chat_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -308,6 +777,11 @@ export type Database = {
     }
     Enums: {
       app_role: "creator" | "normal_admin" | "admin" | "super_admin" | "owner"
+      social_account_status:
+        | "pending_link"
+        | "awaiting_code"
+        | "verified"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -436,6 +910,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["creator", "normal_admin", "admin", "super_admin", "owner"],
+      social_account_status: [
+        "pending_link",
+        "awaiting_code",
+        "verified",
+        "rejected",
+      ],
     },
   },
 } as const
