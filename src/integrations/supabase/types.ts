@@ -14,16 +14,300 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      balance_transactions: {
+        Row: {
+          amount: number
+          campaign_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          release_date: string | null
+          status: string | null
+          submission_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          release_date?: string | null
+          status?: string | null
+          submission_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          release_date?: string | null
+          status?: string | null
+          submission_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_transactions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_transactions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          affiliate_commission_percent: number | null
+          budget_spent: number | null
+          budget_total: number | null
+          campaign_type: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          join_type: string | null
+          max_payout: number | null
+          min_payout: number | null
+          name: string
+          platforms: string[] | null
+          reward_per_1k_views: number
+          rules_guidelines: string | null
+          rules_link: string | null
+          status: string | null
+          thumbnail_url: string | null
+          updated_at: string
+          waitlist_questions: string[] | null
+        }
+        Insert: {
+          affiliate_commission_percent?: number | null
+          budget_spent?: number | null
+          budget_total?: number | null
+          campaign_type?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          join_type?: string | null
+          max_payout?: number | null
+          min_payout?: number | null
+          name: string
+          platforms?: string[] | null
+          reward_per_1k_views?: number
+          rules_guidelines?: string | null
+          rules_link?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          waitlist_questions?: string[] | null
+        }
+        Update: {
+          affiliate_commission_percent?: number | null
+          budget_spent?: number | null
+          budget_total?: number | null
+          campaign_type?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          join_type?: string | null
+          max_payout?: number | null
+          min_payout?: number | null
+          name?: string
+          platforms?: string[] | null
+          reward_per_1k_views?: number
+          rules_guidelines?: string | null
+          rules_link?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          waitlist_questions?: string[] | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          cover_image_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_verified: boolean | null
+          location: string | null
+          payment_details: Json | null
+          referred_by: string | null
+          show_total_earned: boolean | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          location?: string | null
+          payment_details?: Json | null
+          referred_by?: string | null
+          show_total_earned?: boolean | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          location?: string | null
+          payment_details?: Json | null
+          referred_by?: string | null
+          show_total_earned?: boolean | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          admin_notes: string | null
+          campaign_id: string
+          created_at: string
+          estimated_earnings: number | null
+          id: string
+          referrer_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          social_link: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          video_url: string
+          views_count: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          campaign_id: string
+          created_at?: string
+          estimated_earnings?: number | null
+          id?: string
+          referrer_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_link?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+          views_count?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          campaign_id?: string
+          created_at?: string
+          estimated_earnings?: number | null
+          id?: string
+          referrer_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_link?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "creator" | "normal_admin" | "admin" | "super_admin" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +434,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["creator", "normal_admin", "admin", "super_admin", "owner"],
+    },
   },
 } as const
