@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, Mail, RefreshCw, Trash2, Building2, Loader2, CheckCircle, Clock } from "lucide-react";
+import { UserPlus, Mail, RefreshCw, Trash2, Building2, Loader2, CheckCircle, Clock, ShieldOff, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -26,6 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,18 +57,35 @@ interface Campaign {
   name: string;
 }
 
+interface UserRoleEntry {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  profiles?: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
 const AdminInvites = () => {
   const { user, isFounder, isOwner } = useAuth();
   const [admins, setAdmins] = useState<AdminEntry[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRoleEntry[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [removeRoleUser, setRemoveRoleUser] = useState<UserRoleEntry | null>(null);
+  const [removingRole, setRemovingRole] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     invite_type: "normal_admin",
     selected_campaigns: [] as string[],
   });
+
+  const canManageRoles = isFounder || isOwner;
 
   useEffect(() => {
     fetchData();
@@ -65,7 +93,7 @@ const AdminInvites = () => {
 
   const fetchData = async () => {
     try {
-      const [adminsRes, campaignsRes] = await Promise.all([
+      const [adminsRes, campaignsRes, rolesRes] = await Promise.all([
         supabase
           .from("admin_invites")
           .select("*")
@@ -74,13 +102,37 @@ const AdminInvites = () => {
           .from("campaigns")
           .select("id, name")
           .order("name", { ascending: true }),
+        // Fetch active admin roles (excluding creator role)
+        supabase
+          .from("user_roles")
+          .select("id, user_id, role, created_at")
+          .neq("role", "creator")
+          .order("created_at", { ascending: false }),
       ]);
 
       if (adminsRes.error) throw adminsRes.error;
       if (campaignsRes.error) throw campaignsRes.error;
+      if (rolesRes.error) throw rolesRes.error;
       
       setAdmins(adminsRes.data || []);
       setCampaigns(campaignsRes.data || []);
+
+      // Fetch profiles for users with admin roles
+      if (rolesRes.data && rolesRes.data.length > 0) {
+        const userIds = rolesRes.data.map(r => r.user_id);
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, username, avatar_url")
+          .in("user_id", userIds);
+
+        const rolesWithProfiles = rolesRes.data.map(role => ({
+          ...role,
+          profiles: profilesData?.find(p => p.user_id === role.user_id) || null,
+        }));
+        setUserRoles(rolesWithProfiles);
+      } else {
+        setUserRoles([]);
+      }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load data");
@@ -200,6 +252,56 @@ const AdminInvites = () => {
       fetchData();
     } catch (error) {
       toast.error("Failed to remove");
+    }
+  };
+
+  const canRemoveRole = (role: string) => {
+    // Founder can remove everyone except owner
+    if (isFounder && role !== "owner") return true;
+    // Owner can remove everyone except founder
+    if (isOwner && role !== "founder") return true;
+    return false;
+  };
+
+  const handleRemoveRole = async () => {
+    if (!removeRoleUser || !canManageRoles) return;
+    
+    setRemovingRole(true);
+    try {
+      // Demote to creator role instead of deleting
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: "creator" })
+        .eq("id", removeRoleUser.id);
+      
+      if (error) throw error;
+
+      // Also remove any campaign assignments if they were a normal_admin
+      await supabase
+        .from("admin_campaign_assignments")
+        .delete()
+        .eq("admin_user_id", removeRoleUser.user_id);
+
+      // Log the activity
+      await supabase.from("admin_activity_logs").insert({
+        admin_id: user?.id!,
+        action_type: "admin_role_removed",
+        target_type: "user",
+        target_id: removeRoleUser.user_id,
+        action_details: {
+          previous_role: removeRoleUser.role,
+          user_name: removeRoleUser.profiles?.display_name || removeRoleUser.profiles?.username,
+        },
+      });
+
+      toast.success(`Admin role removed from ${removeRoleUser.profiles?.display_name || removeRoleUser.profiles?.username || "user"}`);
+      setRemoveRoleUser(null);
+      fetchData();
+    } catch (error: any) {
+      console.error("Error removing role:", error);
+      toast.error(error.message || "Failed to remove admin role");
+    } finally {
+      setRemovingRole(false);
     }
   };
 
@@ -348,6 +450,123 @@ const AdminInvites = () => {
           </TableBody>
         </Table>
       </motion.div>
+
+      {/* Active Admin Roles Section - Only for Founder/Owner */}
+      {canManageRoles && userRoles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-4"
+        >
+          <div>
+            <h2 className="font-display text-xl font-bold mb-1">Active Admin Roles</h2>
+            <p className="text-muted-foreground text-sm">
+              Manage currently active admin roles. Remove admins by demoting them to creator.
+            </p>
+          </div>
+
+          <div className="glass-card rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Since</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userRoles.map((roleEntry) => (
+                  <TableRow key={roleEntry.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {roleEntry.profiles?.avatar_url ? (
+                          <img
+                            src={roleEntry.profiles.avatar_url}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {(roleEntry.profiles?.display_name || roleEntry.profiles?.username || "U")[0].toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p>{roleEntry.profiles?.display_name || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            @{roleEntry.profiles?.username || "unknown"}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getTypeBadge(roleEntry.role)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(roleEntry.created_at), "dd MMM yyyy")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {canRemoveRole(roleEntry.role) ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setRemoveRoleUser(roleEntry)}
+                        >
+                          <ShieldOff className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Protected
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Remove Role Confirmation Dialog */}
+      <AlertDialog open={!!removeRoleUser} onOpenChange={() => setRemoveRoleUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Remove Admin Role
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove the <strong>{removeRoleUser?.role}</strong> role from{" "}
+              <strong>{removeRoleUser?.profiles?.display_name || removeRoleUser?.profiles?.username}</strong>?
+              <br /><br />
+              They will be demoted to a regular creator and lose all admin privileges.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingRole}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveRole}
+              disabled={removingRole}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removingRole ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                <>
+                  <ShieldOff className="w-4 h-4 mr-2" />
+                  Remove Role
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
