@@ -66,6 +66,7 @@ const initialFormState = {
   reward_per_1k_views: 0,
   min_payout: 0,
   max_payout: 0,
+  budget_spent: 0,
   budget_total: 0,
   status: "active",
   category: "gaming",
@@ -187,6 +188,7 @@ const AdminCampaigns = () => {
       min_payout: campaign.min_payout || 0,
       max_payout: campaign.max_payout || 0,
       budget_total: campaign.budget_total || 0,
+      budget_spent: campaign.budget_spent || 0,
       status: campaign.status || "active",
       category: campaign.category || "gaming",
       campaign_type: campaign.campaign_type || "ugc",
@@ -356,7 +358,7 @@ const AdminCampaigns = () => {
                 rows={3}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">Reward per 1K Views (₹)</label>
                 <Input
@@ -366,6 +368,17 @@ const AdminCampaigns = () => {
                   onChange={(e) => setFormData({ ...formData, reward_per_1k_views: parseFloat(e.target.value) || 0 })}
                 />
               </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Min Payout (₹)</label>
+                <Input
+                  type="number"
+                  placeholder="100"
+                  value={formData.min_payout}
+                  onChange={(e) => setFormData({ ...formData, min_payout: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">Max Payout (₹)</label>
                 <Input
@@ -383,9 +396,37 @@ const AdminCampaigns = () => {
                   value={formData.budget_total}
                   onChange={(e) => setFormData({ ...formData, budget_total: parseFloat(e.target.value) || 0 })}
                 />
-                <p className="text-xs text-muted-foreground mt-1">Campaign pauses when depleted</p>
               </div>
             </div>
+            {editingCampaign && (
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium block">Budget Spent</label>
+                    <p className="text-2xl font-bold text-primary">₹{formData.budget_spent.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <label className="text-sm text-muted-foreground block">Remaining</label>
+                    <p className="text-lg font-semibold text-success">
+                      ₹{(formData.budget_total - formData.budget_spent).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {formData.budget_total > 0 && (
+                  <div className="mt-3">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${Math.min((formData.budget_spent / formData.budget_total) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {((formData.budget_spent / formData.budget_total) * 100).toFixed(1)}% used
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-2 block">Category</label>
