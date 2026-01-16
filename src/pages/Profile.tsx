@@ -8,8 +8,6 @@ import {
   MapPin,
   AtSign,
   FileText,
-  Eye,
-  EyeOff,
   CreditCard,
   Shield,
   Loader2,
@@ -17,7 +15,16 @@ import {
   HelpCircle,
   MessageCircle,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  LayoutDashboard,
+  Package,
+  Users,
+  BarChart3,
+  Tags,
+  Plus,
+  Eye,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +39,9 @@ import { toast } from "sonner";
 import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
 import { MainLayout } from "@/components/layout/MainLayout";
 import SupportChatWidget from "@/components/SupportChatWidget";
+import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
+import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
+import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 
 interface ProfileData {
   id: string;
@@ -52,6 +62,20 @@ interface ProfileData {
   } | null;
 }
 
+interface MyProduct {
+  id: string;
+  title: string;
+  slug: string | null;
+  thumbnail_url: string | null;
+  price: number;
+  product_type: string;
+  subscription_interval: string | null;
+  members_count: number;
+  views_count: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -63,6 +87,11 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [showSupportChat, setShowSupportChat] = useState(false);
   
+  // Seller Dashboard states
+  const [myProducts, setMyProducts] = useState<MyProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [sellerDashboardTab, setSellerDashboardTab] = useState("products");
+  
   // Form states
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -72,12 +101,6 @@ const Profile = () => {
   const [showLocation, setShowLocation] = useState(false);
   const [showOwnedProducts, setShowOwnedProducts] = useState(false);
   const [showJoinedProducts, setShowJoinedProducts] = useState(false);
-  
-  // Payment details
-  const [upiId, setUpiId] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -88,6 +111,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchMyProducts();
     }
   }, [user]);
 
@@ -111,14 +135,6 @@ const Profile = () => {
         setShowLocation(data.show_location || false);
         setShowOwnedProducts(data.show_owned_products || false);
         setShowJoinedProducts(data.show_joined_products || false);
-        
-        const paymentDetails = data.payment_details as ProfileData['payment_details'];
-        if (paymentDetails) {
-          setUpiId(paymentDetails.upi_id || "");
-          setBankName(paymentDetails.bank_name || "");
-          setAccountNumber(paymentDetails.account_number || "");
-          setIfscCode(paymentDetails.ifsc_code || "");
-        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -126,6 +142,46 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchMyProducts = async () => {
+    setProductsLoading(true);
+    const { data } = await supabase
+      .from("marketplace_products")
+      .select("id, title, slug, thumbnail_url, price, product_type, subscription_interval, members_count, views_count, is_active, created_at")
+      .eq("seller_id", user!.id)
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      setMyProducts(data);
+    }
+    setProductsLoading(false);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    
+    const { error } = await supabase
+      .from("marketplace_products")
+      .delete()
+      .eq("id", productId)
+      .eq("seller_id", user!.id);
+
+    if (error) {
+      toast.error("Failed to delete product");
+    } else {
+      toast.success("Product deleted");
+      setMyProducts(prev => prev.filter(p => p.id !== productId));
+    }
+  };
+
+  const formatPrice = (price: number, type: string, interval: string | null) => {
+    if (type === "free" || price === 0) return "Free";
+    const formatted = `₹${price.toLocaleString()}`;
+    if (type === "subscription" && interval) {
+      return `${formatted}/${interval}`;
+    }
+    return formatted;
   };
 
   const handleAvatarClick = () => {
@@ -208,30 +264,6 @@ const Profile = () => {
     }
   };
 
-  const handleSavePayment = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          payment_details: {
-            upi_id: upiId,
-            bank_name: bankName,
-            account_number: accountNumber,
-            ifsc_code: ifscCode,
-          },
-        })
-        .eq("user_id", user!.id);
-
-      if (error) throw error;
-      toast.success("Payment details updated!");
-    } catch (error) {
-      console.error("Error saving payment details:", error);
-      toast.error("Failed to save payment details");
-    } finally {
-      setSaving(false);
-    }
-  };
 
 
   if (authLoading || loading) {
@@ -314,9 +346,9 @@ const Profile = () => {
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Social</span>
               </TabsTrigger>
-              <TabsTrigger value="payment" className="gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span className="hidden sm:inline">Payment</span>
+              <TabsTrigger value="dashboard" className="gap-2">
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
               </TabsTrigger>
               <TabsTrigger value="privacy" className="gap-2">
                 <Shield className="w-4 h-4" />
@@ -401,66 +433,156 @@ const Profile = () => {
               <LinkedSocialAccounts isOwnProfile={true} />
             </TabsContent>
 
-            {/* Payment Tab */}
-            <TabsContent value="payment" className="space-y-6">
-              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
-                <div>
-                  <h3 className="font-display text-lg font-semibold mb-1">UPI Payment</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Add your UPI ID for instant withdrawals</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="upiId">UPI ID</Label>
-                    <Input
-                      id="upiId"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      placeholder="yourname@upi"
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-6">
-                  <h3 className="font-display text-lg font-semibold mb-1">Bank Transfer</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Add bank details for larger withdrawals</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="bankName">Bank Name</Label>
-                      <Input
-                        id="bankName"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder="State Bank of India"
-                      />
+            {/* Seller Dashboard Tab */}
+            <TabsContent value="dashboard" className="space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ifscCode">IFSC Code</Label>
-                      <Input
-                        id="ifscCode"
-                        value={ifscCode}
-                        onChange={(e) => setIfscCode(e.target.value)}
-                        placeholder="SBIN0001234"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="accountNumber">Account Number</Label>
-                      <Input
-                        id="accountNumber"
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="Your account number"
-                        type="password"
-                      />
+                    <div>
+                      <h2 className="font-display text-xl font-bold">Seller Dashboard</h2>
+                      <p className="text-sm text-muted-foreground">Manage your products, buyers & analytics</p>
                     </div>
                   </div>
+                  <Button asChild size="sm">
+                    <Link to="/marketplace/create">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create
+                    </Link>
+                  </Button>
                 </div>
 
-                <Button onClick={handleSavePayment} disabled={saving} className="w-full md:w-auto">
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  Save Payment Details
-                </Button>
+                <Tabs value={sellerDashboardTab} onValueChange={setSellerDashboardTab} className="w-full">
+                  <TabsList className="w-full grid grid-cols-4 mb-6">
+                    <TabsTrigger value="products" className="flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      <span className="hidden sm:inline">Products</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="buyers" className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span className="hidden sm:inline">Buyers</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Analytics</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="discounts" className="flex items-center gap-2">
+                      <Tags className="w-4 h-4" />
+                      <span className="hidden sm:inline">Discounts</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Products Sub-Tab */}
+                  <TabsContent value="products">
+                    {productsLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : myProducts.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="font-bold mb-2">No products yet</h3>
+                        <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                          Start selling your courses, memberships, or digital products
+                        </p>
+                        <Button variant="outline" asChild>
+                          <Link to="/marketplace/create">Create your first product</Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {myProducts.map((product) => (
+                          <div
+                            key={product.id}
+                            className="bg-muted/50 rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-colors"
+                          >
+                            {/* Thumbnail */}
+                            <div className="relative aspect-video overflow-hidden bg-muted">
+                              {product.thumbnail_url ? (
+                                <img
+                                  src={product.thumbnail_url}
+                                  alt={product.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                              )}
+                              {!product.is_active && (
+                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                  <span className="text-sm font-medium text-muted-foreground">Inactive</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <h3 className="font-bold line-clamp-1">{product.title}</h3>
+                                <span className="text-sm font-medium text-primary whitespace-nowrap">
+                                  {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                                </span>
+                              </div>
+
+                              {/* Stats */}
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  {product.members_count || 0}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  {product.views_count || 0}
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" className="flex-1" asChild>
+                                  <Link to={`/marketplace/edit/${product.id}`}>
+                                    <Edit className="w-4 h-4 mr-1" />
+                                    Edit
+                                  </Link>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link to={`/marketplace/${product.slug || product.id}`}>
+                                    <Eye className="w-4 h-4" />
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Buyers Sub-Tab */}
+                  <TabsContent value="buyers">
+                    <SellerBuyersManager />
+                  </TabsContent>
+
+                  {/* Analytics Sub-Tab */}
+                  <TabsContent value="analytics">
+                    <SellerAnalytics />
+                  </TabsContent>
+
+                  {/* Discounts Sub-Tab */}
+                  <TabsContent value="discounts">
+                    <DiscountCodesManager />
+                  </TabsContent>
+                </Tabs>
               </div>
             </TabsContent>
 
