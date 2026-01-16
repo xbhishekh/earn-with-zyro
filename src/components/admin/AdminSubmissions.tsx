@@ -214,7 +214,7 @@ const AdminSubmissions = () => {
         .insert({
           user_id: markPaidSubmission.user_id,
           amount: amount,
-          type: "payout",
+          type: "pending_payout",
           status: "pending",
           campaign_id: markPaidSubmission.campaign_id,
           submission_id: markPaidSubmission.id,
