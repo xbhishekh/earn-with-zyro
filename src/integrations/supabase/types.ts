@@ -1530,6 +1530,10 @@ export type Database = {
         Returns: Json
       }
       can_access_support_chat: { Args: { chat_id: string }; Returns: boolean }
+      can_manage_role: {
+        Args: { _manager_id: string; _target_role: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1542,10 +1546,18 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_founder: { Args: { _user_id: string }; Returns: boolean }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "creator" | "normal_admin" | "admin" | "super_admin" | "owner"
+      app_role:
+        | "creator"
+        | "normal_admin"
+        | "admin"
+        | "super_admin"
+        | "owner"
+        | "founder"
       social_account_status:
         | "pending_link"
         | "awaiting_code"
@@ -1679,7 +1691,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["creator", "normal_admin", "admin", "super_admin", "owner"],
+      app_role: [
+        "creator",
+        "normal_admin",
+        "admin",
+        "super_admin",
+        "owner",
+        "founder",
+      ],
       social_account_status: [
         "pending_link",
         "awaiting_code",

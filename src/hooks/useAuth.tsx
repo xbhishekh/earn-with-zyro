@@ -3,7 +3,7 @@ import { User, Session, type EmailOtpType } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type AppRole = "creator" | "normal_admin" | "admin" | "super_admin" | "owner";
+type AppRole = "creator" | "normal_admin" | "admin" | "super_admin" | "owner" | "founder";
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +13,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isOwner: boolean;
+  isFounder: boolean;
   sendOtp: (
     email: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
@@ -177,9 +178,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Derived admin states
-  const isAdmin = role === "normal_admin" || role === "admin" || role === "super_admin" || role === "owner";
-  const isSuperAdmin = role === "super_admin" || role === "owner";
+  const isFounder = role === "founder";
   const isOwner = role === "owner";
+  const isSuperAdmin = role === "super_admin" || isOwner || isFounder;
+  const isAdmin = role === "normal_admin" || role === "admin" || isSuperAdmin;
 
   return (
     <AuthContext.Provider
@@ -191,6 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         isSuperAdmin,
         isOwner,
+        isFounder,
         sendOtp,
         verifyOtp,
         signUpWithPassword,

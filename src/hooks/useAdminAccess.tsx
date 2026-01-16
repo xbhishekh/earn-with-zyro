@@ -10,7 +10,7 @@ interface AdminAccessData {
 }
 
 export const useAdminAccess = () => {
-  const { user, isSuperAdmin, isOwner } = useAuth();
+  const { user, isSuperAdmin, isOwner, isFounder } = useAuth();
   const [data, setData] = useState<AdminAccessData>({
     myCampaignIds: [],
     myCampaignMemberUserIds: [],
@@ -24,7 +24,7 @@ export const useAdminAccess = () => {
       return;
     }
 
-    const hasFullAccess = isSuperAdmin || isOwner;
+    const hasFullAccess = isSuperAdmin || isOwner || isFounder;
 
     if (hasFullAccess) {
       setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: true, loading: false });
@@ -67,7 +67,7 @@ export const useAdminAccess = () => {
       console.error("Error fetching admin access data:", error);
       setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: false, loading: false });
     }
-  }, [user, isSuperAdmin, isOwner]);
+  }, [user, isSuperAdmin, isOwner, isFounder]);
 
   useEffect(() => {
     fetchAccessData();
