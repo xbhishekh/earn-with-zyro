@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, Mail, Clock, RefreshCw, Trash2 } from "lucide-react";
+import { UserPlus, Mail, Clock, RefreshCw, Trash2, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -41,33 +42,49 @@ interface Invite {
   created_at: string;
 }
 
+interface Campaign {
+  id: string;
+  name: string;
+}
+
 const AdminInvites = () => {
   const { user } = useAuth();
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     invite_type: "normal_admin",
+    selected_campaigns: [] as string[],
   });
 
   useEffect(() => {
-    fetchInvites();
+    fetchData();
   }, []);
 
-  const fetchInvites = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
-        .from("admin_invites")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [invitesRes, campaignsRes] = await Promise.all([
+        supabase
+          .from("admin_invites")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("campaigns")
+          .select("id, name")
+          .order("name", { ascending: true }),
+      ]);
 
-      if (error) throw error;
-      setInvites(data || []);
+      if (invitesRes.error) throw invitesRes.error;
+      if (campaignsRes.error) throw campaignsRes.error;
+      
+      setInvites(invitesRes.data || []);
+      setCampaigns(campaignsRes.data || []);
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to load invites");
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -85,24 +102,73 @@ const AdminInvites = () => {
       return;
     }
 
+    if (formData.invite_type === "normal_admin" && formData.selected_campaigns.length === 0) {
+      toast.error("Please select at least one campaign for Normal Admin");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       
-      const { error } = await supabase.from("admin_invites").insert({
+      // Create the invite
+      const { data: inviteData, error: inviteError } = await supabase.from("admin_invites").insert({
         email: formData.email,
         invite_code: inviteCode,
         invite_type: formData.invite_type as "normal_admin" | "admin" | "super_admin",
         invited_by: user?.id!,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
+        expires_at: expiresAt,
+      }).select().single();
 
-      if (error) throw error;
+      if (inviteError) throw inviteError;
+
+      // If normal_admin, store campaign assignments (will be applied when user signs up)
+      // We'll store this in local storage temporarily and process it when the user accepts
+      if (formData.invite_type === "normal_admin" && formData.selected_campaigns.length > 0) {
+        // Store pending assignments in a separate table or use invite metadata
+        // For now, we'll create placeholders that will be filled with actual user_id upon signup
+        const pendingAssignments = formData.selected_campaigns.map(campaignId => ({
+          invite_id: inviteData.id,
+          campaign_id: campaignId,
+          assigned_by: user?.id!,
+        }));
+
+        // Store in localStorage with invite code as key (will be retrieved during signup)
+        const existingAssignments = JSON.parse(localStorage.getItem('pending_campaign_assignments') || '{}');
+        existingAssignments[inviteCode] = {
+          campaigns: formData.selected_campaigns,
+          assigned_by: user?.id,
+        };
+        localStorage.setItem('pending_campaign_assignments', JSON.stringify(existingAssignments));
+      }
+
+      // Send email notification
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await supabase.functions.invoke('send-admin-invite', {
+          body: {
+            email: formData.email,
+            invite_code: inviteCode,
+            invite_type: formData.invite_type,
+            expires_at: expiresAt,
+          },
+        });
+
+        if (response.error) {
+          console.error("Email notification failed:", response.error);
+          toast.warning("Invite created but email notification failed");
+        } else {
+          toast.success(`Invite sent to ${formData.email}`);
+        }
+      } catch (emailError) {
+        console.error("Email notification error:", emailError);
+        toast.success(`Invite created! Code: ${inviteCode} (Email notification failed)`);
+      }
       
-      toast.success(`Invite created! Code: ${inviteCode}`);
       setIsModalOpen(false);
-      setFormData({ email: "", invite_type: "normal_admin" });
-      fetchInvites();
+      setFormData({ email: "", invite_type: "normal_admin", selected_campaigns: [] });
+      fetchData();
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error.message || "Failed to create invite");
@@ -118,10 +184,19 @@ const AdminInvites = () => {
       const { error } = await supabase.from("admin_invites").delete().eq("id", id);
       if (error) throw error;
       toast.success("Deleted");
-      fetchInvites();
+      fetchData();
     } catch (error) {
       toast.error("Failed to delete");
     }
+  };
+
+  const toggleCampaign = (campaignId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_campaigns: prev.selected_campaigns.includes(campaignId)
+        ? prev.selected_campaigns.filter(id => id !== campaignId)
+        : [...prev.selected_campaigns, campaignId],
+    }));
   };
 
   const getStatusBadge = (status: string, expiresAt: string) => {
@@ -170,7 +245,7 @@ const AdminInvites = () => {
           <p className="text-muted-foreground">Invite new administrators to the platform</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchInvites}>
+          <Button variant="outline" size="sm" onClick={fetchData}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -263,7 +338,7 @@ const AdminInvites = () => {
       </motion.div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Invite New Admin</DialogTitle>
           </DialogHeader>
@@ -281,7 +356,7 @@ const AdminInvites = () => {
               <label className="text-sm text-muted-foreground mb-2 block">Admin Type</label>
               <Select
                 value={formData.invite_type}
-                onValueChange={(v) => setFormData({ ...formData, invite_type: v })}
+                onValueChange={(v) => setFormData({ ...formData, invite_type: v, selected_campaigns: [] })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select admin type" />
@@ -293,6 +368,42 @@ const AdminInvites = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.invite_type === "normal_admin" && (
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Assign Campaigns *
+                </label>
+                <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-muted/30">
+                  {campaigns.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      No campaigns available
+                    </p>
+                  ) : (
+                    campaigns.map((campaign) => (
+                      <div
+                        key={campaign.id}
+                        className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer"
+                        onClick={() => toggleCampaign(campaign.id)}
+                      >
+                        <Checkbox
+                          checked={formData.selected_campaigns.includes(campaign.id)}
+                          onCheckedChange={() => toggleCampaign(campaign.id)}
+                        />
+                        <span className="text-sm">{campaign.name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {formData.selected_campaigns.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {formData.selected_campaigns.length} campaign(s) selected
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="p-4 bg-muted/50 rounded-lg text-sm">
               <p className="font-medium mb-1">Role Permissions:</p>
               <ul className="text-muted-foreground space-y-1">
@@ -307,7 +418,14 @@ const AdminInvites = () => {
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? "Sending..." : "Create Invite"}
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Invite"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

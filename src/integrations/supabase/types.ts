@@ -44,6 +44,38 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_campaign_assignments: {
+        Row: {
+          admin_user_id: string
+          assigned_at: string | null
+          assigned_by: string
+          campaign_id: string
+          id: string
+        }
+        Insert: {
+          admin_user_id: string
+          assigned_at?: string | null
+          assigned_by: string
+          campaign_id: string
+          id?: string
+        }
+        Update: {
+          admin_user_id?: string
+          assigned_at?: string | null
+          assigned_by?: string
+          campaign_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_campaign_assignments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_invites: {
         Row: {
           accepted_at: string | null
