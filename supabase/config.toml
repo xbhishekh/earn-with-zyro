@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.auth-send-code]
 verify_jwt = false
+
+[functions.notify-product-featured]
+verify_jwt = false
+
+[functions.notify-submission]
+verify_jwt = false
+
+[functions.send-admin-invite]
+verify_jwt = false

@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationsBell from "@/components/NotificationsBell";
 import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
+import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 
 interface DashboardStats {
   totalEarnings: number;

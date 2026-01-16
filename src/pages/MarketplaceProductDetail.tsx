@@ -3,12 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Star, Users, Tag, Check, ChevronDown, ChevronUp,
-  Share2, Heart, Loader2, ShoppingCart, Wallet, ExternalLink
+  Share2, Heart, Loader2, ShoppingCart, Wallet, ExternalLink, Ticket, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Navbar } from "@/components/landing/Navbar";
@@ -58,6 +59,14 @@ interface Seller {
   bio: string | null;
 }
 
+interface DiscountCode {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  min_purchase_amount: number;
+}
+
 const MarketplaceProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -73,6 +82,12 @@ const MarketplaceProductDetail = () => {
   const [userBalance, setUserBalance] = useState(0);
   const [avgRating, setAvgRating] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
+  
+  // Discount code state
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+  const [discountError, setDiscountError] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -166,10 +181,95 @@ const MarketplaceProductDetail = () => {
     setLoading(false);
   };
 
+  const applyDiscountCode = async () => {
+    if (!discountCode.trim() || !product) return;
+    
+    setApplyingDiscount(true);
+    setDiscountError("");
+    
+    try {
+      const now = new Date().toISOString();
+      
+      const { data: discount, error } = await supabase
+        .from("discount_codes")
+        .select("*")
+        .eq("code", discountCode.toUpperCase().trim())
+        .eq("is_active", true)
+        .or(`product_id.is.null,product_id.eq.${product.id}`)
+        .single();
+      
+      if (error || !discount) {
+        setDiscountError("Invalid discount code");
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      // Check if code is from this seller or applies to all
+      if (discount.product_id && discount.product_id !== product.id) {
+        setDiscountError("This code doesn't apply to this product");
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      // Check if code has expired
+      if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
+        setDiscountError("This code has expired");
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      // Check if code has started
+      if (discount.starts_at && new Date(discount.starts_at) > new Date()) {
+        setDiscountError("This code is not yet active");
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      // Check usage limit
+      if (discount.max_uses && discount.current_uses >= discount.max_uses) {
+        setDiscountError("This code has reached its usage limit");
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      // Check minimum purchase amount
+      if (discount.min_purchase_amount && product.price < discount.min_purchase_amount) {
+        setDiscountError(`Minimum purchase of ₹${discount.min_purchase_amount} required`);
+        setApplyingDiscount(false);
+        return;
+      }
+      
+      setAppliedDiscount(discount);
+      toast.success("Discount code applied!");
+    } catch (err) {
+      setDiscountError("Failed to apply discount code");
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
+
+  const getDiscountedPrice = () => {
+    if (!product || !appliedDiscount) return product?.price || 0;
+    
+    if (appliedDiscount.discount_type === "percentage") {
+      const discount = (product.price * appliedDiscount.discount_value) / 100;
+      return Math.max(0, product.price - discount);
+    } else {
+      return Math.max(0, product.price - appliedDiscount.discount_value);
+    }
+  };
+
+  const getDiscountAmount = () => {
+    if (!product || !appliedDiscount) return 0;
+    return product.price - getDiscountedPrice();
+  };
+
   const handlePurchase = async (paymentMethod: "balance" | "external") => {
     if (!user || !product) return;
 
-    if (paymentMethod === "balance" && userBalance < product.price) {
+    const finalPrice = getDiscountedPrice();
+
+    if (paymentMethod === "balance" && userBalance < finalPrice) {
       toast.error("Insufficient balance");
       return;
     }
@@ -184,7 +284,10 @@ const MarketplaceProductDetail = () => {
           product_id: product.id,
           buyer_id: user.id,
           seller_id: product.seller_id,
-          amount: product.price,
+          amount: finalPrice,
+          original_price: product.price,
+          discount_code_id: appliedDiscount?.id || null,
+          discount_amount: getDiscountAmount(),
           payment_method: paymentMethod,
           status: "completed"
         });
@@ -197,10 +300,10 @@ const MarketplaceProductDetail = () => {
           .from("balance_transactions")
           .insert({
             user_id: user.id,
-            amount: -product.price,
+            amount: -finalPrice,
             type: "product_purchase",
             status: "available",
-            notes: `Purchase: ${product.title}`
+            notes: `Purchase: ${product.title}${appliedDiscount ? ` (Discount: ${appliedDiscount.code})` : ""}`
           });
 
         if (transactionError) throw transactionError;
@@ -209,6 +312,8 @@ const MarketplaceProductDetail = () => {
       toast.success("Purchase successful!");
       setHasPurchased(true);
       setShowPurchaseModal(false);
+      setAppliedDiscount(null);
+      setDiscountCode("");
     } catch (error: any) {
       console.error("Purchase error:", error);
       toast.error(error.message || "Purchase failed");
@@ -550,8 +655,15 @@ const MarketplaceProductDetail = () => {
       <Footer />
 
       {/* Purchase Modal */}
-      <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
-        <DialogContent>
+      <Dialog open={showPurchaseModal} onOpenChange={(open) => {
+        setShowPurchaseModal(open);
+        if (!open) {
+          setAppliedDiscount(null);
+          setDiscountCode("");
+          setDiscountError("");
+        }
+      }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Complete Purchase</DialogTitle>
           </DialogHeader>
@@ -565,20 +677,106 @@ const MarketplaceProductDetail = () => {
                   className="w-16 h-12 object-cover rounded"
                 />
               )}
-              <div>
+              <div className="flex-1">
                 <p className="font-medium">{product.title}</p>
-                <p className="text-lg font-bold">
-                  {formatPrice(product.price, product.product_type, product.subscription_interval)}
-                </p>
+                {appliedDiscount ? (
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-bold text-green-600">
+                      ₹{getDiscountedPrice().toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground line-through">
+                      ₹{product.price.toLocaleString()}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-lg font-bold">
+                    {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                  </p>
+                )}
               </div>
             </div>
+
+            {/* Discount Code Input */}
+            <div className="mb-4 p-4 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Ticket className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Have a discount code?</span>
+              </div>
+              
+              {appliedDiscount ? (
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-green-700 dark:text-green-400">
+                      {appliedDiscount.code}
+                    </span>
+                    <Badge variant="secondary" className="text-green-600">
+                      {appliedDiscount.discount_type === "percentage" 
+                        ? `-${appliedDiscount.discount_value}%`
+                        : `-₹${appliedDiscount.discount_value}`}
+                    </Badge>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      setAppliedDiscount(null);
+                      setDiscountCode("");
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={discountCode}
+                    onChange={(e) => {
+                      setDiscountCode(e.target.value.toUpperCase());
+                      setDiscountError("");
+                    }}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={applyDiscountCode}
+                    disabled={!discountCode.trim() || applyingDiscount}
+                    variant="secondary"
+                  >
+                    {applyingDiscount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                  </Button>
+                </div>
+              )}
+              
+              {discountError && (
+                <p className="text-sm text-destructive mt-2">{discountError}</p>
+              )}
+            </div>
+
+            {/* Price Summary */}
+            {appliedDiscount && (
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Original Price</span>
+                  <span>₹{product.price.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>Discount ({appliedDiscount.code})</span>
+                  <span>-₹{getDiscountAmount().toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold pt-1 border-t">
+                  <span>Total</span>
+                  <span>₹{getDiscountedPrice().toLocaleString()}</span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               <Button
                 variant="outline"
                 className="w-full h-14 justify-start gap-4"
                 onClick={() => handlePurchase("balance")}
-                disabled={purchasing || userBalance < product.price}
+                disabled={purchasing || userBalance < getDiscountedPrice()}
               >
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Wallet className="w-5 h-5 text-primary" />
@@ -589,7 +787,7 @@ const MarketplaceProductDetail = () => {
                     Available: ₹{userBalance.toLocaleString()}
                   </p>
                 </div>
-                {userBalance < product.price && (
+                {userBalance < getDiscountedPrice() && (
                   <Badge variant="destructive">Insufficient</Badge>
                 )}
               </Button>

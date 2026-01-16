@@ -105,6 +105,9 @@ const AdminMarketplace = () => {
 
   const toggleFeatured = async (productId: string, currentValue: boolean) => {
     setUpdating(productId);
+    
+    const product = products.find(p => p.id === productId);
+    
     const { error } = await supabase
       .from("marketplace_products")
       .update({ is_featured: !currentValue })
@@ -117,6 +120,30 @@ const AdminMarketplace = () => {
       setProducts(prev => prev.map(p => 
         p.id === productId ? { ...p, is_featured: !currentValue } : p
       ));
+      
+      // Send email notification when product is marked as featured
+      if (!currentValue && product) {
+        try {
+          // Get seller_id from the product
+          const { data: productData } = await supabase
+            .from("marketplace_products")
+            .select("seller_id")
+            .eq("id", productId)
+            .single();
+          
+          if (productData?.seller_id) {
+            await supabase.functions.invoke("notify-product-featured", {
+              body: {
+                productId,
+                productTitle: product.title,
+                sellerId: productData.seller_id
+              }
+            });
+          }
+        } catch (notifyError) {
+          console.error("Failed to send featured notification:", notifyError);
+        }
+      }
     }
     setUpdating(null);
   };
