@@ -383,28 +383,38 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Back */}
-        <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
+      <main className="container mx-auto px-4 py-6 max-w-6xl pb-24">
+        {/* Back & Title - Centered like Whop */}
+        <div className="text-center mb-6">
+          <button onClick={() => navigate("/campaigns")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+          <h1 className="font-display text-xl md:text-2xl font-bold">
+            {campaign.name}
+          </h1>
+        </div>
 
-        {/* Campaign Title */}
-        <h1 className="font-display text-xl md:text-2xl font-bold mb-6">
-          {campaign.name} - ₹{campaign.reward_per_1k_views} per 1,000 views
-        </h1>
+        {/* Large Centered Thumbnail - Whop Style */}
+        {campaign.thumbnail_url && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-2xl mx-auto mb-8"
+          >
+            <div className="rounded-2xl overflow-hidden shadow-2xl">
+              <img 
+                src={campaign.thumbnail_url} 
+                alt={campaign.name} 
+                className="w-full aspect-[4/3] object-cover"
+              />
+            </div>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Campaign Thumbnail */}
-            {campaign.thumbnail_url && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl overflow-hidden">
-                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full aspect-video object-cover" />
-              </motion.div>
-            )}
-
             {/* Info Banner */}
             <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3">
               <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
@@ -453,54 +463,16 @@ const CampaignDetail = () => {
 
             {/* Platforms */}
             {campaign.platforms && campaign.platforms.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-xs text-muted-foreground uppercase">Platforms:</span>
                 <div className="flex gap-2">
                   {campaign.platforms.map((p) => (
-                    <span key={p} className="text-lg" title={p}>{getPlatformIcon(p)}</span>
+                    <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Campaign Info & Action */}
-            <div className="glass-card rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-display font-bold">{campaign.name}</h2>
-                <p className="text-sm text-muted-foreground">₹{campaign.reward_per_1k_views} / 1K</p>
-              </div>
-              
-              {/* Banned State */}
-              {isBanned ? (
-                <div className="flex items-center gap-2 text-destructive">
-                  <Ban className="w-5 h-5" />
-                  <div className="text-right">
-                    <p className="font-medium text-sm">You are banned</p>
-                    {banReason && <p className="text-xs text-muted-foreground">{banReason}</p>}
-                  </div>
-                </div>
-              ) : !canSubmit ? (
-                waitlistStatus === "pending" ? (
-                  <div className="flex items-center gap-2 text-warning">
-                    <Clock className="w-5 h-5" />
-                    <span className="text-sm font-medium">Application Pending</span>
-                  </div>
-                ) : waitlistStatus === "rejected" ? (
-                  <div className="flex items-center gap-2 text-destructive">
-                    <XCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">Application Rejected</span>
-                  </div>
-                ) : (
-                  <Button onClick={handleJoin} disabled={joining} className="bg-primary hover:bg-primary/90">
-                    {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : campaign.join_type === "waitlist" ? "Apply to Join" : "Join for free"}
-                  </Button>
-                )
-              ) : (
-                <Button onClick={() => setShowSubmitModal(true)} className="bg-primary hover:bg-primary/90">
-                  Submit
-                </Button>
-              )}
-            </div>
 
             {/* Tabs - Rewards / My Submissions */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -594,6 +566,48 @@ const CampaignDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Sticky Bottom Bar - Whop Style */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border">
+        <div className="container mx-auto px-4 py-3 max-w-6xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-display font-bold">{campaign.name}</h3>
+              <p className="text-sm text-muted-foreground">₹{campaign.reward_per_1k_views} / 1K</p>
+            </div>
+            
+            {isBanned ? (
+              <div className="flex items-center gap-2 text-destructive">
+                <Ban className="w-5 h-5" />
+                <div className="text-right">
+                  <p className="font-medium text-sm">You are banned</p>
+                  {banReason && <p className="text-xs text-muted-foreground">{banReason}</p>}
+                </div>
+              </div>
+            ) : !canSubmit ? (
+              waitlistStatus === "pending" ? (
+                <div className="flex items-center gap-2 text-warning">
+                  <Clock className="w-5 h-5" />
+                  <span className="text-sm font-medium">Application Pending</span>
+                </div>
+              ) : waitlistStatus === "rejected" ? (
+                <div className="flex items-center gap-2 text-destructive">
+                  <XCircle className="w-5 h-5" />
+                  <span className="text-sm font-medium">Application Rejected</span>
+                </div>
+              ) : (
+                <Button onClick={handleJoin} disabled={joining} size="lg" className="bg-primary hover:bg-primary/90 px-8">
+                  {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : campaign.join_type === "waitlist" ? "Apply to Join" : "Join for free"}
+                </Button>
+              )
+            ) : (
+              <Button onClick={() => setShowSubmitModal(true)} size="lg" className="bg-primary hover:bg-primary/90 px-8">
+                Submit
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Submit Modal - Whop Style */}
       <Dialog open={showSubmitModal} onOpenChange={setShowSubmitModal}>
