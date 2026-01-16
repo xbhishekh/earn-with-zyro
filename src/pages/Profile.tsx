@@ -13,7 +13,11 @@ import {
   CreditCard,
   Shield,
   Loader2,
-  Share2
+  Share2,
+  HelpCircle,
+  MessageCircle,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
 import { MainLayout } from "@/components/layout/MainLayout";
+import SupportChatWidget from "@/components/SupportChatWidget";
 
 interface ProfileData {
   id: string;
@@ -53,6 +58,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showSupportChat, setShowSupportChat] = useState(false);
   
   // Form states
   const [displayName, setDisplayName] = useState("");
@@ -243,7 +249,7 @@ const Profile = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-2xl p-6 mb-6"
+          className="bg-card border border-border rounded-2xl p-6 mb-6"
         >
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -287,28 +293,32 @@ const Profile = () => {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
-                Profile
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
               <TabsTrigger value="social" className="gap-2">
                 <Share2 className="w-4 h-4" />
-                Social
+                <span className="hidden sm:inline">Social</span>
               </TabsTrigger>
               <TabsTrigger value="payment" className="gap-2">
                 <CreditCard className="w-4 h-4" />
-                Payment
+                <span className="hidden sm:inline">Payment</span>
               </TabsTrigger>
               <TabsTrigger value="privacy" className="gap-2">
                 <Shield className="w-4 h-4" />
-                Privacy
+                <span className="hidden sm:inline">Privacy</span>
+              </TabsTrigger>
+              <TabsTrigger value="support" className="gap-2">
+                <HelpCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Help</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-6">
-              <div className="glass-card rounded-2xl p-6 space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="displayName" className="flex items-center gap-2">
@@ -381,7 +391,7 @@ const Profile = () => {
 
             {/* Payment Tab */}
             <TabsContent value="payment" className="space-y-6">
-              <div className="glass-card rounded-2xl p-6 space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div>
                   <h3 className="font-display text-lg font-semibold mb-1">UPI Payment</h3>
                   <p className="text-sm text-muted-foreground mb-4">Add your UPI ID for instant withdrawals</p>
@@ -444,7 +454,7 @@ const Profile = () => {
 
             {/* Privacy Tab */}
             <TabsContent value="privacy" className="space-y-6">
-              <div className="glass-card rounded-2xl p-6 space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label className="flex items-center gap-2 text-base">
@@ -471,9 +481,67 @@ const Profile = () => {
                 </Button>
               </div>
             </TabsContent>
+
+            {/* Support Tab */}
+            <TabsContent value="support" className="space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-1">Help & Support</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Get help with your account, campaigns, or payments
+                  </p>
+                </div>
+
+                {/* Live Chat Button */}
+                <button
+                  onClick={() => setShowSupportChat(true)}
+                  className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 rounded-xl border border-primary/20 transition-all group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 gradient-bg rounded-xl flex items-center justify-center">
+                      <MessageCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-semibold">Live Chat Support</h4>
+                      <p className="text-sm text-muted-foreground">Chat with our team in real-time</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </button>
+
+                {/* Help Center Link */}
+                <Link
+                  to="/support"
+                  className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-xl border border-border transition-all group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                      <HelpCircle className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-semibold">Help Center</h4>
+                      <p className="text-sm text-muted-foreground">Browse FAQs and guides</p>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </Link>
+
+                {/* Contact Info */}
+                <div className="pt-4 border-t border-border">
+                  <h4 className="font-medium mb-3">Other ways to reach us</h4>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>📧 Email: support@zyrozo.com</p>
+                    <p>💬 Response time: Usually within 24 hours</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </motion.div>
       </div>
+
+      {/* Support Chat Widget - Only shown when triggered from this page */}
+      {showSupportChat && <SupportChatWidget forceOpen onClose={() => setShowSupportChat(false)} />}
     </MainLayout>
   );
 };
