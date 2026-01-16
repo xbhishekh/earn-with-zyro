@@ -12,6 +12,10 @@ import {
   Upload,
   X,
   ImageIcon,
+  FileText,
+  Link,
+  Bold,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +54,8 @@ interface Campaign {
   platforms: string[] | null;
   join_type: string | null;
   thumbnail_url: string | null;
+  rules_guidelines: string | null;
+  rules_link: string | null;
   created_at: string;
 }
 
@@ -93,6 +99,7 @@ const AdminCampaigns = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showRulesPreview, setShowRulesPreview] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -199,8 +206,8 @@ const AdminCampaigns = () => {
       platforms: campaign.platforms || [],
       join_type: campaign.join_type || "direct",
       thumbnail_url: campaign.thumbnail_url || "",
-      rules_guidelines: "",
-      rules_link: "",
+      rules_guidelines: campaign.rules_guidelines || "",
+      rules_link: campaign.rules_link || "",
     });
     setIsModalOpen(true);
   };
@@ -606,6 +613,150 @@ const AdminCampaigns = () => {
                 onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
                 className="mt-1"
               />
+            </div>
+            
+            {/* Rules & Guidelines */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Rules & Guidelines
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={!showRulesPreview ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowRulesPreview(false)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={showRulesPreview ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowRulesPreview(true)}
+                  >
+                    Preview
+                  </Button>
+                </div>
+              </div>
+              
+              {!showRulesPreview ? (
+                <div className="space-y-3">
+                  {/* Formatting toolbar */}
+                  <div className="flex gap-1 p-2 bg-muted rounded-lg">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => {
+                        const textarea = document.getElementById('rules-textarea') as HTMLTextAreaElement;
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = formData.rules_guidelines;
+                          const newText = text.substring(0, start) + '**' + text.substring(start, end) + '**' + text.substring(end);
+                          setFormData({ ...formData, rules_guidelines: newText });
+                        }
+                      }}
+                    >
+                      <Bold className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          rules_guidelines: formData.rules_guidelines + '\n- ' 
+                        });
+                      }}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          rules_guidelines: formData.rules_guidelines + '\n## ' 
+                        });
+                      }}
+                    >
+                      H2
+                    </Button>
+                  </div>
+                  <Textarea
+                    id="rules-textarea"
+                    placeholder="Enter campaign rules and guidelines...
+
+Example:
+## Content Requirements
+- Videos must be at least 60 seconds long
+- Must mention the brand name
+- Include the product in frame
+
+## Prohibited Content
+- No competitor mentions
+- No explicit content"
+                    value={formData.rules_guidelines}
+                    onChange={(e) => setFormData({ ...formData, rules_guidelines: e.target.value })}
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Supports Markdown formatting: **bold**, ## headings, - bullet points
+                  </p>
+                </div>
+              ) : (
+                <div className="border rounded-lg p-4 min-h-[200px] bg-muted/30 prose prose-sm max-w-none dark:prose-invert">
+                  {formData.rules_guidelines ? (
+                    <div className="whitespace-pre-wrap">
+                      {formData.rules_guidelines.split('\n').map((line, index) => {
+                        if (line.startsWith('## ')) {
+                          return <h2 key={index} className="text-lg font-bold mt-4 mb-2">{line.replace('## ', '')}</h2>;
+                        }
+                        if (line.startsWith('- ')) {
+                          return <li key={index} className="ml-4">{line.replace('- ', '')}</li>;
+                        }
+                        if (line.includes('**')) {
+                          const parts = line.split(/\*\*(.*?)\*\*/g);
+                          return (
+                            <p key={index}>
+                              {parts.map((part, i) => 
+                                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                              )}
+                            </p>
+                          );
+                        }
+                        return line ? <p key={index}>{line}</p> : <br key={index} />;
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic">No rules/guidelines added yet</p>
+                  )}
+                </div>
+              )}
+              
+              {/* External rules link */}
+              <div className="mt-3">
+                <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
+                  <Link className="w-3 h-3" />
+                  External Rules Link (optional)
+                </label>
+                <Input
+                  placeholder="https://notion.so/your-rules-page"
+                  value={formData.rules_link}
+                  onChange={(e) => setFormData({ ...formData, rules_link: e.target.value })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
