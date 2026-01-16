@@ -18,6 +18,12 @@ interface AuthContextType {
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => Promise<{ error: Error | null; otpType?: EmailOtpType }>;
   verifyOtp: (email: string, token: string, type?: EmailOtpType) => Promise<{ error: Error | null }>;
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    metadata?: { username?: string; displayName?: string; referredBy?: string },
+  ) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
@@ -131,6 +137,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
+  // Sign up with email + password
+  const signUpWithPassword = async (
+    email: string,
+    password: string,
+    metadata?: { username?: string; displayName?: string; referredBy?: string },
+  ) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: metadata
+          ? {
+              username: metadata.username,
+              displayName: metadata.displayName,
+              referredBy: metadata.referredBy,
+            }
+          : undefined,
+      },
+    });
+
+    return { error: error as Error | null };
+  };
+
+  // Sign in with email + password
+  const signInWithPassword = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
@@ -153,6 +193,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isOwner,
         sendOtp,
         verifyOtp,
+        signUpWithPassword,
+        signInWithPassword,
         signOut,
         refreshRole,
       }}
