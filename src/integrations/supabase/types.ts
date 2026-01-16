@@ -770,6 +770,78 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_products: {
+        Row: {
+          category: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          faqs: Json | null
+          features: string[] | null
+          gallery_images: string[] | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          members_count: number | null
+          price: number | null
+          product_type: string
+          seller_id: string
+          short_description: string | null
+          slug: string | null
+          subscription_interval: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          faqs?: Json | null
+          features?: string[] | null
+          gallery_images?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          members_count?: number | null
+          price?: number | null
+          product_type?: string
+          seller_id: string
+          short_description?: string | null
+          slug?: string | null
+          subscription_interval?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          faqs?: Json | null
+          features?: string[] | null
+          gallery_images?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          members_count?: number | null
+          price?: number | null
+          product_type?: string
+          seller_id?: string
+          short_description?: string | null
+          slug?: string | null
+          subscription_interval?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -840,6 +912,91 @@ export type Database = {
             columns: ["submission_id"]
             isOneToOne: false
             referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string | null
+          id: string
+          payment_method: string
+          product_id: string
+          seller_id: string
+          status: string | null
+          subscription_ends_at: string | null
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string | null
+          id?: string
+          payment_method: string
+          product_id: string
+          seller_id: string
+          status?: string | null
+          subscription_ends_at?: string | null
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string | null
+          id?: string
+          payment_method?: string
+          product_id?: string
+          seller_id?: string
+          status?: string | null
+          subscription_ends_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_verified_purchase: boolean | null
+          product_id: string
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          product_id: string
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          product_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
             referencedColumns: ["id"]
           },
         ]
