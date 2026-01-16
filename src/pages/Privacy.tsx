@@ -82,7 +82,7 @@ Zyrozo is not intended for users under 18. We do not knowingly collect data from
 
 ## 9. International Transfers
 
-Your data may be transferred to and processed in countries outside India. We ensure appropriate safeguards are in place.
+Your data may be transferred to and processed in different countries. We ensure appropriate safeguards are in place in accordance with applicable data protection laws.
 
 ## 10. Changes to This Policy
 
@@ -92,13 +92,13 @@ We may update this Privacy Policy periodically. We will notify you of significan
 
 For privacy-related questions or requests:
 - Email: privacy@zyrozo.com
-- Address: 123 Creator Hub, Mumbai, Maharashtra 400001
+- Address: 123 Creator Lane, Suite 100, San Francisco, CA 94105, USA
 
-## 12. Grievance Officer
+## 12. Data Protection Officer
 
-As per Information Technology Act, 2000:
-- Name: [Grievance Officer Name]
-- Email: grievance@zyrozo.com
+For data protection inquiries:
+- Name: Data Protection Team
+- Email: privacy@zyrozo.com
 `;
 
 const Privacy = () => {

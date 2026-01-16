@@ -287,10 +287,10 @@ const Contact = () => {
                       <div>
                         <p className="font-medium">Address</p>
                         <p className="text-sm text-muted-foreground">
-                          Zyrozo Technologies Pvt. Ltd.<br />
-                          123 Creator Lane, Tech Park<br />
-                          Bengaluru, Karnataka 560001<br />
-                          India
+                          Zyrozo Inc.<br />
+                          123 Creator Lane, Suite 100<br />
+                          San Francisco, CA 94105<br />
+                          USA
                         </p>
                       </div>
                     </div>
