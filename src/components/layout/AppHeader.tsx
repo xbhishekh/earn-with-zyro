@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Search, Zap, Shield, LogOut, Wallet, Home, Compass, 
+  Search, Shield, LogOut, Wallet, Home, Compass, 
   MessageCircle, TrendingUp, Users, Crown
 } from 'lucide-react';
+import logo from "@/assets/logo.jpeg";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -120,9 +121,11 @@ export const AppHeader = () => {
           <div className="flex items-center h-14 md:h-16 gap-2 md:gap-4">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 md:w-9 md:h-9 gradient-bg rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
-              </div>
+              <img 
+                src={logo} 
+                alt="Zyrozo" 
+                className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
+              />
               <span className="hidden sm:block font-display font-bold text-lg gradient-text">
                 Zyrozo
               </span>

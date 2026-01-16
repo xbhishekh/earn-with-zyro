@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Zap, Shield, Wallet, LogOut, User, LayoutDashboard } from "lucide-react";
+import { Menu, X, Shield, Wallet, LogOut, User, LayoutDashboard } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -76,10 +77,12 @@ export const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+              <img 
+                src={logo} 
+                alt="Zyrozo" 
+                className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform"
+              />
+              <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
             </div>
             <span className="font-display font-bold text-xl md:text-2xl gradient-text">
               Zyrozo

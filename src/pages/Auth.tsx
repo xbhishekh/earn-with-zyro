@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -602,9 +603,11 @@ const Auth = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src={logo} 
+              alt="Zyrozo" 
+              className="w-10 h-10 rounded-xl object-contain"
+            />
             <span className="font-display font-bold text-xl gradient-text">
               Zyrozo
             </span>
@@ -625,8 +628,8 @@ const Auth = () => {
         
         <div className="relative z-10 text-center text-white">
           <div>
-            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm">
-              <Zap className="w-12 h-12" />
+            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm p-3">
+              <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
             </div>
             <h2 className="font-display text-4xl font-bold mb-4">
               Start Earning Today
