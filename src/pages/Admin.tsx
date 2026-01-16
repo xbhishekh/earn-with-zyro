@@ -25,6 +25,7 @@ import {
   Banknote,
   Shield,
   ChevronRight,
+  Gauge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -53,6 +54,7 @@ import AdminCompanyPages from "@/components/admin/AdminCompanyPages";
 import AdminFAQs from "@/components/admin/AdminFAQs";
 import AdminEmailBroadcast from "@/components/admin/AdminEmailBroadcast";
 import AdminMarketplace from "@/components/admin/AdminMarketplace";
+import AdminPerformance from "@/components/admin/AdminPerformance";
 
 interface Tab {
   id: string;
@@ -65,6 +67,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3, component: AdminAnalytics },
+  { id: "performance", label: "Performance", icon: Gauge, component: AdminPerformance, requiresSuperAdmin: true },
   { id: "submissions", label: "Submissions", icon: Video, component: AdminSubmissions },
   { id: "campaigns", label: "Campaigns", icon: Video, component: AdminCampaigns },
   { id: "marketplace", label: "Marketplace", icon: DollarSign, component: AdminMarketplace },
