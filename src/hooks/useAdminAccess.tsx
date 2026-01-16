@@ -32,15 +32,17 @@ export const useAdminAccess = () => {
     }
 
     try {
-      // Normal admin: Get campaigns I created
-      const { data: myCampaigns, error: campaignsError } = await supabase
-        .from("campaigns")
-        .select("id")
-        .eq("created_by", user.id);
+      // Normal admin: Get campaigns I created OR am assigned to
+      const [createdRes, assignedRes] = await Promise.all([
+        supabase.from("campaigns").select("id").eq("created_by", user.id),
+        supabase.from("admin_campaign_assignments").select("campaign_id").eq("admin_user_id", user.id)
+      ]);
 
-      if (campaignsError) throw campaignsError;
-
-      const myCampaignIds = (myCampaigns || []).map(c => c.id);
+      if (createdRes.error) throw createdRes.error;
+      
+      const createdIds = (createdRes.data || []).map(c => c.id);
+      const assignedIds = (assignedRes.data || []).map(a => a.campaign_id);
+      const myCampaignIds = [...new Set([...createdIds, ...assignedIds])];
 
       if (myCampaignIds.length === 0) {
         setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: false, loading: false });
