@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Wallet, 
   Clock, 
   DollarSign, 
   ArrowUpRight,
-  LogOut,
-  User,
-  Zap,
   Send,
   Building2,
   Coins,
-  CheckCircle,
-  XCircle,
   Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 interface BalanceData {
   available: number;
@@ -164,12 +160,6 @@ const Balance = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -194,37 +184,8 @@ const Balance = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass-card border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 gradient-bg rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
-              <Link to="/campaigns" className="text-muted-foreground hover:text-foreground transition-colors">Campaigns</Link>
-              <Link to="/balance" className="text-foreground font-medium">Balance</Link>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/profile"><User className="w-4 h-4 mr-2" />Profile</Link>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Balance & Withdrawals</h1>
@@ -323,7 +284,7 @@ const Balance = () => {
             </div>
           )}
         </motion.div>
-      </main>
+      </div>
 
       {/* Withdrawal Modal */}
       <Dialog open={showWithdrawModal} onOpenChange={setShowWithdrawModal}>
@@ -401,7 +362,7 @@ const Balance = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </MainLayout>
   );
 };
 
