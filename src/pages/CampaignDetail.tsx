@@ -260,6 +260,82 @@ const CampaignDetail = () => {
     );
   }
 
+  // Block access entirely if user is banned from this campaign
+  if (isBanned) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="glass-card border-b border-border sticky top-0 z-50">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between h-14">
+              <Link to="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
+              </Link>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/dashboard"><User className="w-4 h-4" /></Link>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="container mx-auto px-4 py-8">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-lg mx-auto"
+          >
+            <div className="glass-card rounded-2xl p-8 text-center border-2 border-destructive/30">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Ban className="w-10 h-10 text-destructive" />
+              </div>
+              
+              <h1 className="font-display text-2xl font-bold text-destructive mb-2">
+                Access Denied
+              </h1>
+              
+              <p className="text-muted-foreground mb-6">
+                You have been banned from this campaign and cannot access its content.
+              </p>
+
+              {banReason && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+                  <p className="text-sm font-medium text-destructive mb-1">Reason:</p>
+                  <p className="text-sm text-foreground">{banReason}</p>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <Button asChild className="w-full">
+                  <Link to="/campaigns">Browse Other Campaigns</Link>
+                </Button>
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/dashboard">Go to Dashboard</Link>
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-6">
+                If you believe this is a mistake, please contact support.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   const budgetTotal = campaign.budget_total || 0;
   const budgetSpent = campaign.budget_spent || 0;
   const budgetPercent = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
