@@ -26,14 +26,14 @@ const steps = [
 
 export const HowItWorks = () => {
   return (
-    <section className="py-24 relative">
+    <section className="py-20 md:py-24 relative bg-muted/30">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12 md:mb-16"
         >
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             How <span className="gradient-text">Zyrozo</span> Works
@@ -44,7 +44,7 @@ export const HowItWorks = () => {
         </motion.div>
 
         {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
@@ -56,23 +56,23 @@ export const HowItWorks = () => {
             >
               {/* Connector Line */}
               {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary/50 to-secondary/50" />
+                <div className="hidden lg:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary/30 to-secondary/30" />
               )}
 
-              <div className="relative glass-card rounded-2xl p-8 h-full hover:bg-white/10 transition-all group-hover:-translate-y-2">
+              <div className="relative bg-card border border-border rounded-2xl p-6 md:p-8 h-full card-hover">
                 {/* Step Number */}
-                <div className="absolute -top-4 -left-4 w-8 h-8 gradient-bg rounded-full flex items-center justify-center font-display font-bold text-sm text-white">
+                <div className="absolute -top-3 -left-3 w-8 h-8 gradient-bg rounded-full flex items-center justify-center font-display font-bold text-sm text-white shadow-lg">
                   {index + 1}
                 </div>
 
                 {/* Icon */}
-                <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <step.icon className="w-8 h-8 text-white" />
+                <div className="w-14 h-14 gradient-bg rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <step.icon className="w-7 h-7 text-white" />
                 </div>
 
                 {/* Content */}
-                <h3 className="font-display text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-muted-foreground">{step.description}</p>
+                <h3 className="font-display text-lg font-bold mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
               </div>
             </motion.div>
           ))}

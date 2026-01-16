@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export const FinalCTA = () => {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-20 md:py-24 relative overflow-hidden bg-muted/30">
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -13,10 +13,10 @@ export const FinalCTA = () => {
           viewport={{ once: true }}
           className="relative max-w-4xl mx-auto"
         >
-          {/* Gradient Background Card */}
-          <div className="absolute inset-0 gradient-bg rounded-3xl opacity-20 blur-xl" />
+          {/* Gradient Background */}
+          <div className="absolute inset-0 gradient-bg rounded-3xl opacity-10 blur-xl" />
           
-          <div className="relative glass-card rounded-3xl p-8 md:p-12 lg:p-16 text-center">
+          <div className="relative bg-card border border-border rounded-3xl p-8 md:p-12 lg:p-16 text-center shadow-xl">
             {/* Icon */}
             <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Sparkles className="w-8 h-8 text-white" />
