@@ -1,12 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, SmilePlus } from 'lucide-react';
+import { Send, Loader2, SmilePlus, AtSign } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/popover';
 
 interface Profile {
+  user_id?: string;
   username: string | null;
   avatar_url: string | null;
 }
@@ -39,6 +39,11 @@ interface Props {
   roomName: string;
 }
 
+interface TypingUser {
+  id: string;
+  username: string;
+}
+
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🔥', '👏', '🎉'];
 
 export const ChatRoom = ({ roomId, roomName }: Props) => {
@@ -47,12 +52,108 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [roomMembers, setRoomMembers] = useState<Profile[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Fetch room members for @mentions
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url')
+        .limit(100);
+      
+      if (data) {
+        setRoomMembers(data);
+      }
+    };
+    fetchMembers();
+  }, [roomId]);
+
+  // Filter members for mention autocomplete
+  const filteredMembers = useMemo(() => {
+    if (!mentionSearch) return roomMembers.filter(m => m.user_id !== user?.id).slice(0, 5);
+    return roomMembers
+      .filter(m => 
+        m.user_id !== user?.id && 
+        m.username?.toLowerCase().includes(mentionSearch.toLowerCase())
+      )
+      .slice(0, 5);
+  }, [roomMembers, mentionSearch, user?.id]);
+
+  // Setup presence channel for typing indicators
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel(`typing-${roomId}`, {
+      config: { presence: { key: user.id } }
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typing: TypingUser[] = [];
+        
+        Object.entries(state).forEach(([id, presences]) => {
+          const presence = presences[0] as { typing?: boolean; username?: string; presence_ref: string };
+          if (id !== user.id && presence?.typing) {
+            typing.push({
+              id,
+              username: presence.username || 'Someone'
+            });
+          }
+        });
+        
+        setTypingUsers(typing);
+      })
+      .subscribe();
+
+    presenceChannelRef.current = channel;
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roomId, user]);
+
+  // Broadcast typing status
+  const broadcastTyping = useCallback(async (isTyping: boolean) => {
+    if (!presenceChannelRef.current || !user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('user_id', user.id)
+      .single();
+
+    await presenceChannelRef.current.track({
+      typing: isTyping,
+      username: profile?.username || 'Someone'
+    });
+  }, [user]);
+
+  const handleTyping = useCallback(() => {
+    broadcastTyping(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      broadcastTyping(false);
+    }, 2000);
+  }, [broadcastTyping]);
 
   useEffect(() => {
     fetchMessages();
 
-    // Subscribe to realtime messages
     const channel = supabase
       .channel(`room-${roomId}`)
       .on(
@@ -76,7 +177,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       )
       .subscribe();
 
-    // Subscribe to reactions
     const reactionsChannel = supabase
       .channel(`reactions-${roomId}`)
       .on(
@@ -143,11 +243,67 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const position = e.target.selectionStart || 0;
+    setNewMessage(value);
+    setCursorPosition(position);
+    handleTyping();
+
+    // Check for @ mention trigger
+    const textBeforeCursor = value.substring(0, position);
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+    
+    if (atMatch) {
+      setShowMentions(true);
+      setMentionSearch(atMatch[1]);
+      setMentionIndex(0);
+    } else {
+      setShowMentions(false);
+      setMentionSearch('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentions && filteredMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev + 1) % filteredMembers.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev - 1 + filteredMembers.length) % filteredMembers.length);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredMembers[mentionIndex]);
+      } else if (e.key === 'Escape') {
+        setShowMentions(false);
+      }
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const insertMention = (member: Profile) => {
+    const textBeforeCursor = newMessage.substring(0, cursorPosition);
+    const textAfterCursor = newMessage.substring(cursorPosition);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+    
+    const newText = textBeforeCursor.substring(0, atIndex) + 
+                    `@${member.username} ` + 
+                    textAfterCursor;
+    
+    setNewMessage(newText);
+    setShowMentions(false);
+    inputRef.current?.focus();
+  };
+
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
     setSending(true);
+    broadcastTyping(false);
+    
     const { error } = await supabase.from('chat_messages').insert({
       room_id: roomId,
       user_id: user.id,
@@ -206,6 +362,41 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     return counts;
   };
 
+  // Render message content with highlighted @mentions
+  const renderMessageContent = (content: string) => {
+    const mentionRegex = /@(\w+)/g;
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+      
+      const username = match[1];
+      const mentionedUser = roomMembers.find(m => m.username?.toLowerCase() === username.toLowerCase());
+      
+      parts.push(
+        <Link
+          key={match.index}
+          to={`/profile/${username}`}
+          className="text-primary font-medium hover:underline bg-primary/10 px-1 rounded"
+        >
+          @{username}
+        </Link>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : content;
+  };
+
   const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -235,7 +426,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Messages Area - Whop Style */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
@@ -253,7 +444,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
           <div className="px-4 py-2">
             {groupedMessages.map((group, groupIndex) => (
               <div key={groupIndex}>
-                {/* Date Divider - Whop Style */}
+                {/* Date Divider */}
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-border" />
                   <span className="text-xs font-medium text-muted-foreground px-2">{group.date}</span>
@@ -263,7 +454,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                 {/* Messages */}
                 <div className="space-y-1">
                   {group.messages.map((msg, i) => {
-                    const isOwn = msg.user_id === user?.id;
                     const showHeader = i === 0 || group.messages[i - 1].user_id !== msg.user_id;
                     const reactionCounts = getReactionCounts(msg.reactions);
 
@@ -274,7 +464,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                         animate={{ opacity: 1, y: 0 }}
                         className="group hover:bg-muted/30 rounded-lg px-2 py-1 -mx-2 transition-colors"
                       >
-                        {/* Message with Avatar - Whop Style */}
                         <div className="flex gap-3">
                           {/* Avatar Column */}
                           {showHeader ? (
@@ -314,10 +503,10 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                             {/* Message Content */}
                             <div className="relative">
                               <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
-                                {msg.content}
+                                {renderMessageContent(msg.content)}
                               </p>
 
-                              {/* Reaction Button - Shows on Hover */}
+                              {/* Reaction Button */}
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <button 
@@ -381,27 +570,97 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
         )}
       </div>
 
-      {/* Input Area - Whop Style */}
-      <div className="border-t border-border p-3 bg-background">
-        <form onSubmit={sendMessage} className="flex gap-2">
+      {/* Typing Indicator */}
+      <AnimatePresence>
+        {typingUsers.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-4 py-2 border-t border-border bg-muted/30"
+          >
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span>
+                {typingUsers.length === 1 
+                  ? `${typingUsers[0].username} is typing...`
+                  : typingUsers.length === 2
+                  ? `${typingUsers[0].username} and ${typingUsers[1].username} are typing...`
+                  : `${typingUsers.length} people are typing...`
+                }
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Input Area with Mentions */}
+      <div className="border-t border-border p-3 bg-background relative">
+        {/* Mentions Autocomplete */}
+        <AnimatePresence>
+          {showMentions && filteredMembers.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute bottom-full left-3 right-3 mb-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+            >
+              <div className="p-1">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1">
+                  <AtSign className="h-3 w-3" />
+                  Mention someone
+                </div>
+                {filteredMembers.map((member, index) => (
+                  <button
+                    key={member.user_id}
+                    onClick={() => insertMention(member)}
+                    className={`w-full flex items-center gap-2 px-2 py-2 rounded-md transition-colors ${
+                      index === mentionIndex ? 'bg-muted' : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-medium overflow-hidden">
+                      {member.avatar_url ? (
+                        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        member.username?.[0]?.toUpperCase() || '?'
+                      )}
+                    </div>
+                    <span className="font-medium text-sm">{member.username}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="flex gap-2">
           <div className="flex-1 relative">
-            <Input
-              placeholder="Send a message..."
+            <textarea
+              ref={inputRef}
+              placeholder="Send a message... Use @ to mention"
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               disabled={sending}
-              className="bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary pr-12 rounded-xl"
+              rows={1}
+              className="w-full resize-none bg-muted/50 border-0 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground disabled:opacity-50"
+              style={{ minHeight: '44px', maxHeight: '120px' }}
             />
           </div>
           <Button 
-            type="submit" 
+            type="button"
+            onClick={handleSendMessage}
             size="icon" 
             disabled={sending || !newMessage.trim()}
-            className="rounded-xl h-10 w-10 shrink-0"
+            className="rounded-xl h-11 w-11 shrink-0"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
-        </form>
+        </div>
       </div>
     </div>
   );
