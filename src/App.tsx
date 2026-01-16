@@ -22,6 +22,8 @@ const Suspended = lazy(() => import("./pages/Suspended"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Contact = lazy(() => import("./pages/Contact"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -77,6 +79,8 @@ const App = () => (
                 <Route path="/affiliate" element={<Affiliate />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/marketplace" element={<Marketplace />} />
