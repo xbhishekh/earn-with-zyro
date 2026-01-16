@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
 </html>`;
 
     const { error: sendError } = await resend.emails.send({
-      from: "Zyrozo <onboarding@resend.dev>",
+      from: "Zyrozo <noreply@zyrozo.com>",
       to: [email],
       subject,
       html,
