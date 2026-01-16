@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
 type AuthMethod = "password" | "otp";
+type AuthStep = "email" | "otp" | "forgot-password" | "reset-password";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -28,32 +29,44 @@ const Auth = () => {
     verifyOtp,
     signUpWithPassword,
     signInWithPassword,
+    resetPassword,
+    updatePassword,
   } = useAuth();
 
-  const [isSignup, setIsSignup] = useState(searchParams.get("mode") === "signup");
+  const mode = searchParams.get("mode");
+  const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<"email" | "otp">("email");
+  const [step, setStep] = useState<AuthStep>(mode === "reset-password" ? "reset-password" : "email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
   const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
 
-  // Redirect if already logged in
+  // Handle reset password mode from URL
   useEffect(() => {
-    if (!authLoading && user) {
+    if (mode === "reset-password") {
+      setStep("reset-password");
+    }
+  }, [mode]);
+
+  // Redirect if already logged in (but not if resetting password)
+  useEffect(() => {
+    if (!authLoading && user && step !== "reset-password") {
       if (isOwner || isAdmin) {
         navigate("/admin", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }
     }
-  }, [user, authLoading, isAdmin, isOwner, navigate]);
+  }, [user, authLoading, isAdmin, isOwner, navigate, step]);
 
   const handlePasswordAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +114,71 @@ const Auth = () => {
         } else {
           toast.success("Logged in successfully!");
         }
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(email);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await resetPassword(email);
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password reset link sent! Check your email.");
+        setStep("email");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      passwordSchema.parse(password);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await updatePassword(password);
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password updated successfully!");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
@@ -185,6 +263,459 @@ const Auth = () => {
     );
   }
 
+  const renderForgotPasswordForm = () => (
+    <>
+      <h1 className="font-display text-3xl font-bold mb-2">
+        Forgot Password?
+      </h1>
+      <p className="text-muted-foreground mb-6">
+        Enter your email and we'll send you a reset link
+      </p>
+
+      <form onSubmit={handleForgotPassword} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email-reset">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="email-reset"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-12 bg-card border-border"
+              required
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              Send Reset Link
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
+        </Button>
+      </form>
+
+      <button
+        onClick={() => setStep("email")}
+        className="text-muted-foreground hover:text-foreground text-sm mt-6 block"
+      >
+        ← Back to login
+      </button>
+    </>
+  );
+
+  const renderResetPasswordForm = () => (
+    <>
+      <h1 className="font-display text-3xl font-bold mb-2">
+        Set New Password
+      </h1>
+      <p className="text-muted-foreground mb-6">
+        Enter your new password below
+      </p>
+
+      <form onSubmit={handleResetPassword} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="new-password">New Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="new-password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 pr-10 h-12 bg-card border-border"
+              required
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password">Confirm Password</Label>
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="pl-10 pr-10 h-12 bg-card border-border"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              Update Password
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
+        </Button>
+      </form>
+    </>
+  );
+
+  const renderOtpForm = () => (
+    <>
+      <h1 className="font-display text-3xl font-bold mb-2">
+        Check your email
+      </h1>
+      <p className="text-muted-foreground mb-8">
+        We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>
+      </p>
+
+      <div className="space-y-6">
+        <div className="flex justify-center">
+          <InputOTP
+            maxLength={6}
+            value={otp}
+            onChange={(value) => {
+              setOtp(value);
+              if (value.length === 6) {
+                handleVerifyOtp(value);
+              }
+            }}
+            disabled={isLoading}
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+
+        {isLoading && (
+          <div className="flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        )}
+
+        <div className="text-center space-y-4">
+          <button
+            onClick={() => {
+              setStep("email");
+              setOtp("");
+            }}
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            ← Back to email
+          </button>
+          
+          <div>
+            <button
+              onClick={async () => {
+                setIsLoading(true);
+                const metadata = isSignup
+                  ? {
+                      username: username || email.split("@")[0],
+                      displayName: displayName || username || email.split("@")[0],
+                    }
+                  : undefined;
+                const { error } = await sendOtp(email, metadata);
+                if (error) {
+                  toast.error("Failed to resend code. Please try again.");
+                } else {
+                  toast.success("New code sent!");
+                }
+                setIsLoading(false);
+              }}
+              disabled={isLoading}
+              className="text-primary hover:underline text-sm font-medium"
+            >
+              Resend code
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderEmailForm = () => (
+    <>
+      <h1 className="font-display text-3xl font-bold mb-2">
+        {isSignup ? "Create Account" : "Welcome Back"}
+      </h1>
+      <p className="text-muted-foreground mb-6">
+        {isSignup 
+          ? "Join thousands of creators earning on Zyrozo" 
+          : "Sign in to your account"
+        }
+      </p>
+
+      {/* Auth Method Toggle */}
+      <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg">
+        <button
+          type="button"
+          onClick={() => setAuthMethod("password")}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+            authMethod === "password"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Password
+        </button>
+        <button
+          type="button"
+          onClick={() => setAuthMethod("otp")}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+            authMethod === "otp"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Email Code
+        </button>
+      </div>
+
+      {/* Password Auth Form */}
+      {authMethod === "password" ? (
+        <form onSubmit={handlePasswordAuth} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10 h-12 bg-card border-border"
+                required
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              {!isSignup && (
+                <button
+                  type="button"
+                  onClick={() => setStep("forgot-password")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10 h-12 bg-card border-border"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          {isSignup && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="yourname"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    className="pl-10 h-12 bg-card border-border"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Display Name (optional)</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="Your Name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="pl-10 h-12 bg-card border-border"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <Button
+            type="submit"
+            variant="hero"
+            size="lg"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                {isSignup ? "Create Account" : "Log In"}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </form>
+      ) : (
+        /* OTP Auth Form */
+        <form onSubmit={handleSendOtp} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email-otp">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="email-otp"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10 h-12 bg-card border-border"
+                required
+                autoFocus
+              />
+            </div>
+          </div>
+
+          {isSignup && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="username-otp">Username</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="username-otp"
+                    type="text"
+                    placeholder="yourname"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    className="pl-10 h-12 bg-card border-border"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="displayName-otp">Display Name (optional)</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="displayName-otp"
+                    type="text"
+                    placeholder="Your Name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="pl-10 h-12 bg-card border-border"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <Button
+            type="submit"
+            variant="hero"
+            size="lg"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                Send Code
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </form>
+      )}
+
+      {/* Toggle Mode */}
+      <p className="text-center text-muted-foreground mt-8">
+        {isSignup ? (
+          <>
+            Already have an account?{" "}
+            <button
+              onClick={() => setIsSignup(false)}
+              className="text-primary hover:underline font-semibold"
+            >
+              Log in
+            </button>
+          </>
+        ) : (
+          <>
+            Don't have an account?{" "}
+            <button
+              onClick={() => setIsSignup(true)}
+              className="text-primary hover:underline font-semibold"
+            >
+              Sign up
+            </button>
+          </>
+        )}
+      </p>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Side - Form */}
@@ -200,316 +731,10 @@ const Auth = () => {
             </span>
           </Link>
 
-          {step === "email" ? (
-            <>
-              {/* Header */}
-              <h1 className="font-display text-3xl font-bold mb-2">
-                {isSignup ? "Create Account" : "Welcome Back"}
-              </h1>
-              <p className="text-muted-foreground mb-6">
-                {isSignup 
-                  ? "Join thousands of creators earning on Zyrozo" 
-                  : "Sign in to your account"
-                }
-              </p>
-
-              {/* Auth Method Toggle */}
-              <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setAuthMethod("password")}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                    authMethod === "password"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Password
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthMethod("otp")}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                    authMethod === "otp"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Email Code
-                </button>
-              </div>
-
-              {/* Password Auth Form */}
-              {authMethod === "password" ? (
-                <form onSubmit={handlePasswordAuth} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 bg-card border-border"
-                        required
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12 bg-card border-border"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {isSignup && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                          <Input
-                            id="username"
-                            type="text"
-                            placeholder="yourname"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                            className="pl-10 h-12 bg-card border-border"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="displayName">Display Name (optional)</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                          <Input
-                            id="displayName"
-                            type="text"
-                            placeholder="Your Name"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            className="pl-10 h-12 bg-card border-border"
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        {isSignup ? "Create Account" : "Log In"}
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              ) : (
-                /* OTP Auth Form */
-                <form onSubmit={handleSendOtp} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-otp">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="email-otp"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 bg-card border-border"
-                        required
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  {isSignup && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="username-otp">Username</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                          <Input
-                            id="username-otp"
-                            type="text"
-                            placeholder="yourname"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                            className="pl-10 h-12 bg-card border-border"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="displayName-otp">Display Name (optional)</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                          <Input
-                            id="displayName-otp"
-                            type="text"
-                            placeholder="Your Name"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            className="pl-10 h-12 bg-card border-border"
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Send Code
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              )}
-
-              {/* Toggle Mode */}
-              <p className="text-center text-muted-foreground mt-8">
-                {isSignup ? (
-                  <>
-                    Already have an account?{" "}
-                    <button
-                      onClick={() => setIsSignup(false)}
-                      className="text-primary hover:underline font-semibold"
-                    >
-                      Log in
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Don't have an account?{" "}
-                    <button
-                      onClick={() => setIsSignup(true)}
-                      className="text-primary hover:underline font-semibold"
-                    >
-                      Sign up
-                    </button>
-                  </>
-                )}
-              </p>
-            </>
-          ) : (
-            <>
-              {/* OTP Verification */}
-              <h1 className="font-display text-3xl font-bold mb-2">
-                Check your email
-              </h1>
-              <p className="text-muted-foreground mb-8">
-                We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>
-              </p>
-
-              <div className="space-y-6">
-                <div className="flex justify-center">
-                  <InputOTP
-                    maxLength={6}
-                    value={otp}
-                    onChange={(value) => {
-                      setOtp(value);
-                      if (value.length === 6) {
-                        handleVerifyOtp(value);
-                      }
-                    }}
-                    disabled={isLoading}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-
-                {isLoading && (
-                  <div className="flex justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                )}
-
-                <div className="text-center space-y-4">
-                  <button
-                    onClick={() => {
-                      setStep("email");
-                      setOtp("");
-                    }}
-                    className="text-muted-foreground hover:text-foreground text-sm"
-                  >
-                    ← Back to email
-                  </button>
-                  
-                  <div>
-                    <button
-                      onClick={async () => {
-                        setIsLoading(true);
-                        const metadata = isSignup
-                          ? {
-                              username: username || email.split("@")[0],
-                              displayName: displayName || username || email.split("@")[0],
-                            }
-                          : undefined;
-                        const { error } = await sendOtp(email, metadata);
-                        if (error) {
-                          toast.error("Failed to resend code. Please try again.");
-                        } else {
-                          toast.success("New code sent!");
-                        }
-                        setIsLoading(false);
-                      }}
-                      disabled={isLoading}
-                      className="text-primary hover:underline text-sm font-medium"
-                    >
-                      Resend code
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+          {step === "email" && renderEmailForm()}
+          {step === "otp" && renderOtpForm()}
+          {step === "forgot-password" && renderForgotPasswordForm()}
+          {step === "reset-password" && renderResetPasswordForm()}
         </div>
       </div>
 
