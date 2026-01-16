@@ -501,82 +501,8 @@ const CampaignDetail = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <div className="relative rounded-2xl overflow-hidden group">
-            {campaign.video_url ? (
-              <>
-                {showVideoPreview ? (
-                  <div className="relative">
-                    <video
-                      ref={videoRef}
-                      src={campaign.video_url}
-                      className="w-full aspect-video object-cover"
-                      muted={isMuted}
-                      loop
-                      playsInline
-                      autoPlay
-                      onPlay={() => setIsPlaying(true)}
-                      onPause={() => setIsPlaying(false)}
-                    />
-                    {/* Video Controls Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-white hover:bg-white/20"
-                            onClick={() => {
-                              if (videoRef.current) {
-                                if (isPlaying) {
-                                  videoRef.current.pause();
-                                } else {
-                                  videoRef.current.play();
-                                }
-                              }
-                            }}
-                          >
-                            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-white hover:bg-white/20"
-                            onClick={() => setIsMuted(!isMuted)}
-                          >
-                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div 
-                    className="relative cursor-pointer"
-                    onClick={() => setShowVideoPreview(true)}
-                  >
-                    {campaign.thumbnail_url ? (
-                      <img 
-                        src={campaign.thumbnail_url} 
-                        alt={campaign.name} 
-                        className="w-full aspect-video object-cover"
-                      />
-                    ) : (
-                      <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20" />
-                    )}
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                      <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 text-primary ml-1" />
-                      </div>
-                    </div>
-                    <Badge className="absolute top-3 left-3 bg-black/70 text-white border-0">
-                      <Video className="w-3 h-3 mr-1" />
-                      Video
-                    </Badge>
-                  </div>
-                )}
-              </>
-            ) : campaign.thumbnail_url ? (
+          <div className="relative rounded-2xl overflow-hidden">
+            {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name} 

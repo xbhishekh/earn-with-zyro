@@ -258,7 +258,7 @@ const Campaigns = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            navigate(`/campaigns/${campaign.id}`);
+            navigate(`/c/${campaign.slug || campaign.id}`);
           }}
         >
           <CheckCircle className="w-5 h-5 mr-2" />
@@ -362,7 +362,7 @@ const Campaigns = () => {
                   <div key={campaign.id}>
                     <div className="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
                       {/* Header with Creator & Badges */}
-                      <Link to={`/campaigns/${campaign.id}`} className="block">
+                      <Link to={`/c/${campaign.slug || campaign.id}`} className="block">
                         <div className="p-4 flex items-start justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-xl overflow-hidden">
