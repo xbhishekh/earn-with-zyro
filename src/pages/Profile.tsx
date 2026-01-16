@@ -41,6 +41,9 @@ interface ProfileData {
   avatar_url: string | null;
   location: string | null;
   show_total_earned: boolean;
+  show_location: boolean;
+  show_owned_products: boolean;
+  show_joined_products: boolean;
   payment_details: {
     upi_id?: string;
     bank_name?: string;
@@ -66,6 +69,9 @@ const Profile = () => {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [showTotalEarned, setShowTotalEarned] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
+  const [showOwnedProducts, setShowOwnedProducts] = useState(false);
+  const [showJoinedProducts, setShowJoinedProducts] = useState(false);
   
   // Payment details
   const [upiId, setUpiId] = useState("");
@@ -102,6 +108,9 @@ const Profile = () => {
         setBio(data.bio || "");
         setLocation(data.location || "");
         setShowTotalEarned(data.show_total_earned || false);
+        setShowLocation(data.show_location || false);
+        setShowOwnedProducts(data.show_owned_products || false);
+        setShowJoinedProducts(data.show_joined_products || false);
         
         const paymentDetails = data.payment_details as ProfileData['payment_details'];
         if (paymentDetails) {
@@ -183,6 +192,9 @@ const Profile = () => {
           bio: bio,
           location: location,
           show_total_earned: showTotalEarned,
+          show_location: showLocation,
+          show_owned_products: showOwnedProducts,
+          show_joined_products: showJoinedProducts,
         })
         .eq("user_id", user!.id);
 
@@ -455,23 +467,72 @@ const Profile = () => {
             {/* Privacy Tab */}
             <TabsContent value="privacy" className="space-y-6">
               <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label className="flex items-center gap-2 text-base">
-                      {showTotalEarned ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      Show Total Earnings
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Display your total earnings on your public profile
-                    </p>
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-1">More details</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Choose what appears on your profile and other discovery surfaces.
+                  </p>
+
+                  <div className="space-y-4">
+                    {/* Total Earned Toggle */}
+                    <div className="flex items-center justify-between py-3 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <CreditCard className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <span className="font-medium">Total earned</span>
+                      </div>
+                      <Switch
+                        checked={showTotalEarned}
+                        onCheckedChange={setShowTotalEarned}
+                      />
+                    </div>
+
+                    {/* Location Toggle */}
+                    <div className="flex items-center justify-between py-3 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <span className="font-medium">Location</span>
+                      </div>
+                      <Switch
+                        checked={showLocation}
+                        onCheckedChange={setShowLocation}
+                      />
+                    </div>
+
+                    {/* Owned Products Toggle */}
+                    <div className="flex items-center justify-between py-3 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <span className="font-medium">Owned products</span>
+                      </div>
+                      <Switch
+                        checked={showOwnedProducts}
+                        onCheckedChange={setShowOwnedProducts}
+                      />
+                    </div>
+
+                    {/* Joined Products Toggle */}
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <span className="font-medium">Joined products</span>
+                      </div>
+                      <Switch
+                        checked={showJoinedProducts}
+                        onCheckedChange={setShowJoinedProducts}
+                      />
+                    </div>
                   </div>
-                  <Switch
-                    checked={showTotalEarned}
-                    onCheckedChange={setShowTotalEarned}
-                  />
                 </div>
 
-                <Button onClick={handleSaveProfile} disabled={saving} className="w-full md:w-auto">
+                <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
                   {saving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
