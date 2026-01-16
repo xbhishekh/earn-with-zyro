@@ -21,6 +21,7 @@ import Privacy from "./pages/Privacy";
 import Marketplace from "./pages/Marketplace";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
+import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
