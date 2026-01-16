@@ -27,7 +27,10 @@ import {
   Trash2,
   Video,
   UserCog,
-  LogOut
+  LogOut,
+  Mail,
+  Key,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +52,26 @@ import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
 import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
 import AccountSwitcher from "@/components/profile/AccountSwitcher";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ProfileData {
   id: string;
@@ -111,6 +134,19 @@ const Profile = () => {
   const [showLocation, setShowLocation] = useState(false);
   const [showOwnedProducts, setShowOwnedProducts] = useState(false);
   const [showJoinedProducts, setShowJoinedProducts] = useState(false);
+
+  // Account management states
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -275,6 +311,90 @@ const Profile = () => {
     }
   };
 
+  const handleUpdateEmail = async () => {
+    if (!newEmail.trim()) {
+      toast.error("Please enter a new email address");
+      return;
+    }
+
+    setIsUpdatingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail.trim(),
+      });
+
+      if (error) throw error;
+      
+      toast.success("Verification email sent to your new address. Please check your inbox.");
+      setNewEmail("");
+      setEmailDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error updating email:", error);
+      toast.error(error.message || "Failed to update email");
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword.trim()) {
+      toast.error("Please enter a new password");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+      
+      toast.success("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast.error("Please type DELETE to confirm");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      // Delete user data from profiles table first
+      await supabase.from("profiles").delete().eq("user_id", user!.id);
+      
+      // Sign out and inform user
+      await signOut();
+      toast.success("Account deletion requested. Your account will be removed shortly.");
+      navigate("/", { replace: true });
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      toast.error(error.message || "Failed to delete account");
+    } finally {
+      setIsDeletingAccount(false);
+      setDeleteDialogOpen(false);
+    }
+  };
 
 
   if (authLoading || loading) {
@@ -787,8 +907,9 @@ const Profile = () => {
               </div>
             </TabsContent>
 
-            {/* Account Tab - Simplified */}
+            {/* Account Tab */}
             <TabsContent value="account" className="space-y-6">
+              {/* Account Switcher Section */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div>
                   <h3 className="font-display text-lg font-semibold mb-1">Account Management</h3>
@@ -797,7 +918,6 @@ const Profile = () => {
                   </p>
                 </div>
 
-                {/* Account Switcher - Full View */}
                 <AccountSwitcher
                   currentEmail={user?.email || ""}
                   currentAvatar={profile?.avatar_url || null}
@@ -805,7 +925,6 @@ const Profile = () => {
                   onLogout={signOut}
                 />
 
-                {/* Logout Button */}
                 <Button
                   variant="destructive"
                   className="w-full gap-2"
@@ -818,6 +937,201 @@ const Profile = () => {
                   <LogOut className="w-4 h-4" />
                   Log Out
                 </Button>
+              </div>
+
+              {/* Login Credentials Section */}
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-1">Login Credentials</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Update your email address or password
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Change Email */}
+                  <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-xl border border-border transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Mail className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="font-medium">Change Email</h4>
+                            <p className="text-sm text-muted-foreground">{user?.email}</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Email Address</DialogTitle>
+                        <DialogDescription>
+                          A verification email will be sent to your new address. You'll need to confirm it before the change takes effect.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label>Current Email</Label>
+                          <Input value={user?.email || ""} disabled className="bg-muted" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="newEmail">New Email Address</Label>
+                          <Input
+                            id="newEmail"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            placeholder="Enter new email address"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleUpdateEmail} disabled={isUpdatingEmail}>
+                          {isUpdatingEmail ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : null}
+                          Send Verification
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Change Password */}
+                  <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-xl border border-border transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Key className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="font-medium">Change Password</h4>
+                            <p className="text-sm text-muted-foreground">Update your account password</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogDescription>
+                          Enter a new password for your account. Make sure it's at least 6 characters long.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword">New Password</Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword">Confirm Password</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleUpdatePassword} disabled={isUpdatingPassword}>
+                          {isUpdatingPassword ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : null}
+                          Update Password
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-destructive mb-1">Danger Zone</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full gap-2">
+                      <Trash2 className="w-4 h-4" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                        <AlertTriangle className="w-5 h-5" />
+                        Delete Your Account?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-3">
+                        <p>
+                          This action is <strong>permanent and cannot be undone</strong>. All your data will be deleted including:
+                        </p>
+                        <ul className="list-disc list-inside text-sm space-y-1">
+                          <li>Your profile and settings</li>
+                          <li>Campaign memberships and submissions</li>
+                          <li>Balance and transaction history</li>
+                          <li>Messages and chat history</li>
+                          <li>Products and purchases</li>
+                        </ul>
+                        <div className="pt-2">
+                          <Label htmlFor="deleteConfirm" className="text-foreground font-medium">
+                            Type <span className="text-destructive font-bold">DELETE</span> to confirm:
+                          </Label>
+                          <Input
+                            id="deleteConfirm"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder="Type DELETE here"
+                            className="mt-2"
+                          />
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}
+                      >
+                        {isDeletingAccount ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 mr-2" />
+                        )}
+                        Delete Forever
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </TabsContent>
           </Tabs>
