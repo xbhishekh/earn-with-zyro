@@ -8,8 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,11 +207,8 @@ const Marketplace = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="pt-20 pb-16">
-        <div className="container mx-auto px-4">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-4">
           {/* Search Header */}
           <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm py-4 border-b border-border mb-6">
             <div className="flex items-center gap-4">
@@ -493,10 +489,7 @@ const Marketplace = () => {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

@@ -9,26 +9,18 @@ import {
   Clock, 
   ArrowUpRight,
   Plus,
-  LogOut,
-  User,
-  Zap,
   DollarSign,
   Eye,
-  MessageSquare,
   Package,
   Edit,
-  Star,
   Users,
-  MoreHorizontal,
-  Trash2,
-  BarChart3
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import NotificationsBell from "@/components/NotificationsBell";
+import { MainLayout } from "@/components/layout/MainLayout";
 import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 
@@ -209,66 +201,8 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass-card border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 gradient-bg rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-lg gradient-text">
-                Zyrozo
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard" className="text-foreground font-medium">
-                Dashboard
-              </Link>
-              <Link to="/campaigns" className="text-muted-foreground hover:text-foreground transition-colors">
-                Campaigns
-              </Link>
-              <Link to="/balance" className="text-muted-foreground hover:text-foreground transition-colors">
-                Balance
-              </Link>
-              <Link to="/messages" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                <MessageSquare className="w-4 h-4" />
-                Messages
-              </Link>
-              {isAdmin && (
-                <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Admin Panel
-                </Link>
-              )}
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <NotificationsBell />
-              {isAdmin && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/admin">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin
-                  </Link>
-                </Button>
-              )}
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/profile">
-                  <User className="w-4 h-4 mr-2" />
-                  {profile?.display_name || "Profile"}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -487,8 +421,8 @@ const Dashboard = () => {
             </Button>
           </motion.div>
         )}
-      </main>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 
