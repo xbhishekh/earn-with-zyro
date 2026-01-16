@@ -416,6 +416,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          reply_to_id: string | null
           room_id: string
           user_id: string
         }
@@ -426,6 +427,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          reply_to_id?: string | null
           room_id: string
           user_id: string
         }
@@ -436,10 +438,18 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          reply_to_id?: string | null
           room_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_room_id_fkey"
             columns: ["room_id"]
