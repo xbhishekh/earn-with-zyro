@@ -52,13 +52,54 @@ const Marketplace = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
 
   useEffect(() => {
     fetchProducts();
+    fetchFeaturedProducts();
   }, [selectedCategory, searchParams]);
+
+  const fetchFeaturedProducts = async () => {
+    const { data: productsData } = await supabase
+      .from("marketplace_products")
+      .select("*")
+      .eq("is_active", true)
+      .eq("is_featured", true)
+      .order("members_count", { ascending: false })
+      .limit(6);
+
+    if (!productsData || productsData.length === 0) return;
+
+    const sellerIds = [...new Set(productsData.map(p => p.seller_id))];
+    const productIds = productsData.map(p => p.id);
+
+    const [profilesResult, reviewsResult] = await Promise.all([
+      supabase.from("profiles").select("user_id, display_name, username, avatar_url").in("user_id", sellerIds),
+      supabase.from("product_reviews").select("product_id, rating").in("product_id", productIds)
+    ]);
+
+    const profilesMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
+    const ratingsMap = new Map<string, { total: number; count: number }>();
+    reviewsResult.data?.forEach(review => {
+      const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
+      ratingsMap.set(review.product_id, { total: existing.total + review.rating, count: existing.count + 1 });
+    });
+
+    const enriched: Product[] = productsData.map(product => {
+      const ratings = ratingsMap.get(product.id);
+      return {
+        ...product,
+        seller: profilesMap.get(product.seller_id),
+        avg_rating: ratings ? ratings.total / ratings.count : 0,
+        review_count: ratings?.count || 0
+      };
+    });
+
+    setFeaturedProducts(enriched);
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -229,6 +270,108 @@ const Marketplace = () => {
               </Button>
             ))}
           </div>
+
+          {/* Featured Section */}
+          {featuredProducts.length > 0 && selectedCategory === "all" && !searchParams.get("q") && (
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-xl">Featured Products</h2>
+                  <p className="text-sm text-muted-foreground">Top picks curated by our team</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Link
+                      to={`/marketplace/${product.slug || product.id}`}
+                      className="block bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all group"
+                    >
+                      {/* Featured Badge */}
+                      <div className="relative aspect-video overflow-hidden bg-muted">
+                        {product.thumbnail_url ? (
+                          <img
+                            src={product.thumbnail_url}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        
+                        <Badge className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 border-0">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Featured
+                        </Badge>
+                        
+                        <Badge 
+                          className={`absolute bottom-3 right-3 ${
+                            product.product_type === "free" || product.price === 0
+                              ? "bg-green-500 hover:bg-green-600"
+                              : "bg-primary hover:bg-primary/90"
+                          }`}
+                        >
+                          {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                        </Badge>
+                      </div>
+
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                          {product.title}
+                        </h3>
+                        
+                        {product.short_description && (
+                          <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
+                            {product.short_description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 mb-3">
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={product.seller?.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs">
+                              {product.seller?.display_name?.[0] || product.seller?.username?.[0] || "S"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-muted-foreground">
+                            {product.seller?.display_name || product.seller?.username || "Seller"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          {product.review_count && product.review_count > 0 ? (
+                            <div className="flex items-center gap-1">
+                              {renderStars(product.avg_rating || 0)}
+                              <span className="text-sm font-medium ml-1">
+                                {(product.avg_rating || 0).toFixed(1)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No reviews yet</span>
+                          )}
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Users className="w-4 h-4" />
+                            {product.members_count || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Results Header */}
           <div className="mb-6">
