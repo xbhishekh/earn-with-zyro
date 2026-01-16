@@ -39,7 +39,7 @@ You must be at least 18 years old to use Zyrozo. By using our platform, you repr
 
 ## 6. Payments
 
-- Minimum withdrawal amount is ₹500
+- Minimum withdrawal amount is $10
 - Payments are processed within 7 business days
 - We reserve the right to withhold payments for suspected fraud
 - All earnings are subject to platform fees as disclosed
@@ -67,7 +67,7 @@ Zyrozo is provided "as is" without warranties. We do not guarantee earnings or c
 
 ## 11. Limitation of Liability
 
-Our liability is limited to the amount paid to you in the past 12 months, not exceeding ₹50,000.
+Our liability is limited to the amount paid to you in the past 12 months, not exceeding $1,000.
 
 ## 12. Changes to Terms
 

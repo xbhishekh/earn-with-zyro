@@ -16,8 +16,8 @@ const features = [
   },
   {
     icon: DollarSign,
-    title: "Earn ₹100 + Commission",
-    description: "Get ₹100 per signup + 10% of their earnings forever!",
+    title: "Earn $5 + Commission",
+    description: "Get $5 per signup + 10% of their earnings forever!",
   },
 ];
 
@@ -136,7 +136,7 @@ export const AffiliateCTA = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <div className="font-display text-2xl font-bold gradient-text">₹10,000+</div>
+                    <div className="font-display text-2xl font-bold gradient-text">$500+</div>
                     <div className="text-xs text-muted-foreground">Per 100 referrals</div>
                   </div>
                   <div>

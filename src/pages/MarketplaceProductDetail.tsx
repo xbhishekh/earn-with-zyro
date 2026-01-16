@@ -234,7 +234,7 @@ const MarketplaceProductDetail = () => {
       
       // Check minimum purchase amount
       if (discount.min_purchase_amount && product.price < discount.min_purchase_amount) {
-        setDiscountError(`Minimum purchase of ₹${discount.min_purchase_amount} required`);
+        setDiscountError(`Minimum purchase of $${discount.min_purchase_amount} required`);
         setApplyingDiscount(false);
         return;
       }
@@ -324,7 +324,7 @@ const MarketplaceProductDetail = () => {
 
   const formatPrice = (price: number, type: string, interval: string | null) => {
     if (type === "free" || price === 0) return "Free";
-    const formatted = `₹${price.toLocaleString()}`;
+    const formatted = `$${price.toLocaleString()}`;
     if (type === "subscription" && interval) {
       return `${formatted} / ${interval}`;
     }

@@ -79,10 +79,10 @@ const AdminPayments = () => {
 
       <div className="grid grid-cols-2 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-warning" /></div><div><p className="text-sm text-muted-foreground">Pending</p><p className="font-display text-xl font-bold">₹{pendingAmount.toLocaleString()}</p></div></div>
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-warning" /></div><div><p className="text-sm text-muted-foreground">Pending</p><p className="font-display text-xl font-bold">${pendingAmount.toLocaleString()}</p></div></div>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-success" /></div><div><p className="text-sm text-muted-foreground">Available</p><p className="font-display text-xl font-bold">₹{availableAmount.toLocaleString()}</p></div></div>
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-success" /></div><div><p className="text-sm text-muted-foreground">Available</p><p className="font-display text-xl font-bold">${availableAmount.toLocaleString()}</p></div></div>
         </motion.div>
       </div>
 
@@ -95,7 +95,7 @@ const AdminPayments = () => {
             {transactions.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No pending</TableCell></TableRow> : transactions.map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-mono text-xs">{t.user_id.slice(0, 8)}</TableCell>
-                <TableCell className="font-display font-bold text-success">₹{t.amount.toLocaleString()}</TableCell>
+                <TableCell className="font-display font-bold text-success">${t.amount.toLocaleString()}</TableCell>
                 <TableCell className="capitalize">{t.type.replace("_", " ")}</TableCell>
                 <TableCell><Badge variant="outline" className={t.status === "pending" ? "text-warning border-warning" : "text-success border-success"}>{t.status}</Badge></TableCell>
                 <TableCell>{format(new Date(t.created_at), "dd MMM")}</TableCell>

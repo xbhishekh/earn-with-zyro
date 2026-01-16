@@ -318,7 +318,7 @@ const DiscountCodesManager = ({ products: propProducts }: DiscountCodesManagerPr
                       <Badge variant="secondary">
                         {code.discount_type === "percentage" 
                           ? `${code.discount_value}%` 
-                          : `₹${code.discount_value}`}
+                          : `$${code.discount_value}`}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -410,7 +410,7 @@ const DiscountCodesManager = ({ products: propProducts }: DiscountCodesManagerPr
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
+                    <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -447,7 +447,7 @@ const DiscountCodesManager = ({ products: propProducts }: DiscountCodesManagerPr
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Min Purchase (₹)</Label>
+                <Label>Min Purchase ($)</Label>
                 <Input
                   type="number"
                   value={formData.min_purchase_amount}

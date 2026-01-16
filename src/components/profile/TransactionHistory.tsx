@@ -111,7 +111,7 @@ export const TransactionHistory = ({ userId }: TransactionHistoryProps) => {
                     isIncoming ? "text-green-500" : "text-red-500"
                   }`}
                 >
-                  {isIncoming ? "+" : "-"}₹{Math.abs(tx.amount).toLocaleString()}
+                  {isIncoming ? "+" : "-"}${Math.abs(tx.amount).toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">{tx.status}</p>
               </div>

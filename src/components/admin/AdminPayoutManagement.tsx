@@ -106,10 +106,10 @@ const AdminPayoutManagement = () => {
 
       <div className="grid grid-cols-2 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"><Clock className="w-5 h-5 text-warning" /></div><div><p className="text-sm text-muted-foreground">Pending</p><p className="font-display text-xl font-bold">₹{totalPending.toLocaleString()}</p></div></div>
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center"><Clock className="w-5 h-5 text-warning" /></div><div><p className="text-sm text-muted-foreground">Pending</p><p className="font-display text-xl font-bold">${totalPending.toLocaleString()}</p></div></div>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><Wallet className="w-5 h-5 text-success" /></div><div><p className="text-sm text-muted-foreground">Available</p><p className="font-display text-xl font-bold">₹{totalAvailable.toLocaleString()}</p></div></div>
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><Wallet className="w-5 h-5 text-success" /></div><div><p className="text-sm text-muted-foreground">Available</p><p className="font-display text-xl font-bold">${totalAvailable.toLocaleString()}</p></div></div>
         </motion.div>
       </div>
 
@@ -126,7 +126,7 @@ const AdminPayoutManagement = () => {
             ) : transactions.slice(0, 20).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-mono text-xs">{t.user_id.slice(0, 8)}</TableCell>
-                <TableCell className={`font-display font-bold ${t.amount < 0 ? "text-destructive" : "text-success"}`}>{t.amount < 0 ? "-" : "+"}₹{Math.abs(t.amount).toLocaleString()}</TableCell>
+                <TableCell className={`font-display font-bold ${t.amount < 0 ? "text-destructive" : "text-success"}`}>{t.amount < 0 ? "-" : "+"}${Math.abs(t.amount).toLocaleString()}</TableCell>
                 <TableCell className="capitalize">{t.type.replace("_", " ")}</TableCell>
                 <TableCell><Badge variant="outline" className={t.status === "pending" ? "text-warning border-warning" : "text-success border-success"}>{t.status}</Badge></TableCell>
                 <TableCell>{format(new Date(t.created_at), "dd MMM")}</TableCell>
@@ -146,7 +146,7 @@ const AdminPayoutManagement = () => {
                 {profiles.map(p => <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || p.username || p.user_id.slice(0, 8)}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input type="number" placeholder="Amount (₹)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
+            <Input type="number" placeholder="Amount ($)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
             <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

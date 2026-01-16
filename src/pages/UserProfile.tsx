@@ -290,7 +290,7 @@ const UserProfile = () => {
                         </span>
                       </div>
                       <span className="font-medium text-primary">
-                        {product.price === 0 ? "Free" : `₹${product.price}`}
+                        {product.price === 0 ? "Free" : `$${product.price}`}
                       </span>
                     </div>
                   </div>

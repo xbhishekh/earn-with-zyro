@@ -237,7 +237,7 @@ const SellerBuyersManager = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="font-display text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p>
+                <p className="font-display text-2xl font-bold">${totalRevenue.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -330,7 +330,7 @@ const SellerBuyersManager = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <DollarSign className="w-3 h-3" />
-                              ₹{product.totalRevenue.toLocaleString()}
+                              ${product.totalRevenue.toLocaleString()}
                             </span>
                             <Badge variant="outline" className="text-xs">
                               {product.product_type === 'subscription' ? 'Subscription' : 
@@ -394,7 +394,7 @@ const SellerBuyersManager = () => {
                                     </div>
                                   </TableCell>
                                   <TableCell className="font-medium">
-                                    ₹{Number(buyer.amount).toLocaleString()}
+                                    ${Number(buyer.amount).toLocaleString()}
                                   </TableCell>
                                   <TableCell>
                                     <Badge variant="outline" className="text-xs">
@@ -460,7 +460,7 @@ const SellerBuyersManager = () => {
                         </div>
                       </TableCell>
                       <TableCell>{buyer.product_title}</TableCell>
-                      <TableCell>₹{Number(buyer.amount).toLocaleString()}</TableCell>
+                      <TableCell>${Number(buyer.amount).toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(buyer.created_at), "MMM dd, yyyy")}
                       </TableCell>

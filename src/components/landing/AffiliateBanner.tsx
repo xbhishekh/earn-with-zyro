@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Gift, ArrowRight, Sparkles, IndianRupee, Users, Zap } from 'lucide-react';
+import { Gift, ArrowRight, Sparkles, DollarSign, Users, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const AffiliateBanner = () => {
@@ -57,7 +57,7 @@ export const AffiliateBanner = () => {
                         </span>
                       </div>
                       <h3 className="font-display text-lg md:text-xl font-bold">
-                        Refer Friends & Earn <span className="gradient-text">₹200/Signup!</span>
+                        Refer Friends & Earn <span className="gradient-text">$5/Signup!</span>
                       </h3>
                     </div>
                   </div>
@@ -66,10 +66,10 @@ export const AffiliateBanner = () => {
                   <div className="hidden md:flex items-center gap-6 flex-1">
                     <div className="flex items-center gap-2 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                        <IndianRupee className="w-4 h-4 text-success" />
+                        <DollarSign className="w-4 h-4 text-success" />
                       </div>
                       <div>
-                        <p className="font-bold">₹200</p>
+                        <p className="font-bold">$5</p>
                         <p className="text-xs text-muted-foreground">Per Signup</p>
                       </div>
                     </div>
@@ -96,8 +96,8 @@ export const AffiliateBanner = () => {
                   {/* Mobile Stats Row */}
                   <div className="flex md:hidden items-center gap-4 w-full justify-center">
                     <div className="flex items-center gap-1.5 bg-success/10 px-3 py-1.5 rounded-full">
-                      <IndianRupee className="w-3.5 h-3.5 text-success" />
-                      <span className="text-xs font-bold text-success">₹200/signup</span>
+                      <DollarSign className="w-3.5 h-3.5 text-success" />
+                      <span className="text-xs font-bold text-success">$5/signup</span>
                     </div>
                     <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-full">
                       <Users className="w-3.5 h-3.5 text-primary" />

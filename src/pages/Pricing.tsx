@@ -26,7 +26,7 @@ const plans = [
   {
     name: "Pro",
     icon: Crown,
-    price: 499,
+    price: 9,
     period: "month",
     description: "For serious creators",
     features: [
@@ -46,7 +46,7 @@ const plans = [
   {
     name: "Business",
     icon: Rocket,
-    price: 1999,
+    price: 29,
     period: "month",
     description: "For teams and agencies",
     features: [
@@ -119,7 +119,7 @@ const Pricing = () => {
                 <div className="text-center mb-8">
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-display font-bold">
-                      {plan.price === 0 ? "Free" : `₹${plan.price}`}
+                      {plan.price === 0 ? "Free" : `$${plan.price}`}
                     </span>
                     {plan.price > 0 && (
                       <span className="text-muted-foreground">/{plan.period}</span>
