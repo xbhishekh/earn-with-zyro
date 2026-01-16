@@ -13,7 +13,8 @@ import {
   User,
   Zap,
   DollarSign,
-  Eye
+  Eye,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -165,6 +166,10 @@ const Dashboard = () => {
               </Link>
               <Link to="/balance" className="text-muted-foreground hover:text-foreground transition-colors">
                 Balance
+              </Link>
+              <Link to="/messages" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                <MessageSquare className="w-4 h-4" />
+                Messages
               </Link>
               {isAdmin && (
                 <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
