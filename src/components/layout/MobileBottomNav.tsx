@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Compass, MessageCircle, TrendingUp, LogIn } from 'lucide-react';
+import { Home, Compass, MessageCircle, TrendingUp, User, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,15 +11,16 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   center?: boolean;
-  badgeKey?: 'messages' | 'clipping';
+  badgeKey?: 'messages' | 'clipping' | 'profile';
 }
 
-// Removed Profile tab - it's accessible via avatar dropdown, 4 tabs now
+// 5 tabs with Profile as last tab
 const navItems: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Marketplace', href: '/marketplace', icon: Compass },
   { label: 'Messages', href: '/messages', icon: MessageCircle, center: true, badgeKey: 'messages' },
   { label: 'Clipping', href: '/campaigns', icon: TrendingUp, badgeKey: 'clipping' },
+  { label: 'Profile', href: '/profile', icon: User, badgeKey: 'profile' },
 ];
 
 const guestNavItems: NavItem[] = [
@@ -34,6 +35,7 @@ export const MobileBottomNav = () => {
   const { user } = useAuth();
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [campaignUpdates, setCampaignUpdates] = useState(0);
+  const [pendingVerifications, setPendingVerifications] = useState(0);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -136,11 +138,46 @@ export const MobileBottomNav = () => {
     };
   }, [user]);
 
+  // Fetch pending verifications for profile badge
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPendingVerifications = async () => {
+      const { count } = await supabase
+        .from('social_accounts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .in('status', ['pending_link', 'awaiting_code', 'pending_verification']);
+      
+      setPendingVerifications(count || 0);
+    };
+
+    fetchPendingVerifications();
+
+    // Subscribe to social account changes
+    const channel = supabase
+      .channel('profile-verifications')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'social_accounts',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchPendingVerifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const items = user ? navItems : guestNavItems;
 
   const getBadgeCount = (badgeKey?: string) => {
     if (badgeKey === 'messages') return unreadMessages;
     if (badgeKey === 'clipping') return campaignUpdates;
+    if (badgeKey === 'profile') return pendingVerifications;
     return 0;
   };
 
