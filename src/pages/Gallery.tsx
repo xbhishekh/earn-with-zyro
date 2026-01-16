@@ -216,8 +216,12 @@ const Gallery = () => {
                     {/* Content */}
                     <div className="p-4">
                       {/* Creator Info */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                        <div className="flex items-center gap-3 mb-3">
+                        <Link 
+                          to={`/u/${submission.profile?.username || submission.profile?.display_name || "creator"}`}
+                          className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0 hover:ring-2 hover:ring-primary/50 transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {submission.profile?.avatar_url ? (
                             <img 
                               src={submission.profile.avatar_url} 
@@ -229,11 +233,15 @@ const Gallery = () => {
                               {(submission.profile?.display_name || submission.profile?.username || "?")[0].toUpperCase()}
                             </div>
                           )}
-                        </div>
+                        </Link>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
+                          <Link 
+                            to={`/u/${submission.profile?.username || submission.profile?.display_name || "creator"}`}
+                            className="font-medium text-sm truncate block hover:text-primary transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             @{submission.profile?.username || submission.profile?.display_name || "creator"}
-                          </p>
+                          </Link>
                           <p className="text-xs text-muted-foreground">
                             {new Date(submission.created_at).toLocaleDateString()}
                           </p>
