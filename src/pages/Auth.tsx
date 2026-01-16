@@ -4,6 +4,7 @@ import { Zap, Mail, User, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -14,6 +15,8 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 const emailSchema = z.string().email("Please enter a valid email address");
 
 type AuthStep = "email" | "otp";
+
+const REMEMBER_ME_KEY = "zyrozo_remember_me";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -33,6 +36,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -108,6 +112,13 @@ const Auth = () => {
         toast.error("Invalid or expired code. Please try again.");
         setOtp("");
       } else {
+        // Save remember me preference
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_ME_KEY, "true");
+        } else {
+          localStorage.removeItem(REMEMBER_ME_KEY);
+          sessionStorage.setItem(REMEMBER_ME_KEY, "session");
+        }
         toast.success("Logged in successfully!");
       }
     } catch (error) {
@@ -270,6 +281,21 @@ const Auth = () => {
             </div>
           </>
         )}
+
+        {/* Remember Me */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="remember-me"
+            checked={rememberMe}
+            onCheckedChange={(checked) => setRememberMe(checked === true)}
+          />
+          <label
+            htmlFor="remember-me"
+            className="text-sm text-muted-foreground cursor-pointer select-none"
+          >
+            Remember me for 30 days
+          </label>
+        </div>
 
         <Button
           type="submit"
