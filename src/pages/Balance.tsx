@@ -209,7 +209,7 @@ const Balance = () => {
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
               </div>
               <h3 className="text-sm text-muted-foreground mb-1">{card.title}</h3>
-              <p className="font-display text-2xl font-bold">₹{card.value.toLocaleString()}</p>
+              <p className="font-display text-2xl font-bold">${card.value.toLocaleString()}</p>
             </motion.div>
           ))}
         </div>
@@ -238,7 +238,7 @@ const Balance = () => {
                   <div className="flex items-center gap-3">
                     <Clock className="w-5 h-5 text-warning" />
                     <div>
-                      <p className="font-medium">₹{Number(w.amount).toLocaleString()}</p>
+                      <p className="font-medium">${Number(w.amount).toLocaleString()}</p>
                       <p className="text-sm text-muted-foreground">{format(new Date(w.created_at), "dd MMM yyyy")}</p>
                     </div>
                   </div>
@@ -275,7 +275,7 @@ const Balance = () => {
                   </div>
                   <div className="text-right">
                     <p className={`font-medium ${tx.type === "withdrawal" ? "text-destructive" : "text-success"}`}>
-                      {tx.type === "withdrawal" ? "-" : "+"}₹{Math.abs(Number(tx.amount)).toLocaleString()}
+                      {tx.type === "withdrawal" ? "-" : "+"}${Math.abs(Number(tx.amount)).toLocaleString()}
                     </p>
                     <p className={`text-sm capitalize ${getStatusColor(tx.status || "pending")}`}>{tx.status}</p>
                   </div>
@@ -296,7 +296,7 @@ const Balance = () => {
             <div>
               <Label>Amount (Min: $10)</Label>
               <Input type="number" placeholder="Enter amount" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} min={10} max={balance.available} />
-              <p className="text-sm text-muted-foreground mt-1">Available: ₹{balance.available.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground mt-1">Available: ${balance.available.toLocaleString()}</p>
             </div>
 
             <div>

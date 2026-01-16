@@ -117,7 +117,7 @@ const AdminWithdrawals = () => {
         user_id: selectedWithdrawal.user_id,
         type: "withdrawal_completed",
         title: "Withdrawal Completed! 💰",
-        message: `Your withdrawal of ₹${selectedWithdrawal.amount.toLocaleString()} has been processed.`,
+        message: `Your withdrawal of $${selectedWithdrawal.amount.toLocaleString()} has been processed.`,
         metadata: { amount: selectedWithdrawal.amount, method: selectedWithdrawal.payment_method },
       });
 
@@ -232,7 +232,7 @@ const AdminWithdrawals = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Pending Amount</p>
-              <p className="font-display text-xl font-bold">₹{totalPending.toLocaleString()}</p>
+              <p className="font-display text-xl font-bold">${totalPending.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -254,7 +254,7 @@ const AdminWithdrawals = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Paid</p>
-              <p className="font-display text-xl font-bold">₹{totalCompleted.toLocaleString()}</p>
+              <p className="font-display text-xl font-bold">${totalCompleted.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -308,7 +308,7 @@ const AdminWithdrawals = () => {
                       <span className="font-medium">@{getUsername(w.user_id)}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-display font-bold">₹{Number(w.amount).toLocaleString()}</TableCell>
+                  <TableCell className="font-display font-bold">${Number(w.amount).toLocaleString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {w.payment_method === "bank" ? (
@@ -382,7 +382,7 @@ const AdminWithdrawals = () => {
             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
               <p className="text-sm text-muted-foreground">Amount</p>
               <p className="font-display text-3xl font-bold text-green-500">
-                ₹{selectedWithdrawal?.amount?.toLocaleString()}
+                ${selectedWithdrawal?.amount?.toLocaleString()}
               </p>
             </div>
 

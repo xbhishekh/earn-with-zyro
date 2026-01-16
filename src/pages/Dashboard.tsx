@@ -112,7 +112,7 @@ const Dashboard = () => {
 
   const formatPrice = (price: number, type: string, interval: string | null) => {
     if (type === "free" || price === 0) return "Free";
-    const formatted = `₹${price.toLocaleString()}`;
+    const formatted = `$${price.toLocaleString()}`;
     if (type === "subscription" && interval) {
       return `${formatted}/${interval}`;
     }
@@ -177,14 +177,14 @@ const Dashboard = () => {
   const statCards = [
     {
       title: "Total Earnings",
-      value: `₹${stats.totalEarnings.toLocaleString()}`,
+      value: `$${stats.totalEarnings.toLocaleString()}`,
       icon: Wallet,
       color: "text-success",
       bgColor: "bg-success/10",
     },
     {
       title: "Pending Earnings",
-      value: `₹${stats.pendingEarnings.toLocaleString()}`,
+      value: `$${stats.pendingEarnings.toLocaleString()}`,
       icon: Clock,
       color: "text-warning",
       bgColor: "bg-warning/10",

@@ -129,11 +129,11 @@ export const PayUserModal = ({
       await supabase.from("notifications").insert({
         user_id: selectedUser.user_id,
         title: "Payment Received!",
-        message: `You received ₹${amountNum.toLocaleString()} from a user${note ? ` - "${note}"` : ""}`,
+        message: `You received $${amountNum.toLocaleString()} from a user${note ? ` - "${note}"` : ""}`,
         type: "payment",
       });
 
-      toast.success(`₹${amountNum.toLocaleString()} sent to @${selectedUser.username || selectedUser.display_name}!`);
+      toast.success(`$${amountNum.toLocaleString()} sent to @${selectedUser.username || selectedUser.display_name}!`);
       onOpenChange(false);
       setSelectedUser(null);
       setAmount("");
@@ -162,7 +162,7 @@ export const PayUserModal = ({
           {/* Available Balance */}
           <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
             <p className="text-sm text-muted-foreground">Available Balance</p>
-            <p className="text-xl font-bold text-primary">₹{availableBalance.toLocaleString()}</p>
+            <p className="text-xl font-bold text-primary">${availableBalance.toLocaleString()}</p>
           </div>
 
           {!selectedUser ? (
@@ -239,7 +239,7 @@ export const PayUserModal = ({
 
               {/* Amount */}
               <div className="space-y-2">
-                <Label>Amount (₹)</Label>
+                <Label>Amount ($)</Label>
                 <Input
                   type="number"
                   value={amount}
@@ -271,7 +271,7 @@ export const PayUserModal = ({
                 ) : (
                   <Send className="w-4 h-4 mr-2" />
                 )}
-                Send ₹{amount ? parseFloat(amount).toLocaleString() : "0"}
+                Send ${amount ? parseFloat(amount).toLocaleString() : "0"}
               </Button>
             </>
           )}

@@ -641,7 +641,7 @@ const Auth = () => {
             {/* Stats */}
             <div className="flex justify-center gap-8 mt-12">
               <div className="text-center">
-                <div className="font-display text-3xl font-bold">₹40L+</div>
+                <div className="font-display text-3xl font-bold">$50K+</div>
                 <div className="text-white/70 text-sm">Paid Out</div>
               </div>
               <div className="text-center">

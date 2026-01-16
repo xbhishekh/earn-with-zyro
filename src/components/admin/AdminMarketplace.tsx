@@ -185,7 +185,7 @@ const AdminMarketplace = () => {
 
   const formatPrice = (price: number, type: string) => {
     if (type === "free" || price === 0) return "Free";
-    return `₹${price.toLocaleString()}`;
+    return `$${price.toLocaleString()}`;
   };
 
   return (

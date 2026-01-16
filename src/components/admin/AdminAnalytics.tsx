@@ -122,7 +122,7 @@ const AdminAnalytics = () => {
     { title: hasFullAccess ? "Total Users" : "Campaign Members", value: stats.totalUsers, icon: Users, color: "text-primary", bgColor: "bg-primary/10" },
     { title: hasFullAccess ? "All Campaigns" : "My Campaigns", value: stats.totalCampaigns, icon: Video, color: "text-secondary", bgColor: "bg-secondary/10" },
     { title: "Submissions", value: stats.totalSubmissions, icon: BarChart3, color: "text-success", bgColor: "bg-success/10" },
-    { title: "Total Earnings", value: `₹${stats.totalEarnings.toLocaleString()}`, icon: DollarSign, color: "text-warning", bgColor: "bg-warning/10" },
+    { title: "Total Earnings", value: `$${stats.totalEarnings.toLocaleString()}`, icon: DollarSign, color: "text-warning", bgColor: "bg-warning/10" },
     { title: "Total Views", value: stats.totalViews.toLocaleString(), icon: Eye, color: "text-primary", bgColor: "bg-primary/10" },
     { title: "Pending", value: stats.pendingSubmissions, icon: Clock, color: "text-warning", bgColor: "bg-warning/10" },
     { title: "Approved", value: stats.approvedSubmissions, icon: CheckCircle, color: "text-success", bgColor: "bg-success/10" },

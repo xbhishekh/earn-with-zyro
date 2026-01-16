@@ -175,7 +175,7 @@ const SellerAnalytics = () => {
     },
     {
       title: `Earnings (${period}d)`,
-      value: `₹${analytics.totalEarnings.toLocaleString()}`,
+      value: `$${analytics.totalEarnings.toLocaleString()}`,
       icon: DollarSign,
       color: "text-warning",
       bgColor: "bg-warning/10",
@@ -278,7 +278,7 @@ const SellerAnalytics = () => {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px"
                     }}
-                    formatter={(value: number) => [`₹${value.toFixed(2)}`, "Earnings"]}
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, "Earnings"]}
                   />
                   <Area 
                     type="monotone" 
@@ -349,7 +349,7 @@ const SellerAnalytics = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-success">₹{product.earnings.toLocaleString()}</p>
+                    <p className="font-bold text-success">${product.earnings.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">earnings</p>
                   </div>
                 </div>
