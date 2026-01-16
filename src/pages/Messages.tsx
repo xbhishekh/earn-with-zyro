@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, useSearchParams, useLocation } from "react-router-dom";
+import { Navigate, useSearchParams, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -815,16 +815,21 @@ const Messages = () => {
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
-                    {(selectedConversation.other_user.display_name || selectedConversation.other_user.username || "?").charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <Link to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}>
+                  <Avatar className="w-10 h-10 hover:ring-2 hover:ring-primary/50 transition-all">
+                    <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                      {(selectedConversation.other_user.display_name || selectedConversation.other_user.username || "?").charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
                 <div>
-                  <h3 className="font-semibold">
+                  <Link 
+                    to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
+                    className="font-semibold hover:text-primary transition-colors"
+                  >
                     {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                  </h3>
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     @{selectedConversation.other_user.username || "user"}
                   </p>

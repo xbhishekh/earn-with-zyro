@@ -542,7 +542,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       parts.push(
         <Link
           key={`mention-${keyIndex}`}
-          to={`/profile/${username}`}
+          to={`/u/${username}`}
           className="text-primary font-medium hover:underline bg-primary/10 px-1 rounded"
         >
           @{username}
@@ -771,7 +771,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                         <div className="flex gap-3">
                           {/* Avatar Column */}
                           {showHeader ? (
-                            <Link to={`/profile/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
+                            <Link to={`/u/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-sm font-semibold overflow-hidden ring-2 ring-background">
                                 {msg.profiles?.avatar_url ? (
                                   <img src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -793,7 +793,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                             {showHeader && (
                               <div className="flex items-baseline gap-2 mb-0.5">
                                 <Link 
-                                  to={`/profile/${msg.profiles?.username || msg.user_id}`}
+                                  to={`/u/${msg.profiles?.username || msg.user_id}`}
                                   className="font-semibold text-sm text-foreground hover:underline"
                                 >
                                   {msg.profiles?.username || 'Unknown'}

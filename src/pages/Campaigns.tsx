@@ -397,7 +397,13 @@ const Campaigns = () => {
                             {campaign.name} - ₹{campaign.reward_per_1k_views} Per 1,000 Views
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-muted-foreground">{campaign.creator_name}</span>
+                            <Link 
+                              to={campaign.created_by ? `/u/${campaign.creator_name}` : "#"}
+                              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {campaign.creator_name}
+                            </Link>
                             <CheckCircle className="w-4 h-4 text-primary" />
                             {campaign.platforms && campaign.platforms.length > 0 && (
                               <div className="flex gap-1 ml-2">
