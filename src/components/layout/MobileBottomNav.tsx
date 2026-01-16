@@ -39,15 +39,29 @@ export const MobileBottomNav = () => {
     return location.pathname.startsWith(href);
   };
 
-  // Fetch unread message count
+  // Fetch unread message count for DMs
   useEffect(() => {
     if (!user) return;
 
     const fetchUnreadCount = async () => {
-      // Count unread DM messages
+      // First get all DM rooms the user is part of
+      const { data: participations } = await supabase
+        .from('dm_participants')
+        .select('room_id')
+        .eq('user_id', user.id);
+
+      if (!participations || participations.length === 0) {
+        setUnreadMessages(0);
+        return;
+      }
+
+      const roomIds = participations.map(p => p.room_id);
+
+      // Count unread messages in those rooms (not sent by current user)
       const { count } = await supabase
         .from('chat_messages')
         .select('*', { count: 'exact', head: true })
+        .in('room_id', roomIds)
         .neq('user_id', user.id)
         .is('read_at', null);
       
@@ -56,15 +70,28 @@ export const MobileBottomNav = () => {
 
     fetchUnreadCount();
 
-    // Subscribe to new messages
+    // Subscribe to new messages for real-time updates
     const channel = supabase
-      .channel('unread-messages')
+      .channel('unread-dm-messages')
       .on('postgres_changes', { 
-        event: '*', 
+        event: 'INSERT', 
         schema: 'public', 
         table: 'chat_messages' 
-      }, () => {
-        fetchUnreadCount();
+      }, (payload) => {
+        // Only increment if message is not from current user
+        if (payload.new && payload.new.user_id !== user.id) {
+          setUnreadMessages(prev => prev + 1);
+        }
+      })
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'chat_messages' 
+      }, (payload) => {
+        // Decrement when a message is marked as read
+        if (payload.new && payload.new.read_at && !payload.old?.read_at) {
+          setUnreadMessages(prev => Math.max(0, prev - 1));
+        }
       })
       .subscribe();
 
