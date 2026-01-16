@@ -72,13 +72,10 @@ const Campaigns = () => {
 
   const fetchCampaigns = async () => {
     try {
-      // Fetch campaigns with creator profile in single query using join
+      // Fetch campaigns (no FK join - created_by references user_id not id)
       const { data: campaignsData, error } = await supabase
         .from("campaigns")
-        .select(`
-          *,
-          profiles:created_by (display_name, avatar_url)
-        `)
+        .select("*")
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
@@ -90,18 +87,35 @@ const Campaigns = () => {
       }
 
       const campaignIds = campaignsData.map(c => c.id);
+      const creatorIds = campaignsData.map(c => c.created_by).filter(Boolean) as string[];
+
+      // Fetch creator profiles separately
+      let profilesMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+      if (creatorIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", creatorIds);
+        
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.user_id, { display_name: p.display_name, avatar_url: p.avatar_url }));
+        }
+      }
 
       // Show campaigns immediately with basic data (fast first paint)
-      const initialCampaigns = campaignsData.map(campaign => ({
-        ...campaign,
-        creator_name: (campaign.profiles as any)?.display_name || "Zyrozo",
-        creator_avatar: (campaign.profiles as any)?.avatar_url || null,
-        stats: { total_submissions: 0, approved_submissions: 0, total_views: 0 },
-        isMember: false,
-        isBanned: false,
-        banReason: null,
-        waitlistStatus: null,
-      }));
+      const initialCampaigns = campaignsData.map(campaign => {
+        const creatorProfile = campaign.created_by ? profilesMap.get(campaign.created_by) : null;
+        return {
+          ...campaign,
+          creator_name: creatorProfile?.display_name || "Zyrozo",
+          creator_avatar: creatorProfile?.avatar_url || null,
+          stats: { total_submissions: 0, approved_submissions: 0, total_views: 0 },
+          isMember: false,
+          isBanned: false,
+          banReason: null,
+          waitlistStatus: null,
+        };
+      });
       
       setCampaigns(initialCampaigns);
       setLoading(false);
