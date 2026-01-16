@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Zap, Shield, LogOut, Wallet } from 'lucide-react';
+import { 
+  Search, Zap, Shield, LogOut, Wallet, Home, Compass, 
+  MessageCircle, TrendingUp, Users, Menu, X 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import NotificationsBell from '@/components/NotificationsBell';
+import { cn } from '@/lib/utils';
 
 interface Profile {
   avatar_url: string | null;
@@ -22,12 +26,33 @@ interface Profile {
   username: string | null;
 }
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+const desktopNavItems: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Campaigns', href: '/campaigns', icon: TrendingUp },
+  { label: 'Marketplace', href: '/marketplace', icon: Compass },
+  { label: 'Messages', href: '/messages', icon: MessageCircle },
+  { label: 'Affiliate', href: '/affiliate', icon: Users },
+];
+
 export const AppHeader = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [balance, setBalance] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isActive = (href: string) => {
+    if (href === '/') return location.pathname === '/';
+    return location.pathname.startsWith(href);
+  };
 
   // Fetch profile and balance
   useEffect(() => {
@@ -80,7 +105,7 @@ export const AppHeader = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 md:h-16 gap-3">
             {/* Logo */}
-            <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 shrink-0">
+            <Link to="/" className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 md:w-9 md:h-9 gradient-bg rounded-lg flex items-center justify-center">
                 <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
@@ -89,28 +114,50 @@ export const AppHeader = () => {
               </span>
             </Link>
 
-            {/* Search Button - Whop Style Pill */}
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {desktopNavItems.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive(item.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Search Button - Desktop */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex-1 max-w-md mx-4 h-10 px-4 bg-muted/60 hover:bg-muted rounded-full flex items-center gap-3 transition-colors"
+              className="hidden md:flex flex-1 max-w-xs mx-4 h-10 px-4 bg-muted hover:bg-muted/80 rounded-full items-center gap-3 transition-colors"
             >
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-sm text-muted-foreground truncate hidden sm:block">
+              <span className="text-sm text-muted-foreground truncate">
                 Search campaigns, products...
-              </span>
-              <span className="text-sm text-muted-foreground sm:hidden">
-                Search...
               </span>
             </button>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 shrink-0">
+              {/* Mobile: Only Notifications (left) and Balance (right) for logged in users */}
               {user ? (
                 <>
+                  {/* Mobile: Notification on left */}
+                  <div className="md:hidden">
+                    <NotificationsBell />
+                  </div>
+
                   {/* Balance - Desktop */}
                   <Link
                     to="/balance"
-                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 hover:bg-muted rounded-full transition-colors"
+                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
                   >
                     <Wallet className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium">
@@ -118,18 +165,21 @@ export const AppHeader = () => {
                     </span>
                   </Link>
 
-                  {/* Balance - Mobile */}
+                  {/* Balance - Mobile (on right) */}
                   <Link
                     to="/balance"
-                    className="md:hidden flex items-center gap-1 px-2 py-1.5 bg-muted/60 rounded-full"
+                    className="md:hidden flex items-center gap-1 px-2.5 py-1.5 bg-muted rounded-full"
                   >
+                    <Wallet className="w-3.5 h-3.5 text-primary" />
                     <span className="text-xs font-medium">
                       ${balance.toFixed(0)}
                     </span>
                   </Link>
 
-                  {/* Notifications */}
-                  <NotificationsBell />
+                  {/* Desktop: Notifications */}
+                  <div className="hidden md:block">
+                    <NotificationsBell />
+                  </div>
 
                   {/* Admin Button - Desktop */}
                   {isAdmin && (
@@ -146,10 +196,10 @@ export const AppHeader = () => {
                     </Button>
                   )}
 
-                  {/* User Avatar Dropdown */}
+                  {/* User Avatar Dropdown - Desktop */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                      <button className="hidden md:block rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
                         <Avatar className="w-8 h-8 md:w-9 md:h-9">
                           <AvatarImage src={profile?.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
@@ -171,8 +221,11 @@ export const AppHeader = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/messages">Messages</Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/affiliate">Affiliate</Link>
+                      </DropdownMenuItem>
                       {isAdmin && (
-                        <DropdownMenuItem asChild className="md:hidden">
+                        <DropdownMenuItem asChild>
                           <Link to="/admin">
                             <Shield className="w-4 h-4 mr-2" />
                             Admin Panel
@@ -189,6 +242,14 @@ export const AppHeader = () => {
                 </>
               ) : (
                 <>
+                  {/* Mobile Search */}
+                  <button
+                    onClick={() => setSearchOpen(true)}
+                    className="md:hidden p-2 hover:bg-muted rounded-full"
+                  >
+                    <Search className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                  
                   <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
                     <Link to="/auth">Log In</Link>
                   </Button>
