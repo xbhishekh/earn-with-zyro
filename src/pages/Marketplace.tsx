@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
   Search, Star, Users, Tag, Filter, Plus, BookOpen, 

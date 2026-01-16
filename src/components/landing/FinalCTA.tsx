@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,7 @@ export const FinalCTA = () => {
   return (
     <section className="py-20 md:py-24 relative overflow-hidden bg-muted/30">
       <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative max-w-4xl mx-auto"
-        >
+        <div className="relative max-w-4xl mx-auto">
           {/* Gradient Background */}
           <div className="absolute inset-0 gradient-bg rounded-3xl opacity-10 blur-xl" />
           
@@ -51,7 +45,7 @@ export const FinalCTA = () => {
               ✓ Free to join &nbsp; ✓ No hidden fees &nbsp; ✓ Instant withdrawals
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

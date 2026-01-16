@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,11 +15,7 @@ export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50"
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -70,41 +65,34 @@ export const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-t border-border"
-          >
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                >
-                  {link.name}
+      {isOpen && (
+        <div className="md:hidden bg-background border-t border-border">
+          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                onClick={() => setIsOpen(false)}
+                className="text-foreground hover:text-primary transition-colors font-medium py-2"
+              >
+                {link.name}
+              </Link>
+            ))}
+            <div className="flex flex-col gap-2 pt-4 border-t border-border">
+              <Button variant="ghost" asChild className="justify-center">
+                <Link to="/auth" onClick={() => setIsOpen(false)}>
+                  Log In
                 </Link>
-              ))}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" asChild className="justify-center">
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>
-                    Log In
-                  </Link>
-                </Button>
-                <Button className="gradient-bg" asChild>
-                  <Link to="/auth?mode=signup" onClick={() => setIsOpen(false)}>
-                    Get Started
-                  </Link>
-                </Button>
-              </div>
+              </Button>
+              <Button className="gradient-bg" asChild>
+                <Link to="/auth?mode=signup" onClick={() => setIsOpen(false)}>
+                  Get Started
+                </Link>
+              </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+          </div>
+        </div>
+      )}
+    </header>
   );
 };
