@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface Campaign {
   id: string;
@@ -31,6 +32,7 @@ interface Suspension {
 
 const AdminUsers = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignIds, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,12 +46,36 @@ const AdminUsers = () => {
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
-  useEffect(() => { fetchProfiles(); fetchCampaigns(); }, [page]);
+  useEffect(() => { 
+    if (!accessLoading) {
+      fetchProfiles(); 
+      fetchCampaigns(); 
+    }
+  }, [page, accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   const fetchProfiles = async () => {
     try {
-      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }).range(page * pageSize, (page + 1) * pageSize - 1);
-      setProfiles(data || []);
+      if (hasFullAccess) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        setProfiles(data || []);
+      } else {
+        // Normal admin: Only users who joined my campaigns
+        if (myCampaignMemberUserIds.length > 0) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .in("user_id", myCampaignMemberUserIds)
+            .order("created_at", { ascending: false })
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+          setProfiles(data || []);
+        } else {
+          setProfiles([]);
+        }
+      }
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -58,8 +84,22 @@ const AdminUsers = () => {
   };
 
   const fetchCampaigns = async () => {
-    const { data } = await supabase.from("campaigns").select("id, name").order("name");
-    setCampaigns(data || []);
+    if (hasFullAccess) {
+      const { data } = await supabase.from("campaigns").select("id, name").order("name");
+      setCampaigns(data || []);
+    } else {
+      // Normal admin: Only my campaigns
+      if (myCampaignIds.length > 0) {
+        const { data } = await supabase
+          .from("campaigns")
+          .select("id, name")
+          .in("id", myCampaignIds)
+          .order("name");
+        setCampaigns(data || []);
+      } else {
+        setCampaigns([]);
+      }
+    }
   };
 
   const fetchUserSuspensions = async (userId: string) => {
@@ -81,7 +121,7 @@ const AdminUsers = () => {
 
   const openBanModal = (profile: any) => {
     setSelectedUser(profile);
-    setBanType("global");
+    setBanType(hasFullAccess ? "global" : "campaign");
     setBanReason("");
     setSelectedCampaigns([]);
   };
@@ -99,8 +139,7 @@ const AdminUsers = () => {
     }
 
     try {
-      if (banType === "global") {
-        // Global suspension
+      if (banType === "global" && hasFullAccess) {
         const { error } = await supabase.from("user_suspensions").insert({
           user_id: selectedUser.user_id,
           campaign_id: null,
@@ -111,7 +150,6 @@ const AdminUsers = () => {
         if (error) throw error;
         toast.success(`${selectedUser.display_name || selectedUser.username} has been globally suspended`);
       } else {
-        // Campaign-specific bans
         if (selectedCampaigns.length === 0) {
           toast.error("Please select at least one campaign");
           return;
@@ -163,21 +201,76 @@ const AdminUsers = () => {
 
   const filteredProfiles = profiles.filter(p => p.username?.toLowerCase().includes(searchTerm.toLowerCase()) || p.display_name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading || accessLoading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+
+  // Empty state for normal admin with no campaigns
+  if (!hasFullAccess && myCampaignIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <Users className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Campaigns Yet</h2>
+        <p className="text-muted-foreground max-w-md">
+          Create your first campaign to start managing users. You can only see users who have joined your campaigns.
+        </p>
+      </div>
+    );
+  }
+
+  // Empty state for normal admin with campaigns but no members
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0 && myCampaignIds.length > 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <Users className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Members Yet</h2>
+        <p className="text-muted-foreground max-w-md">
+          No users have joined your campaigns yet. Once users join, they'll appear here.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold mb-1">User Management</h1><p className="text-muted-foreground">Manage platform users, verify accounts, and handle suspensions</p></div>
+      <div>
+        <h1 className="font-display text-2xl font-bold mb-1">User Management</h1>
+        <p className="text-muted-foreground">
+          {hasFullAccess 
+            ? "Manage platform users, verify accounts, and handle suspensions"
+            : "Manage users who have joined your campaigns"
+          }
+        </p>
+      </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4 inline-block">
-        <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="w-5 h-5 text-primary" /></div><div><p className="text-sm text-muted-foreground">Total Users</p><p className="font-display text-xl font-bold">{profiles.length}+</p></div></div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {hasFullAccess ? "Total Users" : "My Campaign Members"}
+            </p>
+            <p className="font-display text-xl font-bold">{profiles.length}+</p>
+          </div>
+        </div>
       </motion.div>
 
-      <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+      </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <Table>
-          <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Username</TableHead><TableHead>Verified</TableHead><TableHead>Joined</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Username</TableHead>
+              <TableHead>Verified</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {filteredProfiles.map(p => (
               <TableRow key={p.id}>
@@ -187,9 +280,11 @@ const AdminUsers = () => {
                 <TableCell>{format(new Date(p.created_at), "dd MMM yyyy")}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => handleVerify(p.user_id, p.is_verified)} title={p.is_verified ? "Remove verification" : "Verify user"}>
-                      {p.is_verified ? <Shield className="w-4 h-4 text-success" /> : <CheckCircle className="w-4 h-4" />}
-                    </Button>
+                    {hasFullAccess && (
+                      <Button size="sm" variant="ghost" onClick={() => handleVerify(p.user_id, p.is_verified)} title={p.is_verified ? "Remove verification" : "Verify user"}>
+                        {p.is_verified ? <Shield className="w-4 h-4 text-success" /> : <CheckCircle className="w-4 h-4" />}
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => openViewBansModal(p)} title="View bans">
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -223,49 +318,67 @@ const AdminUsers = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs value={banType} onValueChange={(v) => setBanType(v as "global" | "campaign")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="global" className="flex items-center gap-2">
-                <Globe className="w-4 h-4" />
-                Global Ban
-              </TabsTrigger>
-              <TabsTrigger value="campaign" className="flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Campaign Ban
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="global" className="space-y-4 mt-4">
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm text-destructive font-medium">⚠️ Global Suspension</p>
-                <p className="text-xs text-muted-foreground mt-1">User will be blocked from accessing the entire platform.</p>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="campaign" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Campaigns to Ban From</label>
-                <ScrollArea className="h-[200px] border rounded-lg p-2">
-                  {campaigns.map(campaign => (
-                    <div key={campaign.id} className="flex items-center space-x-2 py-2 px-1 hover:bg-muted/50 rounded">
-                      <Checkbox 
-                        id={campaign.id}
-                        checked={selectedCampaigns.includes(campaign.id)}
-                        onCheckedChange={() => toggleCampaignSelection(campaign.id)}
-                      />
-                      <label htmlFor={campaign.id} className="text-sm cursor-pointer flex-1">{campaign.name}</label>
-                    </div>
-                  ))}
-                  {campaigns.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No campaigns available</p>
+          {hasFullAccess ? (
+            <Tabs value={banType} onValueChange={(v) => setBanType(v as "global" | "campaign")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="global" className="flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Global Ban
+                </TabsTrigger>
+                <TabsTrigger value="campaign" className="flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Campaign Ban
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="global" className="space-y-4 mt-4">
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive font-medium">⚠️ Global Suspension</p>
+                  <p className="text-xs text-muted-foreground mt-1">User will be blocked from accessing the entire platform.</p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="campaign" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Campaigns to Ban From</label>
+                  <ScrollArea className="h-[200px] border rounded-lg p-2">
+                    {campaigns.map(campaign => (
+                      <div key={campaign.id} className="flex items-center space-x-2 py-2 px-1 hover:bg-muted/50 rounded">
+                        <Checkbox 
+                          id={campaign.id}
+                          checked={selectedCampaigns.includes(campaign.id)}
+                          onCheckedChange={() => toggleCampaignSelection(campaign.id)}
+                        />
+                        <label htmlFor={campaign.id} className="text-sm cursor-pointer flex-1">{campaign.name}</label>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                  {selectedCampaigns.length > 0 && (
+                    <p className="text-xs text-muted-foreground">{selectedCampaigns.length} campaign(s) selected</p>
                   )}
-                </ScrollArea>
-                {selectedCampaigns.length > 0 && (
-                  <p className="text-xs text-muted-foreground">{selectedCampaigns.length} campaign(s) selected</p>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+                </div>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Campaigns to Ban From</label>
+              <ScrollArea className="h-[200px] border rounded-lg p-2">
+                {campaigns.map(campaign => (
+                  <div key={campaign.id} className="flex items-center space-x-2 py-2 px-1 hover:bg-muted/50 rounded">
+                    <Checkbox 
+                      id={campaign.id}
+                      checked={selectedCampaigns.includes(campaign.id)}
+                      onCheckedChange={() => toggleCampaignSelection(campaign.id)}
+                    />
+                    <label htmlFor={campaign.id} className="text-sm cursor-pointer flex-1">{campaign.name}</label>
+                  </div>
+                ))}
+              </ScrollArea>
+              {selectedCampaigns.length > 0 && (
+                <p className="text-xs text-muted-foreground">{selectedCampaigns.length} campaign(s) selected</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Reason for Ban *</label>
@@ -282,10 +395,10 @@ const AdminUsers = () => {
             <Button 
               variant="destructive" 
               onClick={handleBan} 
-              disabled={!banReason.trim() || (banType === "campaign" && selectedCampaigns.length === 0)}
+              disabled={!banReason.trim() || (!hasFullAccess && selectedCampaigns.length === 0) || (hasFullAccess && banType === "campaign" && selectedCampaigns.length === 0)}
             >
               <Ban className="w-4 h-4 mr-2" />
-              {banType === "global" ? "Global Ban" : `Ban from ${selectedCampaigns.length} Campaign(s)`}
+              {hasFullAccess && banType === "global" ? "Global Ban" : `Ban from ${selectedCampaigns.length} Campaign(s)`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -332,14 +445,16 @@ const AdminUsers = () => {
                       {format(new Date(suspension.suspended_at), "dd MMM yyyy, HH:mm")}
                     </p>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleLiftBan(suspension.id)}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Lift
-                  </Button>
+                  {(hasFullAccess || (suspension.campaign_id && myCampaignIds.includes(suspension.campaign_id))) && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleLiftBan(suspension.id)}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Lift
+                    </Button>
+                  )}
                 </div>
               ))
             )}

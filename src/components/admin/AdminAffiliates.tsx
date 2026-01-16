@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,19 +28,32 @@ interface Profile {
 }
 
 const AdminAffiliates = () => {
+  const { hasFullAccess, myCampaignIds, loading: accessLoading } = useAdminAccess();
   const [affiliates, setAffiliates] = useState<AffiliateLink[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!accessLoading) fetchData();
+  }, [accessLoading, hasFullAccess, myCampaignIds]);
 
   const fetchData = async () => {
     try {
+      let affiliatesQuery = supabase.from("affiliate_links").select("*").order("created_at", { ascending: false });
+      
+      // Filter for normal admin
+      if (!hasFullAccess && myCampaignIds.length > 0) {
+        affiliatesQuery = affiliatesQuery.in("campaign_id", myCampaignIds);
+      } else if (!hasFullAccess && myCampaignIds.length === 0) {
+        setAffiliates([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
       const [affiliatesRes, profilesRes] = await Promise.all([
-        supabase.from("affiliate_links").select("*").order("created_at", { ascending: false }),
+        affiliatesQuery,
         supabase.from("profiles").select("user_id, username, display_name"),
       ]);
 
@@ -68,10 +82,23 @@ const AdminAffiliates = () => {
     getUsername(a.user_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Empty state for normal admin
+  if (!hasFullAccess && myCampaignIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <Link2 className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Campaigns Yet</h2>
+        <p className="text-muted-foreground max-w-md">
+          Create your first campaign to view affiliate links.
+        </p>
       </div>
     );
   }
@@ -81,7 +108,9 @@ const AdminAffiliates = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Affiliate Management</h1>
-          <p className="text-muted-foreground">View all affiliate links and stats</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "View all affiliate links and stats" : "View affiliate links for your campaigns"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" />

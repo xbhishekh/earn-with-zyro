@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -45,6 +46,7 @@ interface Profile {
 
 const AdminSubmissions = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignIds, loading: accessLoading } = useAdminAccess();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -62,17 +64,30 @@ const AdminSubmissions = () => {
   const [markPaidSubmission, setMarkPaidSubmission] = useState<Submission | null>(null);
 
   useEffect(() => { 
-    fetchData(); 
-  }, [statusFilter]);
+    if (!accessLoading) fetchData(); 
+  }, [statusFilter, accessLoading, hasFullAccess, myCampaignIds]);
 
   const fetchData = async () => {
     try {
-      let query = supabase.from("submissions").select("*").order("created_at", { ascending: false });
-      if (statusFilter !== "all") query = query.eq("status", statusFilter);
+      let submissionsQuery = supabase.from("submissions").select("*").order("created_at", { ascending: false });
+      if (statusFilter !== "all") submissionsQuery = submissionsQuery.eq("status", statusFilter);
+      
+      // Filter by campaigns for normal admin
+      if (!hasFullAccess && myCampaignIds.length > 0) {
+        submissionsQuery = submissionsQuery.in("campaign_id", myCampaignIds);
+      } else if (!hasFullAccess && myCampaignIds.length === 0) {
+        setSubmissions([]);
+        setCampaigns([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
       
       const [submissionsRes, campaignsRes, profilesRes] = await Promise.all([
-        query,
-        supabase.from("campaigns").select("id, name, reward_per_1k_views, min_payout, max_payout, budget_total, budget_spent, status"),
+        submissionsQuery,
+        hasFullAccess 
+          ? supabase.from("campaigns").select("id, name, reward_per_1k_views, min_payout, max_payout, budget_total, budget_spent, status")
+          : supabase.from("campaigns").select("id, name, reward_per_1k_views, min_payout, max_payout, budget_total, budget_spent, status").in("id", myCampaignIds),
         supabase.from("profiles").select("user_id, username, display_name"),
       ]);
 
@@ -99,15 +114,12 @@ const AdminSubmissions = () => {
 
   const calculateEarnings = (views: number, campaign: Campaign): number => {
     let earnings = (views / 1000) * campaign.reward_per_1k_views;
-    
-    // Apply min/max caps
     if (campaign.min_payout && earnings < campaign.min_payout) {
-      earnings = 0; // Below minimum, no payout
+      earnings = 0;
     }
     if (campaign.max_payout && earnings > campaign.max_payout) {
       earnings = campaign.max_payout;
     }
-    
     return earnings;
   };
 
@@ -193,7 +205,6 @@ const AdminSubmissions = () => {
     try {
       const amount = markPaidSubmission.estimated_earnings;
 
-      // 1. Create balance transaction (pending -> available)
       const { error: txError } = await supabase
         .from("balance_transactions")
         .insert({
@@ -210,7 +221,6 @@ const AdminSubmissions = () => {
 
       if (txError) throw txError;
 
-      // 2. Update submission status to paid
       const { error: subError } = await supabase
         .from("submissions")
         .update({ status: "paid" })
@@ -218,11 +228,9 @@ const AdminSubmissions = () => {
 
       if (subError) throw subError;
 
-      // 3. Update campaign budget_spent
       const newBudgetSpent = (campaign.budget_spent || 0) + amount;
       const updateData: any = { budget_spent: newBudgetSpent };
 
-      // 4. Auto-pause campaign if budget depleted
       if (campaign.budget_total && newBudgetSpent >= campaign.budget_total) {
         updateData.status = "paused";
         toast.warning("Campaign auto-paused: Budget depleted");
@@ -235,7 +243,6 @@ const AdminSubmissions = () => {
 
       if (campError) throw campError;
 
-      // 5. Create notification for user
       await supabase.from("notifications").insert({
         user_id: markPaidSubmission.user_id,
         type: "payment_added",
@@ -274,10 +281,23 @@ const AdminSubmissions = () => {
     s.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Empty state for normal admin
+  if (!hasFullAccess && myCampaignIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <CheckCircle className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Campaigns Yet</h2>
+        <p className="text-muted-foreground max-w-md">
+          Create your first campaign to start receiving submissions.
+        </p>
       </div>
     );
   }
@@ -287,7 +307,9 @@ const AdminSubmissions = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Submissions</h1>
-          <p className="text-muted-foreground">Review and manage creator submissions</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Review and manage all submissions" : "Review submissions for your campaigns"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -444,9 +466,7 @@ const AdminSubmissions = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve Submission</DialogTitle>
-            <DialogDescription>
-              Enter the view count to calculate earnings
-            </DialogDescription>
+            <DialogDescription>Enter the view count to calculate earnings</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -471,21 +491,20 @@ const AdminSubmissions = () => {
                 </p>
               </div>
             )}
-            
+
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Admin Notes (Optional)</label>
+              <label className="text-sm text-muted-foreground mb-2 block">Admin Notes (optional)</label>
               <Textarea 
-                placeholder="Add notes..." 
+                placeholder="Add any notes..." 
                 value={adminNotes} 
                 onChange={(e) => setAdminNotes(e.target.value)} 
-                rows={2}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedSubmission(null)}>Cancel</Button>
-            <Button onClick={handleApprove} disabled={actionLoading}>
-              {actionLoading ? "Processing..." : "Approve"}
+            <Button onClick={handleApprove} disabled={actionLoading || !viewsInput}>
+              {actionLoading ? "Approving..." : "Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -495,66 +514,24 @@ const AdminSubmissions = () => {
       <Dialog open={!!markPaidSubmission} onOpenChange={() => setMarkPaidSubmission(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Mark as Paid</DialogTitle>
-            <DialogDescription>
-              This will add the earnings to the user's available balance
-            </DialogDescription>
+            <DialogTitle>Confirm Payment</DialogTitle>
+            <DialogDescription>This will add funds to the user's balance</DialogDescription>
           </DialogHeader>
-          {markPaidSubmission && (
-            <div className="space-y-4 py-4">
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Creator</span>
-                  <span className="font-medium">@{getUsername(markPaidSubmission.user_id)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Views</span>
-                  <span className="font-medium">{markPaidSubmission.views_count?.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Amount</span>
-                  <span className="font-display text-xl font-bold text-green-500">
-                    ₹{markPaidSubmission.estimated_earnings?.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Budget warning */}
-              {(() => {
-                const campaign = getCampaign(markPaidSubmission.campaign_id);
-                if (campaign?.budget_total) {
-                  const newSpent = (campaign.budget_spent || 0) + markPaidSubmission.estimated_earnings;
-                  const percentUsed = (newSpent / campaign.budget_total) * 100;
-                  
-                  if (newSpent >= campaign.budget_total) {
-                    return (
-                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm">
-                        <p className="text-yellow-600 font-medium">⚠️ Budget will be depleted</p>
-                        <p className="text-muted-foreground">
-                          Campaign will be auto-paused after this payment
-                        </p>
-                      </div>
-                    );
-                  } else if (percentUsed > 80) {
-                    return (
-                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm">
-                        <p className="text-yellow-600">
-                          Budget: ₹{newSpent.toLocaleString()} / ₹{campaign.budget_total.toLocaleString()} ({percentUsed.toFixed(0)}% used)
-                        </p>
-                      </div>
-                    );
-                  }
-                }
-                return null;
-              })()}
-            </div>
-          )}
+          <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
+            <p className="text-sm text-muted-foreground">Amount to Pay</p>
+            <p className="font-display text-4xl font-bold text-green-500">
+              ₹{markPaidSubmission?.estimated_earnings?.toLocaleString() || 0}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              to @{markPaidSubmission ? getUsername(markPaidSubmission.user_id) : ""}
+            </p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMarkPaidSubmission(null)}>Cancel</Button>
             <Button 
+              className="bg-green-500 hover:bg-green-600" 
               onClick={handleMarkPaid} 
               disabled={actionLoading}
-              className="bg-green-500 hover:bg-green-600"
             >
               {actionLoading ? "Processing..." : "Confirm Payment"}
             </Button>
