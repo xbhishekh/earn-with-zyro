@@ -401,18 +401,55 @@ const Messages = () => {
     if (!user) return;
 
     try {
+      // First close modal and reset search state
+      setShowUserSearch(false);
+      setUserSearchQuery("");
+      setSearchResults([]);
+
+      // Check existing conversations
       const existingConvo = conversations.find(
         c => c.other_user.user_id === otherUser.user_id
       );
 
       if (existingConvo) {
         setSelectedConversation(existingConvo);
-        setShowUserSearch(false);
-        setUserSearchQuery("");
-        setSearchResults([]);
+        toast.success(`Chat with ${otherUser.display_name || otherUser.username} opened`);
         return;
       }
 
+      // Check if room already exists in database
+      const { data: myRooms } = await supabase
+        .from("dm_participants")
+        .select("room_id")
+        .eq("user_id", user.id);
+
+      if (myRooms && myRooms.length > 0) {
+        const roomIds = myRooms.map(r => r.room_id);
+        const { data: existingParticipant } = await supabase
+          .from("dm_participants")
+          .select("room_id")
+          .in("room_id", roomIds)
+          .eq("user_id", otherUser.user_id)
+          .maybeSingle();
+
+        if (existingParticipant) {
+          // Room exists, just add to conversations and select
+          const newConvo: Conversation = {
+            room_id: existingParticipant.room_id,
+            other_user: otherUser,
+            unread_count: 0,
+          };
+          setConversations(prev => {
+            if (prev.some(c => c.room_id === newConvo.room_id)) return prev;
+            return [newConvo, ...prev];
+          });
+          setSelectedConversation(newConvo);
+          toast.success(`Chat with ${otherUser.display_name || otherUser.username} opened`);
+          return;
+        }
+      }
+
+      // Create new room
       const { data: room, error: roomError } = await supabase
         .from("chat_rooms")
         .insert({ type: "dm", name: null })
@@ -438,9 +475,7 @@ const Messages = () => {
 
       setConversations(prev => [newConvo, ...prev]);
       setSelectedConversation(newConvo);
-      setShowUserSearch(false);
-      setUserSearchQuery("");
-      setSearchResults([]);
+      toast.success(`Started chat with ${otherUser.display_name || otherUser.username}`);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start conversation");
