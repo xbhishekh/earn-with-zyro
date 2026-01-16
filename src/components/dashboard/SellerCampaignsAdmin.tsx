@@ -315,7 +315,7 @@ const SellerCampaignsAdmin = () => {
 
       if (error) throw error;
 
-      toast.success(`Approved! Estimated earnings: ₹${earnings.toLocaleString()}`);
+      toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
       setApproveSubmission(null);
       setViewsInput("");
       setAdminNotes("");
@@ -400,7 +400,7 @@ const SellerCampaignsAdmin = () => {
         user_id: markPaidSubmission.user_id,
         type: "payment_added",
         title: "Payment Added!",
-        message: `₹${amount.toLocaleString()} has been added to your available balance.`,
+        message: `$${amount.toLocaleString()} has been added to your available balance.`,
         metadata: {
           amount,
           campaign_id: selectedCampaign.id,
@@ -408,7 +408,7 @@ const SellerCampaignsAdmin = () => {
         },
       });
 
-      toast.success(`Marked paid! ₹${amount.toLocaleString()} added to user's balance`);
+      toast.success(`Marked paid! $${amount.toLocaleString()} added to user's balance`);
       setMarkPaidSubmission(null);
       fetchSubmissions();
       fetchMyCampaigns(); // Refresh budget
@@ -498,7 +498,7 @@ const SellerCampaignsAdmin = () => {
   const exportSubmissionsCSV = () => {
     if (filteredSubmissions.length === 0) return;
     
-    const headers = ["Creator", "Video URL", "Status", "Views", "Earnings (₹)", "Date", "Notes"];
+    const headers = ["Creator", "Video URL", "Status", "Views", "Earnings ($)", "Date", "Notes"];
     const rows = filteredSubmissions.map(s => [
       `@${s.username || "unknown"}`,
       s.video_url,
@@ -628,9 +628,9 @@ const SellerCampaignsAdmin = () => {
                 <span className="text-sm text-green-500">Budget</span>
               </div>
               <p className="font-display text-xl font-bold">
-                ₹{(selectedCampaign.budget_spent || 0).toLocaleString()}
+                ${(selectedCampaign.budget_spent || 0).toLocaleString()}
                 <span className="text-sm text-muted-foreground font-normal">
-                  /{selectedCampaign.budget_total ? `₹${selectedCampaign.budget_total.toLocaleString()}` : "∞"}
+                  /{selectedCampaign.budget_total ? `$${selectedCampaign.budget_total.toLocaleString()}` : "∞"}
                 </span>
               </p>
             </div>
@@ -733,7 +733,7 @@ const SellerCampaignsAdmin = () => {
                             {s.views_count?.toLocaleString() || "-"}
                           </TableCell>
                           <TableCell className="text-right font-mono font-medium">
-                            {s.estimated_earnings ? `₹${s.estimated_earnings.toLocaleString()}` : "-"}
+                            {s.estimated_earnings ? `$${s.estimated_earnings.toLocaleString()}` : "-"}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
@@ -932,7 +932,7 @@ const SellerCampaignsAdmin = () => {
               {viewsInput && selectedCampaign && (
                 <p className="text-sm text-muted-foreground mt-2">
                   Estimated earnings: <span className="text-primary font-medium">
-                    ₹{calculateEarnings(parseInt(viewsInput) || 0).toLocaleString()}
+                    ${calculateEarnings(parseInt(viewsInput) || 0).toLocaleString()}
                   </span>
                 </p>
               )}
@@ -965,7 +965,7 @@ const SellerCampaignsAdmin = () => {
           <DialogHeader>
             <DialogTitle>Confirm Payment</DialogTitle>
             <DialogDescription>
-              This will add ₹{markPaidSubmission?.estimated_earnings?.toLocaleString() || 0} to the creator's available balance.
+              This will add ${markPaidSubmission?.estimated_earnings?.toLocaleString() || 0} to the creator's available balance.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

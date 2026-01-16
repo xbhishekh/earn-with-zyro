@@ -682,10 +682,10 @@ const MarketplaceProductDetail = () => {
                 {appliedDiscount ? (
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-bold text-green-600">
-                      ₹{getDiscountedPrice().toLocaleString()}
+                      ${getDiscountedPrice().toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground line-through">
-                      ₹{product.price.toLocaleString()}
+                      ${product.price.toLocaleString()}
                     </p>
                   </div>
                 ) : (
@@ -713,7 +713,7 @@ const MarketplaceProductDetail = () => {
                     <Badge variant="secondary" className="text-green-600">
                       {appliedDiscount.discount_type === "percentage" 
                         ? `-${appliedDiscount.discount_value}%`
-                        : `-₹${appliedDiscount.discount_value}`}
+                        : `-$${appliedDiscount.discount_value}`}
                     </Badge>
                   </div>
                   <Button 
@@ -758,15 +758,15 @@ const MarketplaceProductDetail = () => {
               <div className="mb-4 p-3 bg-muted/50 rounded-lg space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Original Price</span>
-                  <span>₹{product.price.toLocaleString()}</span>
+                  <span>${product.price.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-green-600">
                   <span>Discount ({appliedDiscount.code})</span>
-                  <span>-₹{getDiscountAmount().toLocaleString()}</span>
+                  <span>-${getDiscountAmount().toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-bold pt-1 border-t">
                   <span>Total</span>
-                  <span>₹{getDiscountedPrice().toLocaleString()}</span>
+                  <span>${getDiscountedPrice().toLocaleString()}</span>
                 </div>
               </div>
             )}
@@ -784,7 +784,7 @@ const MarketplaceProductDetail = () => {
                 <div className="text-left flex-1">
                   <p className="font-medium">Pay with Balance</p>
                   <p className="text-sm text-muted-foreground">
-                    Available: ₹{userBalance.toLocaleString()}
+                    Available: ${userBalance.toLocaleString()}
                   </p>
                 </div>
                 {userBalance < getDiscountedPrice() && (

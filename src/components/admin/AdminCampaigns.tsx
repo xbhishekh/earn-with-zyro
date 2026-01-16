@@ -327,7 +327,7 @@ const AdminCampaigns = () => {
               <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <DollarSign className="w-4 h-4" />
-                  ₹{campaign.reward_per_1k_views}/1K
+                  ${campaign.reward_per_1k_views}/1K
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <Eye className="w-4 h-4" />
@@ -339,7 +339,7 @@ const AdminCampaigns = () => {
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="text-muted-foreground">Budget</span>
                     <span className="font-medium">
-                      ₹{(campaign.budget_spent || 0).toLocaleString()} / ₹{campaign.budget_total.toLocaleString()}
+                      ${(campaign.budget_spent || 0).toLocaleString()} / ${campaign.budget_total.toLocaleString()}
                     </span>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -416,7 +416,7 @@ const AdminCampaigns = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Reward per 1K Views (₹)</label>
+                <label className="text-sm text-muted-foreground mb-2 block">Reward per 1K Views ($)</label>
                 <Input
                   type="number"
                   placeholder="10"
@@ -425,7 +425,7 @@ const AdminCampaigns = () => {
                 />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Min Payout (₹)</label>
+                <label className="text-sm text-muted-foreground mb-2 block">Min Payout ($)</label>
                 <Input
                   type="number"
                   placeholder="100"
@@ -436,7 +436,7 @@ const AdminCampaigns = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Max Payout (₹)</label>
+                <label className="text-sm text-muted-foreground mb-2 block">Max Payout ($)</label>
                 <Input
                   type="number"
                   placeholder="1000"
@@ -445,7 +445,7 @@ const AdminCampaigns = () => {
                 />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Total Budget (₹)</label>
+                <label className="text-sm text-muted-foreground mb-2 block">Total Budget ($)</label>
                 <Input
                   type="number"
                   placeholder="10000"
@@ -459,12 +459,12 @@ const AdminCampaigns = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-medium block">Budget Spent</label>
-                    <p className="text-2xl font-bold text-primary">₹{formData.budget_spent.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-primary">${formData.budget_spent.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <label className="text-sm text-muted-foreground block">Remaining</label>
                     <p className="text-lg font-semibold text-success">
-                      ₹{(formData.budget_total - formData.budget_spent).toLocaleString()}
+                      ${(formData.budget_total - formData.budget_spent).toLocaleString()}
                     </p>
                   </div>
                 </div>
