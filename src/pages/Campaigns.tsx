@@ -72,10 +72,13 @@ const Campaigns = () => {
 
   const fetchCampaigns = async () => {
     try {
-      // Single query to get all campaigns
+      // Fetch campaigns with creator profile in single query using join
       const { data: campaignsData, error } = await supabase
         .from("campaigns")
-        .select("*")
+        .select(`
+          *,
+          profiles:created_by (display_name, avatar_url)
+        `)
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
@@ -86,77 +89,46 @@ const Campaigns = () => {
         return;
       }
 
-      // Get unique creator IDs
-      const creatorIds = [...new Set(campaignsData.map(c => c.created_by).filter(Boolean))];
       const campaignIds = campaignsData.map(c => c.id);
 
-      // Batch fetch all related data in parallel
-      const [profilesRes, submissionsRes, membersRes, bansRes, waitlistRes] = await Promise.all([
-        // Fetch all creator profiles at once
-        creatorIds.length > 0 
-          ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", creatorIds)
-          : Promise.resolve({ data: [] }),
-        
-        // Fetch all submissions for all campaigns at once
-        supabase.from("submissions").select("campaign_id, status, views_count").in("campaign_id", campaignIds),
-        
-        // User-specific queries (only if logged in)
-        user 
-          ? supabase.from("campaign_members").select("campaign_id").eq("user_id", user.id).in("campaign_id", campaignIds)
-          : Promise.resolve({ data: [] }),
-        
-        user
-          ? supabase.from("user_suspensions").select("campaign_id, reason").eq("user_id", user.id).eq("is_active", true).in("campaign_id", campaignIds)
-          : Promise.resolve({ data: [] }),
-        
-        user
-          ? supabase.from("campaign_waitlist_requests").select("campaign_id, status").eq("user_id", user.id).in("campaign_id", campaignIds)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      // Create lookup maps for O(1) access
-      const profilesMap = new Map(
-        (profilesRes.data || []).map(p => [p.user_id, p])
-      );
+      // Show campaigns immediately with basic data (fast first paint)
+      const initialCampaigns = campaignsData.map(campaign => ({
+        ...campaign,
+        creator_name: (campaign.profiles as any)?.display_name || "Zyrozo",
+        creator_avatar: (campaign.profiles as any)?.avatar_url || null,
+        stats: { total_submissions: 0, approved_submissions: 0, total_views: 0 },
+        isMember: false,
+        isBanned: false,
+        banReason: null,
+        waitlistStatus: null,
+      }));
       
-      const submissionsMap = new Map<string, { total: number; approved: number; views: number }>();
-      (submissionsRes.data || []).forEach(s => {
-        const existing = submissionsMap.get(s.campaign_id) || { total: 0, approved: 0, views: 0 };
-        existing.total++;
-        if (s.status === "approved" || s.status === "paid") existing.approved++;
-        existing.views += s.views_count || 0;
-        submissionsMap.set(s.campaign_id, existing);
-      });
+      setCampaigns(initialCampaigns);
+      setLoading(false);
 
-      const membersSet = new Set((membersRes.data || []).map(m => m.campaign_id));
-      const bansMap = new Map((bansRes.data || []).map(b => [b.campaign_id, b.reason]));
-      const waitlistMap = new Map((waitlistRes.data || []).map(w => [w.campaign_id, w.status]));
+      // Fetch user-specific data in background (only essential for logged-in users)
+      if (user) {
+        const [membersRes, bansRes, waitlistRes] = await Promise.all([
+          supabase.from("campaign_members").select("campaign_id").eq("user_id", user.id).in("campaign_id", campaignIds),
+          supabase.from("user_suspensions").select("campaign_id, reason").eq("user_id", user.id).eq("is_active", true).in("campaign_id", campaignIds),
+          supabase.from("campaign_waitlist_requests").select("campaign_id, status").eq("user_id", user.id).in("campaign_id", campaignIds),
+        ]);
 
-      // Build final campaigns array with all data
-      const campaignsWithData = campaignsData.map(campaign => {
-        const profile = campaign.created_by ? profilesMap.get(campaign.created_by) : null;
-        const stats = submissionsMap.get(campaign.id) || { total: 0, approved: 0, views: 0 };
-        
-        return {
+        const membersSet = new Set((membersRes.data || []).map(m => m.campaign_id));
+        const bansMap = new Map((bansRes.data || []).map(b => [b.campaign_id, b.reason]));
+        const waitlistMap = new Map((waitlistRes.data || []).map(w => [w.campaign_id, w.status]));
+
+        // Update with user-specific status
+        setCampaigns(prev => prev.map(campaign => ({
           ...campaign,
-          creator_name: profile?.display_name || "Zyrozo",
-          creator_avatar: profile?.avatar_url || null,
-          stats: {
-            total_submissions: stats.total,
-            approved_submissions: stats.approved,
-            total_views: stats.views,
-          },
           isMember: membersSet.has(campaign.id),
           isBanned: bansMap.has(campaign.id),
           banReason: bansMap.get(campaign.id) || null,
           waitlistStatus: waitlistMap.get(campaign.id) || null,
-        };
-      });
-      
-      setCampaigns(campaignsWithData);
+        })));
+      }
     } catch (error) {
       console.error("Error fetching campaigns:", error);
-    } finally {
       setLoading(false);
     }
   };
