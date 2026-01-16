@@ -52,6 +52,7 @@ import AdminLegalPages from "@/components/admin/AdminLegalPages";
 import AdminCompanyPages from "@/components/admin/AdminCompanyPages";
 import AdminFAQs from "@/components/admin/AdminFAQs";
 import AdminEmailBroadcast from "@/components/admin/AdminEmailBroadcast";
+import AdminMarketplace from "@/components/admin/AdminMarketplace";
 
 interface Tab {
   id: string;
@@ -66,6 +67,7 @@ const tabs: Tab[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3, component: AdminAnalytics },
   { id: "submissions", label: "Submissions", icon: Video, component: AdminSubmissions },
   { id: "campaigns", label: "Campaigns", icon: Video, component: AdminCampaigns },
+  { id: "marketplace", label: "Marketplace", icon: DollarSign, component: AdminMarketplace },
   { id: "verifications", label: "Verifications", icon: Link2, component: AdminVerifications },
   { id: "announcements", label: "Announcements", icon: Megaphone, component: AdminAnnouncements },
   { id: "withdrawals", label: "Withdrawals", icon: Wallet, component: AdminWithdrawals },

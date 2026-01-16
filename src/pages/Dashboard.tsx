@@ -20,7 +20,8 @@ import {
   Star,
   Users,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationsBell from "@/components/NotificationsBell";
+import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 
 interface DashboardStats {
   totalEarnings: number;
@@ -448,6 +450,18 @@ const Dashboard = () => {
             </div>
           )}
         </motion.div>
+
+        {/* Seller Analytics Section */}
+        {myProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="glass-card rounded-2xl p-6 mb-8"
+          >
+            <SellerAnalytics />
+          </motion.div>
+        )}
 
         {/* Empty State for Submissions */}
         {stats.totalSubmissions === 0 && (
