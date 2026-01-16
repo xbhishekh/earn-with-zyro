@@ -6,6 +6,7 @@ import {
   Wrench, Crown, MessageSquare, FileText, Package,
   Loader2, X
 } from "lucide-react";
+import { ProductCardSkeleton, FeaturedProductSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -399,8 +400,10 @@ const Marketplace = () => {
 
           {/* Products Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-20">

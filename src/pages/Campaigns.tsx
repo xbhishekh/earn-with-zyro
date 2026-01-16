@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, CheckCircle, Ban, Clock, Loader2 } from "lucide-react";
+import { CampaignCardSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -326,8 +327,10 @@ const Campaigns = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <CampaignCardSkeleton key={i} />
+              ))}
             </div>
           ) : filteredCampaigns.length === 0 ? (
             <div className="text-center py-16">
