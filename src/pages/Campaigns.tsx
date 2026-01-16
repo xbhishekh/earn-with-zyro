@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { AvatarImageOptimized } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -376,14 +377,14 @@ const Campaigns = () => {
                       <Link to={`/campaigns/${campaign.id}`} className="block">
                         <div className="p-4 flex items-start justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                              {campaign.creator_avatar ? (
-                                <img src={campaign.creator_avatar} alt="" className="w-full h-full object-cover" />
-                              ) : campaign.thumbnail_url ? (
-                                <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-white font-bold text-lg">{campaign.name.charAt(0)}</span>
-                              )}
+                            <div className="w-12 h-12 rounded-xl overflow-hidden">
+                              <AvatarImageOptimized
+                                src={campaign.creator_avatar || campaign.thumbnail_url}
+                                alt={campaign.name}
+                                size="lg"
+                                fallbackInitial={campaign.name.charAt(0)}
+                                className="w-12 h-12 rounded-xl"
+                              />
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                               <Badge variant="outline" className="text-xs">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
