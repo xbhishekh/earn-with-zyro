@@ -50,6 +50,7 @@ import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
 import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
 import AccountSwitcher from "@/components/profile/AccountSwitcher";
 import PayUserModal from "@/components/profile/PayUserModal";
+import TransactionHistory from "@/components/profile/TransactionHistory";
 
 interface ProfileData {
   id: string;
@@ -807,6 +808,9 @@ const Profile = () => {
                   </div>
                   <span className="text-sm font-medium text-primary">₹{availableBalance.toLocaleString()} available</span>
                 </Button>
+
+                {/* Transaction History */}
+                <TransactionHistory userId={user?.id || ""} />
 
                 {/* Account Switcher */}
                 <AccountSwitcher

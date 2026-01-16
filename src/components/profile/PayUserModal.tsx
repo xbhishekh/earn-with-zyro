@@ -27,6 +27,7 @@ interface PayUserModalProps {
   currentUserId: string;
   availableBalance: number;
   onSuccess: () => void;
+  preselectedUser?: UserProfile | null;
 }
 
 export const PayUserModal = ({
@@ -35,14 +36,22 @@ export const PayUserModal = ({
   currentUserId,
   availableBalance,
   onSuccess,
+  preselectedUser,
 }: PayUserModalProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(preselectedUser || null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
+
+  // Set preselected user when modal opens
+  useEffect(() => {
+    if (open && preselectedUser) {
+      setSelectedUser(preselectedUser);
+    }
+  }, [open, preselectedUser]);
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
