@@ -106,11 +106,13 @@ const SellerCampaignsAdmin = () => {
   const [waitlistRequests, setWaitlistRequests] = useState<WaitlistRequest[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
 
-  // Approve modal
+  // Approve/Update Views modal
   const [approveSubmission, setApproveSubmission] = useState<Submission | null>(null);
   const [viewsInput, setViewsInput] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [updateMode, setUpdateMode] = useState<"approve" | "update">("approve");
+  const [markPaidAfterUpdate, setMarkPaidAfterUpdate] = useState(false);
 
   // Mark Paid modal
   const [markPaidSubmission, setMarkPaidSubmission] = useState<Submission | null>(null);
@@ -286,7 +288,7 @@ const SellerCampaignsAdmin = () => {
     return earnings;
   };
 
-  const handleApproveSubmission = async () => {
+  const handleApproveOrUpdateSubmission = async () => {
     if (!approveSubmission || !viewsInput) {
       toast.error("Enter views count");
       return;
@@ -300,14 +302,15 @@ const SellerCampaignsAdmin = () => {
     setActionLoading(true);
     try {
       const earnings = calculateEarnings(views);
+      const isUpdate = updateMode === "update";
 
       const { error } = await supabase
         .from("submissions")
         .update({
-          status: "approved",
+          status: isUpdate ? approveSubmission.status : "approved",
           views_count: views,
           estimated_earnings: earnings,
-          admin_notes: adminNotes || null,
+          admin_notes: adminNotes || approveSubmission.admin_notes || null,
           reviewed_at: new Date().toISOString(),
           reviewed_by: user?.id,
         })
@@ -315,14 +318,67 @@ const SellerCampaignsAdmin = () => {
 
       if (error) throw error;
 
-      toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
+      // If updating views for approved submission, add to pending balance
+      if (isUpdate && approveSubmission.status === "approved" && selectedCampaign) {
+        const { error: txError } = await supabase
+          .from("balance_transactions")
+          .insert({
+            user_id: approveSubmission.user_id,
+            amount: earnings,
+            type: "pending_payout",
+            status: markPaidAfterUpdate ? "available" : "pending",
+            campaign_id: approveSubmission.campaign_id,
+            submission_id: approveSubmission.id,
+            processed_by: user?.id,
+            processed_at: new Date().toISOString(),
+            notes: `Views update: ${views.toLocaleString()} views`,
+          });
+
+        if (txError) throw txError;
+
+        // Update campaign budget
+        const newBudgetSpent = (selectedCampaign.budget_spent || 0) + earnings;
+        const updateData: any = { budget_spent: newBudgetSpent };
+
+        if (selectedCampaign.budget_total && newBudgetSpent >= selectedCampaign.budget_total) {
+          updateData.status = "paused";
+          toast.warning("Campaign auto-paused: Budget depleted");
+        }
+
+        await supabase.from("campaigns").update(updateData).eq("id", selectedCampaign.id);
+
+        // Mark submission as paid
+        await supabase.from("submissions").update({ status: "paid" }).eq("id", approveSubmission.id);
+
+        // Create notification
+        await supabase.from("notifications").insert({
+          user_id: approveSubmission.user_id,
+          type: markPaidAfterUpdate ? "payment_available" : "payment_pending",
+          title: markPaidAfterUpdate ? "Payment Available!" : "Earnings Added to Pending!",
+          message: markPaidAfterUpdate 
+            ? `$${earnings.toLocaleString()} is now available in your balance.`
+            : `$${earnings.toLocaleString()} has been added to your pending balance.`,
+          metadata: { amount: earnings, views, campaign_id: selectedCampaign.id },
+        });
+
+        toast.success(markPaidAfterUpdate 
+          ? `Updated & Paid! $${earnings.toLocaleString()} added to available balance`
+          : `Updated! $${earnings.toLocaleString()} added to pending balance`);
+        
+        fetchMyCampaigns();
+      } else {
+        toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
+      }
+
       setApproveSubmission(null);
       setViewsInput("");
       setAdminNotes("");
+      setMarkPaidAfterUpdate(false);
+      setUpdateMode("approve");
       fetchSubmissions();
     } catch (error) {
-      console.error("Error approving:", error);
-      toast.error("Failed to approve submission");
+      console.error("Error:", error);
+      toast.error(updateMode === "update" ? "Failed to update views" : "Failed to approve submission");
     } finally {
       setActionLoading(false);
     }
@@ -747,6 +803,8 @@ const SellerCampaignsAdmin = () => {
                                       setApproveSubmission(s);
                                       setViewsInput("");
                                       setAdminNotes("");
+                                      setUpdateMode("approve");
+                                      setMarkPaidAfterUpdate(false);
                                     }}
                                   >
                                     <CheckCircle className="w-4 h-4" />
@@ -762,14 +820,48 @@ const SellerCampaignsAdmin = () => {
                                 </>
                               )}
                               {s.status === "approved" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-500 border-blue-500/50"
+                                    onClick={() => {
+                                      setApproveSubmission(s);
+                                      setViewsInput(s.views_count?.toString() || "");
+                                      setAdminNotes(s.admin_notes || "");
+                                      setUpdateMode("update");
+                                      setMarkPaidAfterUpdate(false);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Update
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    className="bg-green-500 hover:bg-green-600"
+                                    onClick={() => setMarkPaidSubmission(s)}
+                                  >
+                                    <DollarSign className="w-4 h-4 mr-1" />
+                                    Pay
+                                  </Button>
+                                </>
+                              )}
+                              {s.status === "paid" && (
                                 <Button
                                   size="sm"
-                                  variant="default"
-                                  className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => setMarkPaidSubmission(s)}
+                                  variant="outline"
+                                  className="text-blue-500 border-blue-500/50"
+                                  onClick={() => {
+                                    setApproveSubmission(s);
+                                    setViewsInput(s.views_count?.toString() || "");
+                                    setAdminNotes(s.admin_notes || "");
+                                    setUpdateMode("update");
+                                    setMarkPaidAfterUpdate(false);
+                                  }}
                                 >
-                                  <DollarSign className="w-4 h-4 mr-1" />
-                                  Pay
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Update
                                 </Button>
                               )}
                             </div>
@@ -911,13 +1003,15 @@ const SellerCampaignsAdmin = () => {
         </>
       )}
 
-      {/* Approve Modal */}
-      <Dialog open={!!approveSubmission} onOpenChange={() => setApproveSubmission(null)}>
+      {/* Approve/Update Views Modal */}
+      <Dialog open={!!approveSubmission} onOpenChange={() => { setApproveSubmission(null); setUpdateMode("approve"); setMarkPaidAfterUpdate(false); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Submission</DialogTitle>
+            <DialogTitle>{updateMode === "update" ? "Update Views" : "Approve Submission"}</DialogTitle>
             <DialogDescription>
-              Enter the verified view count for this submission.
+              {updateMode === "update" 
+                ? "Update views to recalculate earnings → adds to pending balance" 
+                : "Enter the verified view count for this submission."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -930,13 +1024,29 @@ const SellerCampaignsAdmin = () => {
                 onChange={(e) => setViewsInput(e.target.value)}
               />
               {viewsInput && selectedCampaign && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Estimated earnings: <span className="text-primary font-medium">
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg mt-2">
+                  <p className="text-sm text-muted-foreground">
+                    {updateMode === "update" ? "Earnings (→ Pending Balance)" : "Estimated earnings"}
+                  </p>
+                  <p className="text-lg font-bold text-green-500">
                     ${calculateEarnings(parseInt(viewsInput) || 0).toLocaleString()}
-                  </span>
-                </p>
+                  </p>
+                </div>
               )}
             </div>
+
+            {updateMode === "update" && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={markPaidAfterUpdate}
+                  onChange={(e) => setMarkPaidAfterUpdate(e.target.checked)}
+                  className="w-4 h-4 rounded border-border"
+                />
+                <span className="text-sm">Also move to Available Balance (Mark Paid)</span>
+              </label>
+            )}
+
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Notes (optional)</label>
               <Textarea
@@ -948,12 +1058,14 @@ const SellerCampaignsAdmin = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveSubmission(null)}>
+            <Button variant="outline" onClick={() => { setApproveSubmission(null); setUpdateMode("approve"); setMarkPaidAfterUpdate(false); }}>
               Cancel
             </Button>
-            <Button onClick={handleApproveSubmission} disabled={actionLoading}>
+            <Button onClick={handleApproveOrUpdateSubmission} disabled={actionLoading}>
               {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Approve
+              {updateMode === "update" 
+                ? (markPaidAfterUpdate ? "Update & Pay" : "Update Views") 
+                : "Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>
