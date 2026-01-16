@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, Mail, Clock, RefreshCw, Trash2, Building2, Loader2 } from "lucide-react";
+import { UserPlus, Mail, RefreshCw, Trash2, Building2, Loader2, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,14 +32,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 
-interface Invite {
+interface AdminEntry {
   id: string;
   email: string;
-  invite_code: string;
   invite_type: string;
   status: string;
-  expires_at: string;
   created_at: string;
+  accepted_at: string | null;
 }
 
 interface Campaign {
@@ -49,7 +48,7 @@ interface Campaign {
 
 const AdminInvites = () => {
   const { user } = useAuth();
-  const [invites, setInvites] = useState<Invite[]>([]);
+  const [admins, setAdmins] = useState<AdminEntry[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +65,7 @@ const AdminInvites = () => {
 
   const fetchData = async () => {
     try {
-      const [invitesRes, campaignsRes] = await Promise.all([
+      const [adminsRes, campaignsRes] = await Promise.all([
         supabase
           .from("admin_invites")
           .select("*")
@@ -77,10 +76,10 @@ const AdminInvites = () => {
           .order("name", { ascending: true }),
       ]);
 
-      if (invitesRes.error) throw invitesRes.error;
+      if (adminsRes.error) throw adminsRes.error;
       if (campaignsRes.error) throw campaignsRes.error;
       
-      setInvites(invitesRes.data || []);
+      setAdmins(adminsRes.data || []);
       setCampaigns(campaignsRes.data || []);
     } catch (error) {
       console.error("Error:", error);
@@ -107,63 +106,77 @@ const AdminInvites = () => {
       return;
     }
 
+    // Check if email already exists in admin list
+    const existingAdmin = admins.find(a => a.email.toLowerCase() === formData.email.toLowerCase());
+    if (existingAdmin) {
+      toast.error("This email is already in the admin list");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // Generate a simple code (not used for verification, just for tracking)
       const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       
-      // Create the invite
+      // Create the admin entry
       const { data: inviteData, error: inviteError } = await supabase.from("admin_invites").insert({
         email: formData.email,
         invite_code: inviteCode,
         invite_type: formData.invite_type as "normal_admin" | "admin" | "super_admin",
         invited_by: user?.id!,
-        expires_at: expiresAt,
+        status: 'pending',
       }).select().single();
 
       if (inviteError) throw inviteError;
 
-      // If normal_admin, store campaign assignments (will be applied when user signs up)
-      // We'll store this in local storage temporarily and process it when the user accepts
-      if (formData.invite_type === "normal_admin" && formData.selected_campaigns.length > 0) {
-        // Store pending assignments in a separate table or use invite metadata
-        // For now, we'll create placeholders that will be filled with actual user_id upon signup
-        const pendingAssignments = formData.selected_campaigns.map(campaignId => ({
-          invite_id: inviteData.id,
-          campaign_id: campaignId,
-          assigned_by: user?.id!,
-        }));
+      // Try to assign role immediately if user already exists
+      const { data: assignResultRaw, error: assignError } = await supabase.rpc(
+        'assign_admin_role_if_user_exists',
+        {
+          invite_email: formData.email,
+          invite_type: formData.invite_type,
+          invited_by_user: user?.id!,
+        }
+      );
 
-        // Store in localStorage with invite code as key (will be retrieved during signup)
-        const existingAssignments = JSON.parse(localStorage.getItem('pending_campaign_assignments') || '{}');
-        existingAssignments[inviteCode] = {
-          campaigns: formData.selected_campaigns,
-          assigned_by: user?.id,
-        };
-        localStorage.setItem('pending_campaign_assignments', JSON.stringify(existingAssignments));
+      if (assignError) {
+        console.error("Error checking user:", assignError);
       }
 
-      // Send email notification
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const response = await supabase.functions.invoke('send-admin-invite', {
-          body: {
-            email: formData.email,
-            invite_code: inviteCode,
-            invite_type: formData.invite_type,
-            expires_at: expiresAt,
-          },
-        });
+      // Parse the result safely
+      const assignResult = assignResultRaw as { user_exists?: boolean; user_id?: string; message?: string } | null;
 
-        if (response.error) {
-          console.error("Email notification failed:", response.error);
-          toast.warning("Invite created but email notification failed");
-        } else {
-          toast.success(`Invite sent to ${formData.email}`);
+      // If user exists and role was assigned, update invite status
+      if (assignResult?.user_exists && assignResult?.user_id) {
+        await supabase
+          .from("admin_invites")
+          .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+          .eq("id", inviteData.id);
+
+        // If normal_admin, create campaign assignments
+        if (formData.invite_type === "normal_admin" && formData.selected_campaigns.length > 0) {
+          const assignments = formData.selected_campaigns.map(campaignId => ({
+            admin_user_id: assignResult.user_id!,
+            campaign_id: campaignId,
+            assigned_by: user?.id!,
+          }));
+
+          await supabase.from("admin_campaign_assignments").insert(assignments);
         }
-      } catch (emailError) {
-        console.error("Email notification error:", emailError);
-        toast.success(`Invite created! Code: ${inviteCode} (Email notification failed)`);
+
+        toast.success(`${formData.email} is now an admin! They can access the admin panel immediately.`);
+      } else {
+        // User doesn't exist yet, store pending campaign assignments
+        if (formData.invite_type === "normal_admin" && formData.selected_campaigns.length > 0) {
+          const existingAssignments = JSON.parse(localStorage.getItem('pending_campaign_assignments') || '{}');
+          existingAssignments[formData.email.toLowerCase()] = {
+            campaigns: formData.selected_campaigns,
+            assigned_by: user?.id,
+          };
+          localStorage.setItem('pending_campaign_assignments', JSON.stringify(existingAssignments));
+        }
+
+        toast.success(`${formData.email} added. They'll become admin when they sign up.`);
       }
       
       setIsModalOpen(false);
@@ -171,22 +184,22 @@ const AdminInvites = () => {
       fetchData();
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error.message || "Failed to create invite");
+      toast.error(error.message || "Failed to add admin");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this invite?")) return;
+  const handleDelete = async (id: string, email: string) => {
+    if (!confirm(`Remove ${email} from admin list?`)) return;
     
     try {
       const { error } = await supabase.from("admin_invites").delete().eq("id", id);
       if (error) throw error;
-      toast.success("Deleted");
+      toast.success("Removed from admin list");
       fetchData();
     } catch (error) {
-      toast.error("Failed to delete");
+      toast.error("Failed to remove");
     }
   };
 
@@ -199,18 +212,22 @@ const AdminInvites = () => {
     }));
   };
 
-  const getStatusBadge = (status: string, expiresAt: string) => {
-    const isExpired = new Date(expiresAt) < new Date();
-    if (isExpired && status === "pending") {
-      return <Badge variant="outline" className="text-destructive border-destructive">Expired</Badge>;
-    }
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="text-warning border-warning">Pending</Badge>;
+        return (
+          <Badge variant="outline" className="text-warning border-warning">
+            <Clock className="w-3 h-3 mr-1" />
+            Waiting for Signup
+          </Badge>
+        );
       case "accepted":
-        return <Badge variant="outline" className="text-success border-success">Accepted</Badge>;
-      case "expired":
-        return <Badge variant="outline" className="text-destructive border-destructive">Expired</Badge>;
+        return (
+          <Badge variant="outline" className="text-success border-success">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Active Admin
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -241,8 +258,8 @@ const AdminInvites = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold mb-1">Admin Invites</h1>
-          <p className="text-muted-foreground">Invite new administrators to the platform</p>
+          <h1 className="font-display text-2xl font-bold mb-1">Manage Admins</h1>
+          <p className="text-muted-foreground">Add or remove platform administrators</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchData}>
@@ -251,26 +268,26 @@ const AdminInvites = () => {
           </Button>
           <Button onClick={() => setIsModalOpen(true)}>
             <UserPlus className="w-4 h-4 mr-2" />
-            Invite Admin
+            Add Admin
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <p className="text-sm text-muted-foreground">Total Invites</p>
-          <p className="font-display text-2xl font-bold">{invites.length}</p>
+          <p className="text-sm text-muted-foreground">Total Admins</p>
+          <p className="font-display text-2xl font-bold">{admins.length}</p>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <p className="text-sm text-muted-foreground">Pending</p>
+          <p className="text-sm text-muted-foreground">Waiting for Signup</p>
           <p className="font-display text-2xl font-bold text-warning">
-            {invites.filter(i => i.status === "pending").length}
+            {admins.filter(i => i.status === "pending").length}
           </p>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
-          <p className="text-sm text-muted-foreground">Accepted</p>
+          <p className="text-sm text-muted-foreground">Active Admins</p>
           <p className="font-display text-2xl font-bold text-success">
-            {invites.filter(i => i.status === "accepted").length}
+            {admins.filter(i => i.status === "accepted").length}
           </p>
         </motion.div>
       </div>
@@ -284,51 +301,42 @@ const AdminInvites = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Email</TableHead>
-              <TableHead>Code</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Expires</TableHead>
+              <TableHead>Added On</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invites.length === 0 ? (
+            {admins.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  No pending invites
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  No admins added yet
                 </TableCell>
               </TableRow>
             ) : (
-              invites.map((invite) => (
-                <TableRow key={invite.id}>
+              admins.map((admin) => (
+                <TableRow key={admin.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      {invite.email}
+                      {admin.email}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <code className="bg-muted px-2 py-1 rounded text-xs">{invite.invite_code}</code>
-                  </TableCell>
-                  <TableCell>{getTypeBadge(invite.invite_type)}</TableCell>
-                  <TableCell>{getStatusBadge(invite.status, invite.expires_at)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      {format(new Date(invite.expires_at), "dd MMM yyyy")}
-                    </div>
+                  <TableCell>{getTypeBadge(admin.invite_type)}</TableCell>
+                  <TableCell>{getStatusBadge(admin.status)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(admin.created_at), "dd MMM yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
-                    {invite.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => handleDelete(invite.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => handleDelete(admin.id, admin.email)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -340,17 +348,20 @@ const AdminInvites = () => {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Invite New Admin</DialogTitle>
+            <DialogTitle>Add New Admin</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Email *</label>
+              <label className="text-sm text-muted-foreground mb-2 block">Email Address *</label>
               <Input
                 type="email"
                 placeholder="admin@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                If this user has an account, they'll become admin immediately. Otherwise, they'll become admin when they sign up.
+              </p>
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Admin Type</label>
@@ -421,10 +432,10 @@ const AdminInvites = () => {
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending...
+                  Adding...
                 </>
               ) : (
-                "Send Invite"
+                "Add Admin"
               )}
             </Button>
           </DialogFooter>
