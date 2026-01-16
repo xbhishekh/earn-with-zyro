@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Compass, MessageCircle, TrendingUp, User, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -197,10 +196,9 @@ export const MobileBottomNav = () => {
                 to={item.href}
                 className="relative flex flex-col items-center justify-center -mt-4"
               >
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
+              <div
                   className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg",
+                    "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-transform",
                     active 
                       ? "gradient-bg glow-primary" 
                       : "bg-muted hover:bg-muted/80"
@@ -215,7 +213,7 @@ export const MobileBottomNav = () => {
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
-                </motion.div>
+                </div>
                 <span className={cn(
                   "text-[10px] mt-1 font-medium",
                   active ? "text-primary" : "text-muted-foreground"
@@ -232,7 +230,7 @@ export const MobileBottomNav = () => {
               to={item.href}
               className="relative flex flex-col items-center justify-center py-2 px-3"
             >
-              <motion.div whileTap={{ scale: 0.95 }} className="relative">
+              <div className="relative active:scale-95 transition-transform">
                 <Icon className={cn(
                   "w-5 h-5 transition-colors",
                   active ? "text-primary" : "text-muted-foreground"
@@ -242,7 +240,7 @@ export const MobileBottomNav = () => {
                     {badgeCount > 9 ? '9+' : badgeCount}
                   </span>
                 )}
-              </motion.div>
+              </div>
               <span className={cn(
                 "text-[10px] mt-1 transition-colors",
                 active ? "text-primary font-medium" : "text-muted-foreground"

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, CheckCircle, Ban, Clock, Loader2 } from "lucide-react";
 import { CampaignCardSkeleton } from "@/components/ui/card-skeleton";
@@ -346,7 +345,7 @@ const Campaigns = () => {
                 const timeAgo = formatDistanceToNow(new Date(campaign.created_at), { addSuffix: false });
                 
                 return (
-                  <motion.div key={campaign.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+                  <div key={campaign.id}>
                     <div className="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
                       {/* Header with Creator & Badges */}
                       <Link to={`/campaigns/${campaign.id}`} className="block">
@@ -452,7 +451,7 @@ const Campaigns = () => {
                         {renderActionButton(campaign)}
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>

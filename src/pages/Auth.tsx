@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,11 +189,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex">
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
+        <div className="w-full max-w-md">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 mb-8">
             <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
@@ -515,7 +510,7 @@ const Auth = () => {
               </div>
             </>
           )}
-        </motion.div>
+        </div>
       </div>
 
       {/* Right Side - Branding */}
@@ -526,11 +521,7 @@ const Auth = () => {
         </div>
         
         <div className="relative z-10 text-center text-white">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
+          <div>
             <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm">
               <Zap className="w-12 h-12" />
             </div>
@@ -552,7 +543,7 @@ const Auth = () => {
                 <div className="text-white/70 text-sm">Campaigns</div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>
