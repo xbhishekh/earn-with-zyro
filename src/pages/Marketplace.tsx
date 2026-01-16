@@ -63,9 +63,13 @@ const Marketplace = () => {
   }, [selectedCategory, searchParams]);
 
   const fetchFeaturedProducts = async () => {
+    // Single query with joined seller profile
     const { data: productsData } = await supabase
       .from("marketplace_products")
-      .select("*")
+      .select(`
+        *,
+        profiles:seller_id (display_name, username, avatar_url)
+      `)
       .eq("is_active", true)
       .eq("is_featured", true)
       .order("members_count", { ascending: false })
@@ -73,40 +77,50 @@ const Marketplace = () => {
 
     if (!productsData || productsData.length === 0) return;
 
-    const sellerIds = [...new Set(productsData.map(p => p.seller_id))];
+    // Show featured products immediately
+    const initialFeatured: Product[] = productsData.map(product => ({
+      ...product,
+      seller: (product.profiles as any) || undefined,
+      avg_rating: 0,
+      review_count: 0
+    }));
+    setFeaturedProducts(initialFeatured);
+
+    // Load ratings in background
     const productIds = productsData.map(p => p.id);
+    const { data: reviewsData } = await supabase
+      .from("product_reviews")
+      .select("product_id, rating")
+      .in("product_id", productIds);
 
-    const [profilesResult, reviewsResult] = await Promise.all([
-      supabase.from("profiles").select("user_id, display_name, username, avatar_url").in("user_id", sellerIds),
-      supabase.from("product_reviews").select("product_id, rating").in("product_id", productIds)
-    ]);
+    if (reviewsData && reviewsData.length > 0) {
+      const ratingsMap = new Map<string, { total: number; count: number }>();
+      reviewsData.forEach(review => {
+        const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
+        ratingsMap.set(review.product_id, { total: existing.total + review.rating, count: existing.count + 1 });
+      });
 
-    const profilesMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
-    const ratingsMap = new Map<string, { total: number; count: number }>();
-    reviewsResult.data?.forEach(review => {
-      const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
-      ratingsMap.set(review.product_id, { total: existing.total + review.rating, count: existing.count + 1 });
-    });
-
-    const enriched: Product[] = productsData.map(product => {
-      const ratings = ratingsMap.get(product.id);
-      return {
-        ...product,
-        seller: profilesMap.get(product.seller_id),
-        avg_rating: ratings ? ratings.total / ratings.count : 0,
-        review_count: ratings?.count || 0
-      };
-    });
-
-    setFeaturedProducts(enriched);
+      setFeaturedProducts(prev => prev.map(product => {
+        const ratings = ratingsMap.get(product.id);
+        return {
+          ...product,
+          avg_rating: ratings ? ratings.total / ratings.count : 0,
+          review_count: ratings?.count || 0
+        };
+      }));
+    }
   };
 
   const fetchProducts = async () => {
     setLoading(true);
     
+    // Single query with joined seller profile
     let query = supabase
       .from("marketplace_products")
-      .select("*")
+      .select(`
+        *,
+        profiles:seller_id (display_name, username, avatar_url)
+      `)
       .eq("is_active", true)
       .order("is_featured", { ascending: false })
       .order("members_count", { ascending: false });
@@ -128,39 +142,42 @@ const Marketplace = () => {
       return;
     }
 
-    // Fetch seller profiles and reviews
-    const sellerIds = [...new Set(productsData?.map(p => p.seller_id) || [])];
-    const productIds = productsData?.map(p => p.id) || [];
+    // Show products immediately (fast first paint)
+    const initialProducts: Product[] = productsData?.map(product => ({
+      ...product,
+      seller: (product.profiles as any) || undefined,
+      avg_rating: 0,
+      review_count: 0
+    })) || [];
 
-    const [profilesResult, reviewsResult] = await Promise.all([
-      supabase.from("profiles").select("user_id, display_name, username, avatar_url").in("user_id", sellerIds),
-      supabase.from("product_reviews").select("product_id, rating").in("product_id", productIds)
-    ]);
-
-    const profilesMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
-    
-    // Calculate average ratings
-    const ratingsMap = new Map<string, { total: number; count: number }>();
-    reviewsResult.data?.forEach(review => {
-      const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
-      ratingsMap.set(review.product_id, {
-        total: existing.total + review.rating,
-        count: existing.count + 1
-      });
-    });
-
-    const enrichedProducts: Product[] = productsData?.map(product => {
-      const ratings = ratingsMap.get(product.id);
-      return {
-        ...product,
-        seller: profilesMap.get(product.seller_id),
-        avg_rating: ratings ? ratings.total / ratings.count : 0,
-        review_count: ratings?.count || 0
-      };
-    }) || [];
-
-    setProducts(enrichedProducts);
+    setProducts(initialProducts);
     setLoading(false);
+
+    // Load ratings in background
+    const productIds = productsData?.map(p => p.id) || [];
+    if (productIds.length === 0) return;
+
+    const { data: reviewsData } = await supabase
+      .from("product_reviews")
+      .select("product_id, rating")
+      .in("product_id", productIds);
+
+    if (reviewsData && reviewsData.length > 0) {
+      const ratingsMap = new Map<string, { total: number; count: number }>();
+      reviewsData.forEach(review => {
+        const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
+        ratingsMap.set(review.product_id, { total: existing.total + review.rating, count: existing.count + 1 });
+      });
+
+      setProducts(prev => prev.map(product => {
+        const ratings = ratingsMap.get(product.id);
+        return {
+          ...product,
+          avg_rating: ratings ? ratings.total / ratings.count : 0,
+          review_count: ratings?.count || 0
+        };
+      }));
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
