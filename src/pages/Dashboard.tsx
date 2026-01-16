@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationsBell from "@/components/NotificationsBell";
@@ -31,7 +32,7 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, isAdmin } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalEarnings: 0,
     pendingEarnings: 0,
@@ -165,10 +166,23 @@ const Dashboard = () => {
               <Link to="/balance" className="text-muted-foreground hover:text-foreground transition-colors">
                 Balance
               </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Admin Panel
+                </Link>
+              )}
             </nav>
 
             <div className="flex items-center gap-3">
               <NotificationsBell />
+              {isAdmin && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin
+                  </Link>
+                </Button>
+              )}
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/profile">
                   <User className="w-4 h-4 mr-2" />
