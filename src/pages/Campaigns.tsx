@@ -248,68 +248,78 @@ const Campaigns = () => {
   const renderActionButton = (campaign: Campaign) => {
     const isJoining = joiningCampaignId === campaign.id;
     
-    // Banned user
+    // Banned user - full width red button
     if (campaign.isBanned) {
       return (
-        <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-          <Ban className="w-4 h-4" />
-          <span className="text-sm font-medium">Banned</span>
-        </div>
+        <Button 
+          variant="destructive" 
+          className="w-full h-12 text-base font-semibold"
+          disabled
+        >
+          <Ban className="w-5 h-5 mr-2" />
+          Banned from Campaign
+        </Button>
       );
     }
     
-    // Already a member or approved from waitlist
+    // Already a member or approved from waitlist - full width green button
     if (campaign.isMember || campaign.waitlistStatus === "approved") {
       return (
         <Button 
-          size="sm" 
-          className="bg-success hover:bg-success/90 text-white"
+          className="w-full h-12 text-base font-semibold bg-success hover:bg-success/90 text-white"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             navigate(`/campaigns/${campaign.id}`);
           }}
         >
-          <CheckCircle className="w-4 h-4 mr-1" />
+          <CheckCircle className="w-5 h-5 mr-2" />
           View Campaign
         </Button>
       );
     }
     
-    // Waitlist pending
+    // Waitlist pending - full width amber button
     if (campaign.waitlistStatus === "pending") {
       return (
-        <div className="flex items-center gap-2 text-warning bg-warning/10 px-3 py-2 rounded-lg">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium">Waitlisted</span>
-        </div>
+        <Button 
+          variant="outline"
+          className="w-full h-12 text-base font-semibold border-warning text-warning hover:bg-warning/10"
+          disabled
+        >
+          <Clock className="w-5 h-5 mr-2" />
+          Waitlisted - Pending Review
+        </Button>
       );
     }
     
-    // Waitlist rejected
+    // Waitlist rejected - full width red button
     if (campaign.waitlistStatus === "rejected") {
       return (
-        <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-          <Ban className="w-4 h-4" />
-          <span className="text-sm font-medium">Rejected</span>
-        </div>
+        <Button 
+          variant="destructive"
+          className="w-full h-12 text-base font-semibold"
+          disabled
+        >
+          <Ban className="w-5 h-5 mr-2" />
+          Application Rejected
+        </Button>
       );
     }
     
-    // Can join
+    // Can join - full width primary button (Whop style)
     return (
       <Button 
-        size="sm" 
+        className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
         onClick={(e) => handleJoinClick(campaign, e)}
         disabled={isJoining}
-        className="bg-primary hover:bg-primary/90"
       >
         {isJoining ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : campaign.join_type === "waitlist" ? (
-          "Apply Now"
+          "Join Waitlist"
         ) : (
-          "Join Now"
+          "Join for free"
         )}
       </Button>
     );
@@ -457,13 +467,8 @@ const Campaigns = () => {
                         </div>
                       </Link>
 
-                      {/* Action Button - Join/Waitlist/Banned */}
-                      <div className="px-4 py-3 border-t border-border flex items-center justify-between bg-muted/30">
-                        <div className="text-sm">
-                          {campaign.join_type === "waitlist" && !campaign.isMember && !campaign.waitlistStatus && (
-                            <Badge variant="outline" className="text-xs">Waitlist Only</Badge>
-                          )}
-                        </div>
+                      {/* Action Button - Full Width Join/Waitlist/Banned (Whop Style) */}
+                      <div className="p-4 border-t border-border">
                         {renderActionButton(campaign)}
                       </div>
                     </div>

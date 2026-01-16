@@ -89,7 +89,7 @@ const assetTypeIcons = {
 };
 
 const initialAssetForm = {
-  asset_type: 'link' as 'video' | 'image' | 'file' | 'link',
+  asset_type: 'file' as 'video' | 'image' | 'file' | 'link',
   title: '',
   description: '',
   url: '',
@@ -528,6 +528,94 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
             <DialogTitle>Add Campaign Asset</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Upload File First Section */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                Upload File <span className="text-xs">(Video, Image, or Document)</span>
+              </label>
+              <label 
+                className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-colors"
+                onDragOver={handleDragOver}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleFileUpload(file);
+                }}
+              >
+                {uploading ? (
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary mb-2" />
+                    <p className="text-sm text-muted-foreground">Uploading...</p>
+                  </div>
+                ) : assetForm.url ? (
+                  <div className="flex flex-col items-center">
+                    <CheckCircle2 className="w-10 h-10 text-green-500 mb-2" />
+                    <p className="text-sm font-medium text-green-500">File Uploaded!</p>
+                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-[250px]">{assetForm.title || 'File ready'}</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-10 h-10 text-muted-foreground mb-3" />
+                    <p className="text-sm text-muted-foreground text-center">
+                      <span className="font-medium text-primary">Click to upload</span> from your device
+                      <br />or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Video, Image, PDF, ZIP • Max 50MB
+                    </p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  disabled={uploading}
+                  accept="video/*,image/*,.pdf,.zip,.rar,.doc,.docx,.txt"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">OR paste a link</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">External URL</label>
+              <Input
+                placeholder="https://example.com/file.mp4"
+                value={assetForm.url}
+                onChange={(e) => setAssetForm({ ...assetForm, url: e.target.value, asset_type: 'link' })}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Title *</label>
+              <Input
+                placeholder="Asset title (auto-filled from file name)"
+                value={assetForm.title}
+                onChange={(e) => setAssetForm({ ...assetForm, title: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Description (Optional)</label>
+              <Textarea
+                placeholder="Brief description of the asset"
+                value={assetForm.description}
+                onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
+                rows={2}
+              />
+            </div>
+
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Asset Type</label>
               <Select 
@@ -538,12 +626,6 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="link">
-                    <div className="flex items-center gap-2">
-                      <LinkIcon className="w-4 h-4" />
-                      External Link
-                    </div>
-                  </SelectItem>
                   <SelectItem value="video">
                     <div className="flex items-center gap-2">
                       <Video className="w-4 h-4" />
@@ -562,59 +644,14 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
                       File / Document
                     </div>
                   </SelectItem>
+                  <SelectItem value="link">
+                    <div className="flex items-center gap-2">
+                      <LinkIcon className="w-4 h-4" />
+                      External Link
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Title *</label>
-              <Input
-                placeholder="Asset title"
-                value={assetForm.title}
-                onChange={(e) => setAssetForm({ ...assetForm, title: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Description</label>
-              <Textarea
-                placeholder="Brief description of the asset"
-                value={assetForm.description}
-                onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">URL *</label>
-              {assetForm.asset_type !== 'link' && (
-                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors mb-2">
-                  {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-medium text-primary">Click to upload</span> or drag and drop
-                      </p>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload(file);
-                    }}
-                  />
-                </label>
-              )}
-              <Input
-                placeholder="https://..."
-                value={assetForm.url}
-                onChange={(e) => setAssetForm({ ...assetForm, url: e.target.value })}
-              />
             </div>
 
             <div className="flex items-center justify-between">
