@@ -290,7 +290,7 @@ const AdminCampaigns = () => {
               <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                 {campaign.description || "No description"}
               </p>
-              <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+              <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <DollarSign className="w-4 h-4" />
                   ₹{campaign.reward_per_1k_views}/1K
@@ -300,6 +300,28 @@ const AdminCampaigns = () => {
                   {campaign.campaign_type?.toUpperCase()}
                 </div>
               </div>
+              {campaign.budget_total && campaign.budget_total > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">Budget</span>
+                    <span className="font-medium">
+                      ₹{(campaign.budget_spent || 0).toLocaleString()} / ₹{campaign.budget_total.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all ${
+                        ((campaign.budget_spent || 0) / campaign.budget_total) >= 0.9 
+                          ? 'bg-destructive' 
+                          : ((campaign.budget_spent || 0) / campaign.budget_total) >= 0.7 
+                            ? 'bg-yellow-500' 
+                            : 'bg-primary'
+                      }`}
+                      style={{ width: `${Math.min(((campaign.budget_spent || 0) / campaign.budget_total) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(campaign)}>
                   <Edit className="w-4 h-4 mr-1" />
