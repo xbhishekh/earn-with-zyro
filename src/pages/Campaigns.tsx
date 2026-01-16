@@ -71,84 +71,86 @@ const Campaigns = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const { data, error } = await supabase
+      // Single query to get all campaigns
+      const { data: campaignsData, error } = await supabase
         .from("campaigns")
         .select("*")
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch creator profiles and stats for campaigns
-      const campaignsWithData = await Promise.all(
-        (data || []).map(async (campaign) => {
-          // Fetch creator profile
-          let creator_name = "Zyrozo";
-          let creator_avatar = null;
-          
-          if (campaign.created_by) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("display_name, avatar_url")
-              .eq("user_id", campaign.created_by)
-              .single();
-            creator_name = profile?.display_name || "Zyrozo";
-            creator_avatar = profile?.avatar_url;
-          }
-          
-          // Fetch submission stats for this campaign
-          const { data: submissions } = await supabase
-            .from("submissions")
-            .select("status, views_count")
-            .eq("campaign_id", campaign.id);
-          
-          const total_submissions = submissions?.length || 0;
-          const approved_submissions = submissions?.filter(
-            s => s.status === "approved" || s.status === "paid"
-          ).length || 0;
-          const total_views = submissions?.reduce(
-            (sum, s) => sum + (s.views_count || 0), 0
-          ) || 0;
-          
-          // Check user-specific status if logged in
-          let isMember = false;
-          let isBanned = false;
-          let banReason = null;
-          let waitlistStatus = null;
-          
-          if (user) {
-            const [memberRes, banRes, waitlistRes] = await Promise.all([
-              supabase.from("campaign_members").select("id").eq("user_id", user.id).eq("campaign_id", campaign.id).maybeSingle(),
-              supabase.from("user_suspensions").select("reason").eq("user_id", user.id).eq("campaign_id", campaign.id).eq("is_active", true).maybeSingle(),
-              supabase.from("campaign_waitlist_requests").select("status").eq("user_id", user.id).eq("campaign_id", campaign.id).maybeSingle(),
-            ]);
-            
-            isMember = !!memberRes.data;
-            if (banRes.data) {
-              isBanned = true;
-              banReason = banRes.data.reason;
-            }
-            if (waitlistRes.data) {
-              waitlistStatus = waitlistRes.data.status;
-            }
-          }
-          
-          return {
-            ...campaign,
-            creator_name,
-            creator_avatar,
-            stats: {
-              total_submissions,
-              approved_submissions,
-              total_views,
-            },
-            isMember,
-            isBanned,
-            banReason,
-            waitlistStatus,
-          };
-        })
+      if (!campaignsData || campaignsData.length === 0) {
+        setCampaigns([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get unique creator IDs
+      const creatorIds = [...new Set(campaignsData.map(c => c.created_by).filter(Boolean))];
+      const campaignIds = campaignsData.map(c => c.id);
+
+      // Batch fetch all related data in parallel
+      const [profilesRes, submissionsRes, membersRes, bansRes, waitlistRes] = await Promise.all([
+        // Fetch all creator profiles at once
+        creatorIds.length > 0 
+          ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", creatorIds)
+          : Promise.resolve({ data: [] }),
+        
+        // Fetch all submissions for all campaigns at once
+        supabase.from("submissions").select("campaign_id, status, views_count").in("campaign_id", campaignIds),
+        
+        // User-specific queries (only if logged in)
+        user 
+          ? supabase.from("campaign_members").select("campaign_id").eq("user_id", user.id).in("campaign_id", campaignIds)
+          : Promise.resolve({ data: [] }),
+        
+        user
+          ? supabase.from("user_suspensions").select("campaign_id, reason").eq("user_id", user.id).eq("is_active", true).in("campaign_id", campaignIds)
+          : Promise.resolve({ data: [] }),
+        
+        user
+          ? supabase.from("campaign_waitlist_requests").select("campaign_id, status").eq("user_id", user.id).in("campaign_id", campaignIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      // Create lookup maps for O(1) access
+      const profilesMap = new Map(
+        (profilesRes.data || []).map(p => [p.user_id, p])
       );
+      
+      const submissionsMap = new Map<string, { total: number; approved: number; views: number }>();
+      (submissionsRes.data || []).forEach(s => {
+        const existing = submissionsMap.get(s.campaign_id) || { total: 0, approved: 0, views: 0 };
+        existing.total++;
+        if (s.status === "approved" || s.status === "paid") existing.approved++;
+        existing.views += s.views_count || 0;
+        submissionsMap.set(s.campaign_id, existing);
+      });
+
+      const membersSet = new Set((membersRes.data || []).map(m => m.campaign_id));
+      const bansMap = new Map((bansRes.data || []).map(b => [b.campaign_id, b.reason]));
+      const waitlistMap = new Map((waitlistRes.data || []).map(w => [w.campaign_id, w.status]));
+
+      // Build final campaigns array with all data
+      const campaignsWithData = campaignsData.map(campaign => {
+        const profile = campaign.created_by ? profilesMap.get(campaign.created_by) : null;
+        const stats = submissionsMap.get(campaign.id) || { total: 0, approved: 0, views: 0 };
+        
+        return {
+          ...campaign,
+          creator_name: profile?.display_name || "Zyrozo",
+          creator_avatar: profile?.avatar_url || null,
+          stats: {
+            total_submissions: stats.total,
+            approved_submissions: stats.approved,
+            total_views: stats.views,
+          },
+          isMember: membersSet.has(campaign.id),
+          isBanned: bansMap.has(campaign.id),
+          banReason: bansMap.get(campaign.id) || null,
+          waitlistStatus: waitlistMap.get(campaign.id) || null,
+        };
+      });
       
       setCampaigns(campaignsWithData);
     } catch (error) {
