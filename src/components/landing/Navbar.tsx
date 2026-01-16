@@ -3,13 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const navLinks = [
-  { name: "Campaigns", href: "/campaigns" },
-  { name: "Gallery", href: "/gallery" },
-  { name: "Marketplace", href: "/marketplace" },
-  { name: "Pricing", href: "/pricing" },
-  { name: "About", href: "/about" },
-];
+const navLinks: { name: string; href: string }[] = [];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
