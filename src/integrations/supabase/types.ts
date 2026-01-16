@@ -1091,6 +1091,9 @@ export type Database = {
           location: string | null
           payment_details: Json | null
           referred_by: string | null
+          show_joined_products: boolean | null
+          show_location: boolean | null
+          show_owned_products: boolean | null
           show_total_earned: boolean | null
           updated_at: string
           user_id: string
@@ -1107,6 +1110,9 @@ export type Database = {
           location?: string | null
           payment_details?: Json | null
           referred_by?: string | null
+          show_joined_products?: boolean | null
+          show_location?: boolean | null
+          show_owned_products?: boolean | null
           show_total_earned?: boolean | null
           updated_at?: string
           user_id: string
@@ -1123,6 +1129,9 @@ export type Database = {
           location?: string | null
           payment_details?: Json | null
           referred_by?: string | null
+          show_joined_products?: boolean | null
+          show_location?: boolean | null
+          show_owned_products?: boolean | null
           show_total_earned?: boolean | null
           updated_at?: string
           user_id?: string
