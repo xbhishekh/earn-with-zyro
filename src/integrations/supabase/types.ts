@@ -621,6 +621,65 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          min_purchase_amount: number | null
+          product_id: string | null
+          seller_id: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          discount_type?: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_purchase_amount?: number | null
+          product_id?: string | null
+          seller_id: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_purchase_amount?: number | null
+          product_id?: string | null
+          seller_id?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dm_participants: {
         Row: {
           id: string
@@ -921,7 +980,10 @@ export type Database = {
           amount: number
           buyer_id: string
           created_at: string | null
+          discount_amount: number | null
+          discount_code_id: string | null
           id: string
+          original_price: number | null
           payment_method: string
           product_id: string
           seller_id: string
@@ -932,7 +994,10 @@ export type Database = {
           amount: number
           buyer_id: string
           created_at?: string | null
+          discount_amount?: number | null
+          discount_code_id?: string | null
           id?: string
+          original_price?: number | null
           payment_method: string
           product_id: string
           seller_id: string
@@ -943,7 +1008,10 @@ export type Database = {
           amount?: number
           buyer_id?: string
           created_at?: string | null
+          discount_amount?: number | null
+          discount_code_id?: string | null
           id?: string
+          original_price?: number | null
           payment_method?: string
           product_id?: string
           seller_id?: string
@@ -951,6 +1019,13 @@ export type Database = {
           subscription_ends_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "product_purchases_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_purchases_product_id_fkey"
             columns: ["product_id"]
