@@ -13,7 +13,14 @@ import {
   Copy,
   Check,
   AlertCircle,
-  Send
+  Send,
+  Facebook,
+  Linkedin,
+  Twitch,
+  Film,
+  Tv,
+  Music,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +35,20 @@ import { toast } from "sonner";
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+  </svg>
+);
+
+// Snapchat icon component
+const SnapchatIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.076-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.449-.165-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-.809-.329-1.224-.72-1.227-1.153-.015-.36.285-.69.72-.839.156-.074.346-.104.54-.104.12 0 .284.015.449.104.375.165.72.284 1.019.284.211 0 .359-.045.435-.09-.008-.165-.023-.329-.037-.51l-.002-.06c-.106-1.628-.232-3.654.297-4.847C7.86 1.068 11.216.793 12.206.793z"/>
+  </svg>
+);
+
+// Pinterest icon component
+const PinterestIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
   </svg>
 );
 
@@ -69,6 +90,60 @@ const platformConfig: Record<string, { icon: any; color: string; name: string; u
     name: "X (Twitter)",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/([a-zA-Z0-9_]+)/,
   },
+  facebook: {
+    icon: Facebook,
+    color: "text-blue-600",
+    name: "Facebook",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?facebook\.com\/([a-zA-Z0-9_.]+)/,
+  },
+  linkedin: {
+    icon: Linkedin,
+    color: "text-blue-700",
+    name: "LinkedIn",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/,
+  },
+  snapchat: {
+    icon: SnapchatIcon,
+    color: "text-yellow-400",
+    name: "Snapchat",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?snapchat\.com\/add\/([a-zA-Z0-9_.]+)/,
+  },
+  pinterest: {
+    icon: PinterestIcon,
+    color: "text-red-600",
+    name: "Pinterest",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?pinterest\.com\/([a-zA-Z0-9_]+)/,
+  },
+  twitch: {
+    icon: Twitch,
+    color: "text-purple-500",
+    name: "Twitch",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)/,
+  },
+  spotify: {
+    icon: Music,
+    color: "text-green-500",
+    name: "Spotify",
+    urlPattern: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/(?:user|artist)\/([a-zA-Z0-9]+)/,
+  },
+  netflix: {
+    icon: Film,
+    color: "text-red-500",
+    name: "Netflix",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?netflix\.com\/([a-zA-Z0-9_-]+)/,
+  },
+  primevideo: {
+    icon: Tv,
+    color: "text-blue-400",
+    name: "Prime Video",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?primevideo\.com\/([a-zA-Z0-9_-]+)/,
+  },
+  other: {
+    icon: Globe,
+    color: "text-muted-foreground",
+    name: "Other",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9_.-]+\.[a-zA-Z]{2,})\/?/,
+  },
 };
 
 interface LinkedSocialAccountsProps {
@@ -77,8 +152,11 @@ interface LinkedSocialAccountsProps {
 }
 
 const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccountsProps) => {
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isOwner, isFounder, role } = useAuth();
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
+
+  // Only admins can add/delete social accounts
+  const canManageAccounts = isAdmin || isSuperAdmin || isOwner || isFounder || role === "normal_admin";
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("");
@@ -247,7 +325,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
           <h3 className="font-display text-lg font-bold">Linked Social Accounts</h3>
           <p className="text-sm text-muted-foreground">Connect your social media for verification</p>
         </div>
-        {isOwnProfile && (
+        {isOwnProfile && canManageAccounts && (
           <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Account
@@ -261,7 +339,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
             <Plus className="w-8 h-8 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground mb-4">No social accounts linked yet</p>
-          {isOwnProfile && (
+          {isOwnProfile && canManageAccounts && (
             <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
               Link Your First Account
             </Button>
@@ -302,8 +380,8 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
                       </Button>
                     )}
 
-                    {/* Delete button */}
-                    {isOwnProfile && (
+                    {/* Delete button - only for admins */}
+                    {isOwnProfile && canManageAccounts && (
                       <Button
                         variant="ghost"
                         size="icon"
