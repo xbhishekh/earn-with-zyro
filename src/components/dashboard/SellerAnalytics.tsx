@@ -44,7 +44,7 @@ interface TimeSeriesData {
 }
 
 const SellerAnalytics = () => {
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
   const [period, setPeriod] = useState("30");
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
@@ -368,9 +368,11 @@ const SellerAnalytics = () => {
             <p className="text-muted-foreground mb-4">
               Create your first product to start tracking analytics
             </p>
-            <Button asChild>
-              <a href="/marketplace/create">Create Product</a>
-            </Button>
+            {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
+              <Button asChild>
+                <a href="/marketplace/create">Create Product</a>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

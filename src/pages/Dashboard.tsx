@@ -53,7 +53,7 @@ interface MyProduct {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut, isAdmin } = useAuth();
+  const { user, loading: authLoading, signOut, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalEarnings: 0,
     pendingEarnings: 0,
@@ -291,12 +291,14 @@ const Dashboard = () => {
                 <p className="text-sm text-muted-foreground">Manage your products, buyers & analytics</p>
               </div>
             </div>
-            <Button asChild>
-              <Link to="/marketplace/create">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Product
-              </Link>
-            </Button>
+            {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
+              <Button asChild>
+                <Link to="/marketplace/create">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Product
+                </Link>
+              </Button>
+            )}
           </div>
 
           <Tabs defaultValue="products" className="w-full">
@@ -332,9 +334,11 @@ const Dashboard = () => {
                   <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
                     Start selling your courses, memberships, or digital products
                   </p>
-                  <Button variant="outline" asChild>
-                    <Link to="/marketplace/create">Create your first product</Link>
-                  </Button>
+                  {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
+                    <Button variant="outline" asChild>
+                      <Link to="/marketplace/create">Create your first product</Link>
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

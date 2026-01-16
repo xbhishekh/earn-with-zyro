@@ -37,7 +37,7 @@ const PRODUCT_TYPES = [
 const MarketplaceCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
   const isEditing = !!id;
 
   const [loading, setLoading] = useState(false);
@@ -58,15 +58,22 @@ const MarketplaceCreate = () => {
     is_active: true,
   });
 
+  const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder";
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
+    // Only admins can create products
+    if (!isAdminUser) {
+      navigate("/marketplace");
+      return;
+    }
     if (isEditing) {
       fetchProduct();
     }
-  }, [user, id]);
+  }, [user, id, isAdminUser]);
 
   const fetchProduct = async () => {
     setLoading(true);
