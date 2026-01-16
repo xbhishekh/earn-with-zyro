@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface WaitlistRequest {
   id: string;
@@ -22,28 +23,36 @@ interface WaitlistRequest {
 
 const AdminWaitlist = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignIds, loading: accessLoading } = useAdminAccess();
   const [searchTerm, setSearchTerm] = useState("");
   const [requests, setRequests] = useState<WaitlistRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("campaign_waitlist_requests")
-        .select(`
-          *,
-          profiles!campaign_waitlist_requests_user_id_fkey(username),
-          campaigns!campaign_waitlist_requests_campaign_id_fkey(name)
-        `)
+        .select(`*, profiles!campaign_waitlist_requests_user_id_fkey(username), campaigns!campaign_waitlist_requests_campaign_id_fkey(name)`)
         .order("created_at", { ascending: false });
 
+      // Filter for normal admin
+      if (!hasFullAccess && myCampaignIds.length > 0) {
+        query = query.in("campaign_id", myCampaignIds);
+      } else if (!hasFullAccess && myCampaignIds.length === 0) {
+        setRequests([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query;
+
       if (error) {
-        // If foreign key relationship doesn't exist, fetch without joins
-        const { data: simpleData, error: simpleError } = await supabase
-          .from("campaign_waitlist_requests")
-          .select("*")
-          .order("created_at", { ascending: false });
-        
+        // Fallback without joins
+        let simpleQuery = supabase.from("campaign_waitlist_requests").select("*").order("created_at", { ascending: false });
+        if (!hasFullAccess && myCampaignIds.length > 0) {
+          simpleQuery = simpleQuery.in("campaign_id", myCampaignIds);
+        }
+        const { data: simpleData, error: simpleError } = await simpleQuery;
         if (simpleError) throw simpleError;
         setRequests(simpleData || []);
       } else {
@@ -63,8 +72,8 @@ const AdminWaitlist = () => {
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    if (!accessLoading) fetchRequests();
+  }, [accessLoading, hasFullAccess, myCampaignIds]);
 
   const handleApprove = async (id: string) => {
     try {
