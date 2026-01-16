@@ -76,7 +76,7 @@ export const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass-card border-t border-border/50"
+            className="md:hidden bg-background border-t border-border"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {navLinks.map((link) => (
@@ -84,18 +84,18 @@ export const Navbar = () => {
                   key={link.name}
                   to={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+                  className="text-foreground hover:text-primary transition-colors font-medium py-2"
                 >
                   {link.name}
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" asChild className="justify-center">
                   <Link to="/auth" onClick={() => setIsOpen(false)}>
                     Log In
                   </Link>
                 </Button>
-                <Button variant="hero" asChild>
+                <Button className="gradient-bg" asChild>
                   <Link to="/auth?mode=signup" onClick={() => setIsOpen(false)}>
                     Get Started
                   </Link>
