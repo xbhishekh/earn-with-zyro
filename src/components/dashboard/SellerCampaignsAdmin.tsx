@@ -15,6 +15,7 @@ import {
   Loader2,
   RefreshCw,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -493,6 +494,59 @@ const SellerCampaignsAdmin = () => {
   const pendingWaitlistCount = waitlistRequests.filter(r => r.status === "pending").length;
   const pendingSubmissionsCount = submissions.filter(s => s.status === "pending").length;
 
+  // CSV Export Functions
+  const exportSubmissionsCSV = () => {
+    if (filteredSubmissions.length === 0) return;
+    
+    const headers = ["Creator", "Video URL", "Status", "Views", "Earnings (₹)", "Date", "Notes"];
+    const rows = filteredSubmissions.map(s => [
+      `@${s.username || "unknown"}`,
+      s.video_url,
+      s.status || "pending",
+      s.views_count?.toString() || "0",
+      s.estimated_earnings?.toString() || "0",
+      format(new Date(s.created_at), "yyyy-MM-dd"),
+      s.admin_notes || "",
+    ]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    
+    downloadCSV(csvContent, `submissions-${selectedCampaign?.slug || "campaign"}-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    toast.success(`Exported ${filteredSubmissions.length} submissions`);
+  };
+
+  const exportMembersCSV = () => {
+    if (members.length === 0) return;
+    
+    const headers = ["Username", "Display Name", "Status", "Joined Date"];
+    const rows = members.map(m => [
+      `@${m.username || "unknown"}`,
+      m.display_name || "",
+      m.status || "active",
+      m.joined_at ? format(new Date(m.joined_at), "yyyy-MM-dd") : "",
+    ]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    
+    downloadCSV(csvContent, `members-${selectedCampaign?.slug || "campaign"}-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    toast.success(`Exported ${members.length} members`);
+  };
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -606,8 +660,8 @@ const SellerCampaignsAdmin = () => {
 
             {/* Submissions Tab */}
             <TabsContent value="overview" className="space-y-4 mt-4">
-              <div className="flex gap-4">
-                <div className="relative flex-1 max-w-md">
+              <div className="flex flex-wrap gap-4">
+                <div className="relative flex-1 min-w-[200px] max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search..."
@@ -628,6 +682,15 @@ const SellerCampaignsAdmin = () => {
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportSubmissionsCSV()}
+                  disabled={filteredSubmissions.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
               </div>
 
               {submissionsLoading ? (
@@ -721,6 +784,18 @@ const SellerCampaignsAdmin = () => {
 
             {/* Members Tab */}
             <TabsContent value="members" className="space-y-4 mt-4">
+              {members.length > 0 && (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportMembersCSV()}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                </div>
+              )}
               {membersLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
