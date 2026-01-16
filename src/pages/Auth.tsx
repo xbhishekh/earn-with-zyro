@@ -45,9 +45,9 @@ const Auth = () => {
     }
   }, [user, authLoading, isAdmin, isOwner, navigate]);
 
-  // Auto-verify when OTP is complete (6 digits)
+  // Auto-verify when OTP is complete (6 or 8 digits - Supabase uses 6, some flows use 8)
   useEffect(() => {
-    if (otpCode.length === 6 && step === "otp") {
+    if ((otpCode.length === 6 || otpCode.length === 8) && step === "otp") {
       handleVerifyOtp();
     }
   }, [otpCode]);
@@ -104,8 +104,8 @@ const Auth = () => {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      toast.error("Please enter the complete 6-digit code");
+    if (otpCode.length < 6) {
+      toast.error("Please enter the complete verification code");
       return;
     }
 
@@ -218,7 +218,7 @@ const Auth = () => {
             )}
             {step === "signup-info" && "Choose a unique username for your profile"}
             {step === "otp" && (
-              <>We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>. Enter the code from your email.</>
+              <>We sent a code to <span className="text-foreground font-medium">{email}</span>. Enter the verification code from your email.</>
             )}
           </p>
 
@@ -323,17 +323,17 @@ const Auth = () => {
             <div className="space-y-6">
               <div className="flex justify-center">
                 <InputOTP
-                  maxLength={6}
+                  maxLength={8}
                   value={otpCode}
                   onChange={(value) => setOtpCode(value)}
                   disabled={isLoading}
                 >
                   <InputOTPGroup className="gap-2">
-                    {Array.from({ length: 6 }).map((_, idx) => (
+                    {Array.from({ length: 8 }).map((_, idx) => (
                       <InputOTPSlot
                         key={idx}
                         index={idx}
-                        className="w-12 h-14 text-xl border-border bg-card"
+                        className="w-10 h-12 text-lg border-border bg-card"
                       />
                     ))}
                   </InputOTPGroup>
