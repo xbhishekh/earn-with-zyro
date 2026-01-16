@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   ArrowLeft, 
-  Ban,
   Clock,
   Loader2,
   Zap,
@@ -16,13 +15,14 @@ import {
   DollarSign,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Instagram,
+  Link as LinkIcon
 } from "lucide-react";
 import { CampaignChatSidebar } from "@/components/campaigns/CampaignChatSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -77,23 +77,18 @@ const CampaignDetail = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
-  const [isBanned, setIsBanned] = useState(false);
-  const [banReason, setBanReason] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [waitlistStatus, setWaitlistStatus] = useState<string | null>(null);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rewards");
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
+  
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [joining, setJoining] = useState(false);
   
   // Form data
   const [videoUrl, setVideoUrl] = useState("");
   const [socialLink, setSocialLink] = useState("");
-  const [waitlistAnswers, setWaitlistAnswers] = useState<string[]>([]);
 
   // Track affiliate clicks from ref param
   useEffect(() => {
@@ -138,7 +133,6 @@ const CampaignDetail = () => {
         if (!campaignData) throw new Error("Campaign not found");
       }
       setCampaign(campaignData as Campaign);
-      setWaitlistAnswers(new Array(campaignData.waitlist_questions?.length || 0).fill(""));
 
       const campaignId = campaignData.id;
 
@@ -154,17 +148,13 @@ const CampaignDetail = () => {
         }
       }
 
-      const [memberRes, banRes, waitlistRes, submissionRes, roomRes] = await Promise.all([
+      const [memberRes, submissionRes, roomRes] = await Promise.all([
         supabase.from("campaign_members").select("id").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
-        supabase.from("user_suspensions").select("reason").eq("user_id", user!.id).eq("campaign_id", campaignId).eq("is_active", true).maybeSingle(),
-        supabase.from("campaign_waitlist_requests").select("status").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
         supabase.from("submissions").select("*").eq("user_id", user!.id).eq("campaign_id", campaignId).order("created_at", { ascending: false }),
         supabase.from("chat_rooms").select("id").eq("campaign_id", campaignId).eq("type", "campaign").maybeSingle(),
       ]);
 
       setIsMember(!!memberRes.data);
-      if (banRes.data) { setIsBanned(true); setBanReason(banRes.data.reason); }
-      if (waitlistRes.data) setWaitlistStatus(waitlistRes.data.status);
       setSubmissions(submissionRes.data as Submission[] || []);
       if (roomRes.data) setChatRoomId(roomRes.data.id);
     } catch (error) {
@@ -172,55 +162,6 @@ const CampaignDetail = () => {
       toast.error("Failed to load campaign");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleJoin = async () => {
-    if (!campaign) return;
-    
-    if (campaign.join_type === "waitlist") {
-      setShowWaitlistModal(true);
-      return;
-    }
-
-    setJoining(true);
-    try {
-      const { error } = await supabase.from("campaign_members").insert({
-        user_id: user!.id,
-        campaign_id: campaign.id
-      });
-
-      if (error) throw error;
-      toast.success("Successfully joined!");
-      setIsMember(true);
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to join campaign");
-    } finally {
-      setJoining(false);
-    }
-  };
-
-  const handleWaitlistSubmit = async () => {
-    if (!campaign) return;
-    
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.from("campaign_waitlist_requests").insert({
-        user_id: user!.id,
-        campaign_id: campaign.id,
-        answers: waitlistAnswers
-      });
-
-      if (error) throw error;
-      toast.success("Application submitted!");
-      setShowWaitlistModal(false);
-      setWaitlistStatus("pending");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to submit application");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -262,6 +203,55 @@ const CampaignDetail = () => {
     }
   };
 
+  // Parse rules_guidelines into requirement pills
+  const parseRequirements = (guidelines: string | null): string[] => {
+    if (!guidelines) return [];
+    // Split by newlines, filter empty lines, trim whitespace
+    return guidelines
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && !line.startsWith('#'));
+  };
+
+  // Extract URLs from rules_guidelines for assets section
+  const extractAssets = (guidelines: string | null): { title: string; url: string; icon: string }[] => {
+    if (!guidelines) return [];
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = guidelines.match(urlRegex) || [];
+    
+    return matches.map(url => {
+      let icon = "🔗";
+      let title = url;
+      
+      if (url.includes("instagram.com")) {
+        icon = "📸";
+        title = "Instagram Link";
+      } else if (url.includes("tiktok.com")) {
+        icon = "🎵";
+        title = "TikTok Link";
+      } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        icon = "📺";
+        title = "YouTube Link";
+      } else if (url.includes("drive.google.com")) {
+        icon = "📁";
+        title = "Google Drive Asset";
+      } else if (url.includes("dropbox.com")) {
+        icon = "📦";
+        title = "Dropbox Asset";
+      } else {
+        // Try to extract domain name
+        try {
+          const domain = new URL(url).hostname.replace('www.', '');
+          title = domain;
+        } catch {
+          title = "External Link";
+        }
+      }
+      
+      return { title, url, icon };
+    });
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -278,8 +268,8 @@ const CampaignDetail = () => {
     );
   }
 
-  // Block access entirely if user is banned from this campaign
-  if (isBanned) {
+  // If not a member, redirect back to campaigns page (join/waitlist happens there)
+  if (!isMember) {
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
@@ -292,62 +282,37 @@ const CampaignDetail = () => {
                 </div>
                 <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
               </Link>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/dashboard"><User className="w-4 h-4" /></Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-8">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6">
+        <div className="container mx-auto px-4 py-8 max-w-lg">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/campaigns")} className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Back to Campaigns
           </Button>
 
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-lg mx-auto"
+            className="glass-card rounded-2xl p-8 text-center"
           >
-            <div className="glass-card rounded-2xl p-8 text-center border-2 border-destructive/30">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
-                <Ban className="w-10 h-10 text-destructive" />
-              </div>
-              
-              <h1 className="font-display text-2xl font-bold text-destructive mb-2">
-                Access Denied
-              </h1>
-              
-              <p className="text-muted-foreground mb-6">
-                You have been banned from this campaign and cannot access its content.
-              </p>
-
-              {banReason && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
-                  <p className="text-sm font-medium text-destructive mb-1">Reason:</p>
-                  <p className="text-sm text-foreground">{banReason}</p>
-                </div>
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              {campaign.thumbnail_url ? (
+                <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-2xl">{campaign.name.charAt(0)}</span>
               )}
-
-              <div className="space-y-3">
-                <Button asChild className="w-full">
-                  <Link to="/campaigns">Browse Other Campaigns</Link>
-                </Button>
-                <Button variant="outline" asChild className="w-full">
-                  <Link to="/dashboard">Go to Dashboard</Link>
-                </Button>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-6">
-                If you believe this is a mistake, please contact support.
-              </p>
             </div>
+            
+            <h1 className="font-display text-2xl font-bold mb-2">{campaign.name}</h1>
+            <p className="text-muted-foreground mb-6">
+              You need to join this campaign first to view its content and submit.
+            </p>
+
+            <Button onClick={() => navigate("/campaigns")} className="w-full" size="lg">
+              Go to Campaigns to Join
+            </Button>
           </motion.div>
         </div>
       </div>
@@ -357,7 +322,8 @@ const CampaignDetail = () => {
   const budgetTotal = campaign.budget_total || 0;
   const budgetSpent = campaign.budget_spent || 0;
   const budgetPercent = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
-  const canSubmit = isMember || waitlistStatus === "approved";
+  const requirements = parseRequirements(campaign.rules_guidelines);
+  const assets = extractAssets(campaign.rules_guidelines);
 
   const getPlatformIcon = (platform: string) => {
     const p = platform.toLowerCase();
@@ -401,41 +367,32 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl pb-24">
-        {/* Creator Info Section - Whop Style */}
-        <div className="flex items-center gap-4 mb-6">
+      <main className="container mx-auto px-4 py-6 max-w-4xl pb-28">
+        {/* Back Button & Title - Whop Style */}
+        <div className="flex items-center gap-4 mb-4">
           <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
           </button>
+          <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
         </div>
 
-        {/* Creator Header - Large icon + name like Whop */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-            {creatorProfile?.avatar_url ? (
-              <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : campaign.thumbnail_url ? (
-              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white font-bold text-2xl">{campaign.name.charAt(0)}</span>
-            )}
+        {/* Platforms Icons Row */}
+        {campaign.platforms && campaign.platforms.length > 0 && (
+          <div className="flex gap-2 mb-6">
+            {campaign.platforms.map((p) => (
+              <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
+            ))}
           </div>
-          <div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold">
-              {creatorProfile?.display_name || "Zyrozo"}
-            </h1>
-          </div>
-        </div>
+        )}
 
-        {/* Campaign Card - Whop Style */}
+        {/* Large Thumbnail - Whop Style */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-2xl overflow-hidden mb-8"
+          className="mb-6"
         >
-          {/* Thumbnail with Waitlist Badge */}
-          <div className="relative">
+          <div className="relative rounded-2xl overflow-hidden">
             {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
@@ -444,240 +401,213 @@ const CampaignDetail = () => {
               />
             ) : (
               <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <span className="text-4xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
+                <span className="text-6xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
               </div>
             )}
-            {campaign.join_type === "waitlist" && (
-              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">Waitlist</Badge>
-            )}
-            {/* Small creator icon overlay */}
-            <div className="absolute bottom-4 right-4 w-12 h-12 rounded-xl overflow-hidden bg-background/80 backdrop-blur border border-border shadow-lg">
-              {creatorProfile?.avatar_url ? (
-                <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <span className="text-white font-bold">{campaign.name.charAt(0)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Campaign Info */}
-          <div className="p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                {creatorProfile?.avatar_url ? (
-                  <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white font-bold">{campaign.name.charAt(0)}</span>
-                )}
-              </div>
-              <div>
-                <h2 className="font-display font-bold text-lg">{campaign.name}</h2>
-                <p className="text-sm text-muted-foreground">{campaign.description || "Join and start earning!"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <span className="text-primary font-bold">Free</span>
-              <span className="text-yellow-500">⭐</span>
-              <span className="text-sm text-muted-foreground">4.9</span>
-            </div>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Info Banner */}
-            <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3">
-              <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-              <p className="text-sm text-warning">
-                Only views after you submit count towards payout. Submit as soon as you post to get paid for all of your views.
-              </p>
+        {/* Info Banner - Yellow Warning Style */}
+        <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3 mb-6">
+          <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+          <p className="text-sm text-warning">
+            Only views after you submit count towards payout. Submit as soon as you post to get paid for all of your views.
+          </p>
+        </div>
+
+        {/* Budget Progress - Whop Style */}
+        {budgetTotal > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className="text-muted-foreground uppercase text-xs">PAID OUT</span>
+              <span className="font-medium">{budgetPercent}%</span>
             </div>
-
-            {/* Budget Progress - Whop Style */}
-            {budgetTotal > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">PAID OUT</span>
-                  <span className="font-medium">{budgetPercent}%</span>
-                </div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>₹{budgetSpent.toLocaleString()} of ₹{budgetTotal.toLocaleString()} paid out</span>
-                </div>
-                <Progress value={budgetPercent} className="h-2" />
-              </div>
-            )}
-
-            {/* Stats Grid - Whop Style */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
-                <Badge className="bg-primary text-primary-foreground">₹{campaign.reward_per_1k_views} / 1K</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
-                <Badge variant="outline">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
-                <Badge variant="outline">₹{campaign.min_payout || 0}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
-                <Badge variant="outline">₹{campaign.max_payout || "∞"}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
-                <Badge variant="outline">{campaign.category || "General"}</Badge>
-              </div>
-            </div>
-
-            {/* Platforms */}
-            {campaign.platforms && campaign.platforms.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground uppercase">Platforms:</span>
-                <div className="flex gap-2">
-                  {campaign.platforms.map((p) => (
-                    <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-
-            {/* Tabs - Rewards / My Submissions */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full max-w-xs">
-                <TabsTrigger value="rewards" className="flex-1">Rewards</TabsTrigger>
-                <TabsTrigger value="submissions" className="flex-1">My submissions</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="rewards" className="mt-4 space-y-4">
-                {/* Description */}
-                {campaign.description && (
-                  <div className="glass-card rounded-xl p-4">
-                    <h3 className="font-medium mb-2">About this campaign</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
-                  </div>
-                )}
-
-                {/* Rules */}
-                {campaign.rules_guidelines && (
-                  <div className="glass-card rounded-xl p-4">
-                    <h3 className="font-medium mb-2">Rules & Guidelines</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.rules_guidelines}</p>
-                    {campaign.rules_link && (
-                      <a href={campaign.rules_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-sm mt-2 hover:underline">
-                        <ExternalLink className="w-3 h-3" /> View full guidelines
-                      </a>
-                    )}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="submissions" className="mt-4">
-                {submissions.length === 0 ? (
-                  <div className="glass-card rounded-xl p-8 text-center">
-                    <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">No submissions yet</p>
-                    {canSubmit && (
-                      <Button onClick={() => setShowSubmitModal(true)} className="mt-4" variant="outline">
-                        Create your first submission
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {submissions.map((sub) => (
-                      <motion.div key={sub.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {getSubmissionStatusIcon(sub.status)}
-                            <div>
-                              <a href={sub.social_link || sub.video_url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary flex items-center gap-1">
-                                View post <ExternalLink className="w-3 h-3" />
-                              </a>
-                              <p className="text-xs text-muted-foreground">{format(new Date(sub.created_at), "MMM d, yyyy")}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge variant={sub.status === "approved" || sub.status === "paid" ? "default" : sub.status === "rejected" ? "destructive" : "secondary"} className="text-xs">
-                              {sub.status || "pending"}
-                            </Badge>
-                            {(sub.views_count ?? 0) > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 justify-end">
-                                <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
-                              </div>
-                            )}
-                            {(sub.estimated_earnings ?? 0) > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-success font-medium mt-1 justify-end">
-                                <DollarSign className="w-3 h-3" /> ₹{Number(sub.estimated_earnings).toLocaleString()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            <p className="text-sm mb-2">
+              ₹{budgetSpent.toLocaleString()} of ₹{budgetTotal.toLocaleString()} paid out
+            </p>
+            <Progress value={budgetPercent} className="h-2" />
           </div>
+        )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-20">
+        {/* Stats Grid - Whop Style */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border mb-6">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
+            <Badge className="bg-primary text-primary-foreground">₹{campaign.reward_per_1k_views} / 1K</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
+            <Badge variant="outline">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
+            <Badge variant="outline">₹{campaign.min_payout || 0}</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
+            <Badge variant="outline">₹{campaign.max_payout || "∞"}</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
+            <Badge variant="outline">{campaign.category || "General"}</Badge>
+          </div>
+        </div>
+
+        {/* Requirements Section - Whop Style Pills */}
+        {requirements.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-xs text-muted-foreground uppercase mb-3">REQUIREMENTS</h3>
+            <div className="flex flex-wrap gap-2">
+              {requirements.map((req, i) => (
+                <span 
+                  key={i} 
+                  className="inline-block bg-muted/80 text-foreground text-sm px-4 py-2 rounded-lg border border-border"
+                >
+                  {req}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Assets Section - Whop Style */}
+        {assets.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-xs text-muted-foreground uppercase mb-3">ASSETS</h3>
+            <div className="space-y-2">
+              {assets.map((asset, i) => (
+                <a
+                  key={i}
+                  href={asset.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+                >
+                  <span className="text-2xl">{asset.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-primary group-hover:underline truncate">{asset.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{asset.url}</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rules Link if provided */}
+        {campaign.rules_link && (
+          <div className="mb-6">
+            <a
+              href={campaign.rules_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+            >
+              <span className="text-2xl">📋</span>
+              <div className="flex-1">
+                <p className="font-medium text-primary group-hover:underline">Full Guidelines & Rules</p>
+                <p className="text-xs text-muted-foreground">View detailed campaign rules</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </div>
+        )}
+
+        {/* Disclaimer - Whop Style */}
+        <div className="mb-6">
+          <h3 className="text-xs text-muted-foreground uppercase mb-2">DISCLAIMER</h3>
+          <p className="text-sm text-muted-foreground">
+            Creators may reject submissions that don't meet requirements. By submitting, you grant full usage rights and agree to follow the platform guidelines.
+          </p>
+        </div>
+
+        {/* Tabs - My Submissions */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full max-w-xs">
+            <TabsTrigger value="rewards" className="flex-1">About</TabsTrigger>
+            <TabsTrigger value="submissions" className="flex-1">My submissions</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="rewards" className="mt-4 space-y-4">
+            {/* Description */}
+            {campaign.description && (
+              <div className="glass-card rounded-xl p-4">
+                <h3 className="font-medium mb-2">About this campaign</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
+              </div>
+            )}
+
+            {/* Campaign Chat */}
+            {chatRoomId && (
               <CampaignChatSidebar
                 campaignId={campaign.id}
                 campaignName={campaign.name}
                 chatRoomId={chatRoomId}
-                isMember={canSubmit}
+                isMember={true}
               />
-            </div>
-          </div>
-        </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="submissions" className="mt-4">
+            {submissions.length === 0 ? (
+              <div className="glass-card rounded-xl p-8 text-center">
+                <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No submissions yet</p>
+                <Button onClick={() => setShowSubmitModal(true)} className="mt-4" variant="outline">
+                  Create your first submission
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {submissions.map((sub) => (
+                  <motion.div key={sub.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getSubmissionStatusIcon(sub.status)}
+                        <div>
+                          <a href={sub.social_link || sub.video_url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary flex items-center gap-1">
+                            View post <ExternalLink className="w-3 h-3" />
+                          </a>
+                          <p className="text-xs text-muted-foreground">{format(new Date(sub.created_at), "MMM d, yyyy")}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={sub.status === "approved" || sub.status === "paid" ? "default" : sub.status === "rejected" ? "destructive" : "secondary"} className="text-xs">
+                          {sub.status || "pending"}
+                        </Badge>
+                        {(sub.views_count ?? 0) > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 justify-end">
+                            <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
+                          </div>
+                        )}
+                        {(sub.estimated_earnings ?? 0) > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-success font-medium mt-1 justify-end">
+                            <DollarSign className="w-3 h-3" /> ₹{Number(sub.estimated_earnings).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Sticky Bottom Bar - Whop Style */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border">
-        <div className="container mx-auto px-4 py-3 max-w-6xl">
+        <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display font-bold">{campaign.name}</h3>
               <p className="text-sm text-muted-foreground">₹{campaign.reward_per_1k_views} / 1K</p>
             </div>
             
-            {isBanned ? (
-              <div className="flex items-center gap-2 text-destructive">
-                <Ban className="w-5 h-5" />
-                <div className="text-right">
-                  <p className="font-medium text-sm">You are banned</p>
-                  {banReason && <p className="text-xs text-muted-foreground">{banReason}</p>}
-                </div>
-              </div>
-            ) : !canSubmit ? (
-              waitlistStatus === "pending" ? (
-                <div className="flex items-center gap-2 text-warning">
-                  <Clock className="w-5 h-5" />
-                  <span className="text-sm font-medium">Application Pending</span>
-                </div>
-              ) : waitlistStatus === "rejected" ? (
-                <div className="flex items-center gap-2 text-destructive">
-                  <XCircle className="w-5 h-5" />
-                  <span className="text-sm font-medium">Application Rejected</span>
-                </div>
-              ) : (
-                <Button onClick={handleJoin} disabled={joining} size="lg" className="bg-primary hover:bg-primary/90 px-8">
-                  {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : campaign.join_type === "waitlist" ? "Apply to Join" : "Join for free"}
-                </Button>
-              )
-            ) : (
-              <Button onClick={() => setShowSubmitModal(true)} size="lg" className="bg-primary hover:bg-primary/90 px-8">
-                Submit
-              </Button>
-            )}
+            <Button onClick={() => setShowSubmitModal(true)} size="lg" className="bg-primary hover:bg-primary/90 px-8 rounded-xl">
+              Submit
+            </Button>
           </div>
         </div>
       </div>
@@ -741,49 +671,6 @@ const CampaignDetail = () => {
 
           <Button onClick={handleSubmission} disabled={submitting || !socialLink.trim()} className="w-full mt-4" size="lg">
             {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit"}
-          </Button>
-        </DialogContent>
-      </Dialog>
-
-      {/* Waitlist Modal */}
-      <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl">Apply to Join</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Please answer the following questions to apply for this campaign.
-            </p>
-            
-            {campaign.waitlist_questions?.map((q, i) => (
-              <div key={i}>
-                <Label className="text-sm">
-                  {q} <span className="text-destructive">*</span>
-                </Label>
-                <Textarea 
-                  value={waitlistAnswers[i] || ""} 
-                  onChange={(e) => {
-                    const newAnswers = [...waitlistAnswers];
-                    newAnswers[i] = e.target.value;
-                    setWaitlistAnswers(newAnswers);
-                  }} 
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-            ))}
-
-            {(!campaign.waitlist_questions || campaign.waitlist_questions.length === 0) && (
-              <p className="text-center text-muted-foreground py-4">
-                No questions required. Click submit to apply.
-              </p>
-            )}
-          </div>
-
-          <Button onClick={handleWaitlistSubmit} disabled={submitting} className="w-full mt-4" size="lg">
-            {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit Application"}
           </Button>
         </DialogContent>
       </Dialog>
