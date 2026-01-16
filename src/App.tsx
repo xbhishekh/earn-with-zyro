@@ -1,11 +1,13 @@
 import { lazy, Suspense } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import SuspensionGuard from "@/components/SuspensionGuard";
+
+// Lazy load non-critical UI components to reduce initial bundle
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const SuspensionGuard = lazy(() => import("@/components/SuspensionGuard"));
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -57,10 +59,12 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <SuspensionGuard>
-            <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={null}>
+            <Toaster />
+            <Sonner />
+          </Suspense>
+          <Suspense fallback={<PageLoader />}>
+            <SuspensionGuard>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
@@ -87,8 +91,8 @@ const App = () => (
                 <Route path="/support" element={<Support />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Suspense>
-          </SuspensionGuard>
+            </SuspensionGuard>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
