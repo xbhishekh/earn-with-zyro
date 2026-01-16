@@ -20,7 +20,7 @@ export const HeroSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-8">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">India's #1 Creator Rewards Platform</span>
+            <span className="text-sm font-medium text-primary">#1 Creator Rewards Platform</span>
           </div>
 
           {/* Main Heading */}

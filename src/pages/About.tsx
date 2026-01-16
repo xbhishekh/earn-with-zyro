@@ -53,7 +53,7 @@ const About = () => {
               <span className="gradient-text">Earn More</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Zyrozo is India's leading creator rewards platform, connecting talented 
+              Zyrozo is a leading creator rewards platform, connecting talented 
               content creators with top brands for mutually rewarding partnerships.
             </p>
           </motion.div>

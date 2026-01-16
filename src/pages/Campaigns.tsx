@@ -371,7 +371,7 @@ const Campaigns = () => {
                         {/* Campaign Title & Creator */}
                         <div className="px-4 pb-3">
                           <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">
-                            {campaign.name} - ₹{campaign.reward_per_1k_views} Per 1,000 Views
+                            {campaign.name} - ${campaign.reward_per_1k_views} Per 1,000 Views
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
                             <Link 
@@ -400,11 +400,11 @@ const Campaigns = () => {
                           </div>
                           <div className="flex items-center justify-between">
                             <div>
-                              <span className="font-bold text-lg">₹{(budgetSpent / 1000).toFixed(2)}k</span>
-                              <span className="text-muted-foreground text-sm"> / ₹{(budgetTotal / 1000).toFixed(0)}k</span>
+                              <span className="font-bold text-lg">${(budgetSpent / 1000).toFixed(2)}k</span>
+                              <span className="text-muted-foreground text-sm"> / ${(budgetTotal / 1000).toFixed(0)}k</span>
                             </div>
                             <div>
-                              <span className="font-bold text-primary text-lg">₹{campaign.reward_per_1k_views}</span>
+                              <span className="font-bold text-primary text-lg">${campaign.reward_per_1k_views}</span>
                               <span className="text-muted-foreground text-sm"> / 1k views</span>
                             </div>
                           </div>
@@ -441,7 +441,7 @@ const Campaigns = () => {
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground mb-0.5">Budget Left</p>
-                            <p className="font-semibold text-sm text-success">₹{(budgetRemaining / 1000).toFixed(2)}k</p>
+                            <p className="font-semibold text-sm text-success">${(budgetRemaining / 1000).toFixed(2)}k</p>
                           </div>
                         </div>
                       </Link>
@@ -477,7 +477,7 @@ const Campaigns = () => {
                 </div>
                 <div>
                   <p className="font-medium">{selectedCampaign.name}</p>
-                  <p className="text-sm text-muted-foreground">₹{selectedCampaign.reward_per_1k_views} / 1K views</p>
+                  <p className="text-sm text-muted-foreground">${selectedCampaign.reward_per_1k_views} / 1K views</p>
                 </div>
               </div>
 

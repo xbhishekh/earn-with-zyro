@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, CheckCircle, XCircle, ExternalLink, Download, RefreshCw, DollarSign, Ban } from "lucide-react";
+import { Search, Filter, CheckCircle, XCircle, ExternalLink, Download, RefreshCw, DollarSign, Ban, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +62,9 @@ const AdminSubmissions = () => {
   
   // Mark Paid modal
   const [markPaidSubmission, setMarkPaidSubmission] = useState<Submission | null>(null);
+  
+  // Video Preview modal
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => { 
     if (!accessLoading) fetchData(); 
@@ -395,14 +398,27 @@ const AdminSubmissions = () => {
                       {campaign?.name || "Unknown"}
                     </TableCell>
                     <TableCell>
-                      <a 
-                        href={s.video_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-1"
-                      >
-                        View <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        {s.video_url && (s.video_url.includes('supabase') || s.video_url.endsWith('.mp4') || s.video_url.endsWith('.webm') || s.video_url.endsWith('.mov')) ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2"
+                            onClick={() => setVideoPreviewUrl(s.video_url)}
+                          >
+                            <Play className="w-3 h-3 mr-1" />
+                            Play
+                          </Button>
+                        ) : null}
+                        <a 
+                          href={s.video_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-1 text-sm"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(s.status || "pending")}</TableCell>
                     <TableCell className="text-right font-mono">
@@ -540,6 +556,37 @@ const AdminSubmissions = () => {
               {actionLoading ? "Processing..." : "Confirm Payment"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Preview Modal */}
+      <Dialog open={!!videoPreviewUrl} onOpenChange={() => setVideoPreviewUrl(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center justify-between">
+              Video Preview
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setVideoPreviewUrl(null)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 pt-2">
+            {videoPreviewUrl && (
+              <video 
+                src={videoPreviewUrl} 
+                controls 
+                autoPlay
+                className="w-full max-h-[70vh] rounded-lg bg-black"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
