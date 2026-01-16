@@ -114,7 +114,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return {
       error: (error as Error | null) ?? null,
-      otpType: (data?.otpType as EmailOtpType | undefined) ?? (isSignup ? "signup" : "magiclink"),
+      // For email OTP verification, Supabase expects `type: "email"` ("magiclink"/"signup" are deprecated).
+      otpType: "email" as EmailOtpType,
     };
   };
 
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: (type ?? "magiclink") as EmailOtpType,
+      type: (type ?? ("email" as EmailOtpType)) as EmailOtpType,
     });
 
     return { error: error as Error | null };
