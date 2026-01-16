@@ -56,7 +56,7 @@ interface Submission {
 }
 
 const CampaignDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   
@@ -79,35 +79,81 @@ const CampaignDetail = () => {
   const [socialLink, setSocialLink] = useState("");
   const [waitlistAnswers, setWaitlistAnswers] = useState<string[]>([]);
 
+  // Track affiliate clicks from ref param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    
+    if (refCode) {
+      // Store referral code in localStorage for signup
+      localStorage.setItem('referral_code', refCode);
+      
+      // Track click (fire and forget)
+      const trackClick = async () => {
+        try {
+          await supabase.rpc('increment_affiliate_clicks', { link_code: refCode });
+        } catch {
+          // Silent fail
+        }
+      };
+      trackClick();
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth", { replace: true });
       return;
     }
-    if (id && user) {
+    if ((id || slug) && user) {
       fetchCampaignData();
     }
-  }, [id, user, authLoading, navigate]);
+  }, [id, slug, user, authLoading, navigate]);
+
+  // Helper function to create slug from campaign name
+  const createSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  };
 
   const fetchCampaignData = async () => {
     try {
-      // Fetch campaign
-      const { data: campaignData, error: campaignError } = await supabase
-        .from("campaigns")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (campaignError) throw campaignError;
+      let campaignData;
+      
+      if (id) {
+        // Fetch by ID
+        const { data, error } = await supabase
+          .from("campaigns")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (error) throw error;
+        campaignData = data;
+      } else if (slug) {
+        // Fetch all campaigns and match by slug
+        const { data: allCampaigns, error } = await supabase
+          .from("campaigns")
+          .select("*");
+        if (error) throw error;
+        
+        campaignData = allCampaigns?.find(c => createSlug(c.name) === slug);
+        if (!campaignData) throw new Error("Campaign not found");
+      }
       setCampaign(campaignData as Campaign);
       setWaitlistAnswers(new Array(campaignData.waitlist_questions?.length || 0).fill(""));
+
+      const campaignId = campaignData.id;
 
       // Check if member
       const { data: memberData } = await supabase
         .from("campaign_members")
         .select("id")
         .eq("user_id", user!.id)
-        .eq("campaign_id", id)
+        .eq("campaign_id", campaignId)
         .maybeSingle();
 
       setIsMember(!!memberData);
@@ -117,7 +163,7 @@ const CampaignDetail = () => {
         .from("user_suspensions")
         .select("reason")
         .eq("user_id", user!.id)
-        .eq("campaign_id", id)
+        .eq("campaign_id", campaignId)
         .eq("is_active", true)
         .maybeSingle();
 
@@ -131,7 +177,7 @@ const CampaignDetail = () => {
         .from("campaign_waitlist_requests")
         .select("status")
         .eq("user_id", user!.id)
-        .eq("campaign_id", id)
+        .eq("campaign_id", campaignId)
         .maybeSingle();
 
       if (waitlistData) {
@@ -143,7 +189,7 @@ const CampaignDetail = () => {
         .from("submissions")
         .select("*")
         .eq("user_id", user!.id)
-        .eq("campaign_id", id)
+        .eq("campaign_id", campaignId)
         .order("created_at", { ascending: false });
 
       setSubmissions(submissionData as Submission[] || []);
@@ -152,7 +198,7 @@ const CampaignDetail = () => {
       const { data: existingRoom } = await supabase
         .from("chat_rooms")
         .select("id")
-        .eq("campaign_id", id)
+        .eq("campaign_id", campaignId)
         .eq("type", "campaign")
         .maybeSingle();
 
@@ -163,7 +209,7 @@ const CampaignDetail = () => {
         const { data: newRoom } = await supabase
           .from("chat_rooms")
           .insert({ 
-            campaign_id: id, 
+            campaign_id: campaignId, 
             type: "campaign",
             name: `${campaignData.name} Chat`
           })
@@ -183,7 +229,9 @@ const CampaignDetail = () => {
   };
 
   const handleJoin = async () => {
-    if (campaign?.join_type === "waitlist") {
+    if (!campaign) return;
+    
+    if (campaign.join_type === "waitlist") {
       setShowWaitlistModal(true);
       return;
     }
@@ -191,7 +239,7 @@ const CampaignDetail = () => {
     try {
       const { error } = await supabase.from("campaign_members").insert({
         user_id: user!.id,
-        campaign_id: id
+        campaign_id: campaign.id
       });
 
       if (error) throw error;
@@ -204,11 +252,13 @@ const CampaignDetail = () => {
   };
 
   const handleWaitlistSubmit = async () => {
+    if (!campaign) return;
+    
     setSubmitting(true);
     try {
       const { error } = await supabase.from("campaign_waitlist_requests").insert({
         user_id: user!.id,
-        campaign_id: id,
+        campaign_id: campaign.id,
         answers: waitlistAnswers
       });
 
@@ -225,7 +275,7 @@ const CampaignDetail = () => {
   };
 
   const handleSubmission = async () => {
-    if (!videoUrl || !socialLink) {
+    if (!videoUrl || !socialLink || !campaign) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -236,7 +286,7 @@ const CampaignDetail = () => {
         .from("submissions")
         .insert({
           user_id: user!.id,
-          campaign_id: id,
+          campaign_id: campaign.id,
           video_url: videoUrl,
           social_link: socialLink
         })
@@ -251,7 +301,7 @@ const CampaignDetail = () => {
           submission_id: submissionData.id,
           video_url: videoUrl,
           social_link: socialLink,
-          campaign_id: id,
+          campaign_id: campaign.id,
           user_id: user!.id
         }
       }).catch(err => console.log("Notification error (non-blocking):", err));
@@ -447,7 +497,7 @@ const CampaignDetail = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <CampaignChatSidebar
-                campaignId={id!}
+                campaignId={campaign.id}
                 campaignName={campaign.name}
                 chatRoomId={chatRoomId}
                 isMember={isMember || waitlistStatus === "approved"}
