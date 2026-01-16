@@ -25,7 +25,9 @@ import {
   Download,
   FileText,
   Image as ImageIcon,
-  Video
+  Video,
+  Share2,
+  Copy
 } from "lucide-react";
 import { CampaignChatSidebar } from "@/components/campaigns/CampaignChatSidebar";
 import { Button } from "@/components/ui/button";
@@ -477,13 +479,27 @@ const CampaignDetail = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-28">
-        {/* Back Button & Title - Whop Style */}
-        <div className="flex items-center gap-4 mb-4">
-          <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
-          </button>
-          <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
+        {/* Back Button & Title + Share - Whop Style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+            <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const shareUrl = `https://zyrozo.com/c/${campaign.slug || campaign.id}`;
+              navigator.clipboard.writeText(shareUrl);
+              toast.success("Campaign link copied!");
+            }}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </Button>
         </div>
 
         {/* Platforms Icons Row */}
