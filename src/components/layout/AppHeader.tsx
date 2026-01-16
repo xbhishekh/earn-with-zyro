@@ -187,6 +187,16 @@ export const AppHeader = () => {
                     </Badge>
                   )}
 
+                  {/* Mobile: Admin icon next to notification */}
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="md:hidden p-2 hover:bg-muted rounded-full relative"
+                    >
+                      <Shield className="w-5 h-5 text-primary" />
+                    </Link>
+                  )}
+
                   {/* Mobile: Notification on left */}
                   <div className="md:hidden">
                     <NotificationsBell />
