@@ -25,6 +25,7 @@ interface AuthContextType {
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -174,6 +175,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
+  // Sign in with Google OAuth
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+
+    return { error: error as Error | null };
+  };
+
   // Send password reset email
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -218,6 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verifyOtp,
         signUpWithPassword,
         signInWithPassword,
+        signInWithGoogle,
         resetPassword,
         updatePassword,
         signOut,
