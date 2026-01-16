@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle, DollarSign } from "lucide-react";
+import { Search, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,18 +9,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const AdminPayments = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => { fetchTransactions(); }, []);
+  useEffect(() => { 
+    if (!accessLoading) fetchTransactions(); 
+  }, [accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   const fetchTransactions = async () => {
     try {
-      const { data } = await supabase.from("balance_transactions").select("*").in("status", ["pending", "available"]).order("created_at", { ascending: false });
+      let query = supabase.from("balance_transactions").select("*").in("status", ["pending", "available"]).order("created_at", { ascending: false });
+      
+      // Filter for normal admin - only show transactions from their campaign members
+      if (!hasFullAccess && myCampaignMemberUserIds.length > 0) {
+        query = query.in("user_id", myCampaignMemberUserIds);
+      } else if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+        setTransactions([]);
+        setLoading(false);
+        return;
+      }
+      
+      const { data } = await query;
       setTransactions(data || []);
     } catch (error) {
       console.error("Error:", error);
@@ -40,11 +55,27 @@ const AdminPayments = () => {
   const pendingAmount = transactions.filter(t => t.status === "pending").reduce((a, t) => a + t.amount, 0);
   const availableAmount = transactions.filter(t => t.status === "available").reduce((a, t) => a + t.amount, 0);
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading || accessLoading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+
+  // Show message for normal admins with no campaigns
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaign Members</h3>
+        <p className="text-muted-foreground">Create a campaign and get members to see payment data here.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div><h1 className="font-display text-2xl font-bold mb-1">Payments</h1><p className="text-muted-foreground">Process pending payments</p></div>
+      <div>
+        <h1 className="font-display text-2xl font-bold mb-1">Payments</h1>
+        <p className="text-muted-foreground">
+          {hasFullAccess ? "Process all pending payments" : "Process payments for your campaign members"}
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">

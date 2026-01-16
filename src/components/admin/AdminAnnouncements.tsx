@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Megaphone, Trash2, Pin, PinOff, RefreshCw } from "lucide-react";
+import { Plus, Megaphone, Trash2, Pin, PinOff, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface Announcement {
   id: string;
@@ -41,6 +42,7 @@ interface Campaign {
 
 const AdminAnnouncements = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignIds, loading: accessLoading } = useAdminAccess();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,14 +56,30 @@ const AdminAnnouncements = () => {
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!accessLoading) fetchData();
+  }, [accessLoading, hasFullAccess, myCampaignIds]);
 
   const fetchData = async () => {
     try {
+      let announcementsQuery = supabase.from("announcements").select("*").order("created_at", { ascending: false });
+      let campaignsQuery = supabase.from("campaigns").select("id, name");
+      
+      // Filter for normal admin - only show announcements for their campaigns
+      if (!hasFullAccess) {
+        if (myCampaignIds.length > 0) {
+          announcementsQuery = announcementsQuery.in("campaign_id", myCampaignIds);
+          campaignsQuery = campaignsQuery.in("id", myCampaignIds);
+        } else {
+          setAnnouncements([]);
+          setCampaigns([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       const [announcementsRes, campaignsRes] = await Promise.all([
-        supabase.from("announcements").select("*").order("created_at", { ascending: false }),
-        supabase.from("campaigns").select("id, name"),
+        announcementsQuery,
+        campaignsQuery,
       ]);
 
       if (announcementsRes.error) throw announcementsRes.error;
@@ -78,6 +96,12 @@ const AdminAnnouncements = () => {
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
       toast.error("Title and content required");
+      return;
+    }
+
+    // Normal admins must select one of their campaigns (no global announcements)
+    if (!hasFullAccess && !formData.campaign_id) {
+      toast.error("Please select a campaign for your announcement");
       return;
     }
 
@@ -138,10 +162,20 @@ const AdminAnnouncements = () => {
     return campaign?.name || "Unknown";
   };
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasFullAccess && myCampaignIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaigns</h3>
+        <p className="text-muted-foreground">Create a campaign first to send announcements to your members.</p>
       </div>
     );
   }
@@ -151,7 +185,9 @@ const AdminAnnouncements = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Announcements</h1>
-          <p className="text-muted-foreground">Broadcast messages to creators</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Broadcast messages to all creators" : "Send announcements to your campaign members"}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchData}>
@@ -248,16 +284,18 @@ const AdminAnnouncements = () => {
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Campaign (optional)</label>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                Campaign {hasFullAccess ? "(optional)" : "*"}
+              </label>
               <Select
                 value={formData.campaign_id}
                 onValueChange={(v) => setFormData({ ...formData, campaign_id: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Global (all users)" />
+                  <SelectValue placeholder={hasFullAccess ? "Global (all users)" : "Select campaign"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Global (all users)</SelectItem>
+                  {hasFullAccess && <SelectItem value="">Global (all users)</SelectItem>}
                   {campaigns.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
