@@ -25,7 +25,9 @@ import {
   Eye,
   Edit,
   Trash2,
-  Video
+  Video,
+  DollarSign,
+  UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +48,8 @@ import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
 import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
 import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
+import AccountSwitcher from "@/components/profile/AccountSwitcher";
+import PayUserModal from "@/components/profile/PayUserModal";
 
 interface ProfileData {
   id: string;
@@ -90,6 +94,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showSupportChat, setShowSupportChat] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [availableBalance, setAvailableBalance] = useState(0);
   
   // Check if user is an admin (can create products/campaigns)
   const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin";
@@ -119,8 +125,26 @@ const Profile = () => {
     if (user) {
       fetchProfile();
       fetchMyProducts();
+      fetchAvailableBalance();
     }
   }, [user]);
+
+  const fetchAvailableBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("balance_transactions")
+        .select("amount, status")
+        .eq("user_id", user!.id)
+        .eq("status", "completed");
+
+      if (error) throw error;
+
+      const total = (data || []).reduce((sum, tx) => sum + (tx.amount || 0), 0);
+      setAvailableBalance(Math.max(0, total));
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -346,7 +370,7 @@ const Profile = () => {
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className={cn(
               "grid w-full lg:w-auto lg:inline-grid",
-              isAdminUser ? "grid-cols-6" : "grid-cols-5"
+              isAdminUser ? "grid-cols-7" : "grid-cols-6"
             )}>
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
@@ -373,6 +397,10 @@ const Profile = () => {
               <TabsTrigger value="support" className="gap-2">
                 <HelpCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Help</span>
+              </TabsTrigger>
+              <TabsTrigger value="account" className="gap-2">
+                <UserCog className="w-4 h-4" />
+                <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
             </TabsList>
 
@@ -751,12 +779,59 @@ const Profile = () => {
                 </div>
               </div>
             </TabsContent>
+
+            {/* Account Tab - Logout & Account Switching */}
+            <TabsContent value="account" className="space-y-6">
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-1">Account Management</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Switch accounts or log out
+                  </p>
+                </div>
+
+                {/* Pay Button */}
+                <Button
+                  onClick={() => setShowPayModal(true)}
+                  variant="outline"
+                  className="w-full flex items-center justify-between p-4 h-auto"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Send Payment</p>
+                      <p className="text-sm text-muted-foreground">Transfer balance to another user</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-primary">₹{availableBalance.toLocaleString()} available</span>
+                </Button>
+
+                {/* Account Switcher */}
+                <AccountSwitcher
+                  currentEmail={user?.email || ""}
+                  currentAvatar={profile?.avatar_url || null}
+                  currentDisplayName={profile?.display_name || null}
+                  onLogout={signOut}
+                />
+              </div>
+            </TabsContent>
           </Tabs>
         </motion.div>
       </div>
 
       {/* Support Chat Widget - Only shown when triggered from this page */}
       {showSupportChat && <SupportChatWidget forceOpen onClose={() => setShowSupportChat(false)} />}
+
+      {/* Pay User Modal */}
+      <PayUserModal
+        open={showPayModal}
+        onOpenChange={setShowPayModal}
+        currentUserId={user?.id || ""}
+        availableBalance={availableBalance}
+        onSuccess={fetchAvailableBalance}
+      />
     </MainLayout>
   );
 };
