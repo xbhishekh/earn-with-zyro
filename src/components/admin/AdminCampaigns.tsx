@@ -149,19 +149,27 @@ const AdminCampaigns = () => {
 
     setSubmitting(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a campaign");
+        setSubmitting(false);
+        return;
+      }
+
       const slug = formData.slug.trim() || generateSlug(formData.name);
       const campaignData = {
         name: formData.name,
         slug: slug,
         description: formData.description || null,
-        reward_per_1k_views: formData.reward_per_1k_views,
+        reward_per_1k_views: formData.reward_per_1k_views || 0,
         min_payout: formData.min_payout || null,
         max_payout: formData.max_payout || null,
         budget_total: formData.budget_total || null,
         status: formData.status,
         category: formData.category,
         campaign_type: formData.campaign_type,
-        platforms: formData.platforms,
+        platforms: formData.platforms.length > 0 ? formData.platforms : [],
         join_type: formData.join_type,
         thumbnail_url: formData.thumbnail_url || null,
         video_url: formData.video_url || null,
@@ -176,11 +184,20 @@ const AdminCampaigns = () => {
           .update(campaignData)
           .eq("id", editingCampaign.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
         toast.success("Campaign updated!");
       } else {
-        const { error } = await supabase.from("campaigns").insert(campaignData);
-        if (error) throw error;
+        const { error } = await supabase.from("campaigns").insert({
+          ...campaignData,
+          created_by: user.id,
+        });
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
         toast.success("Campaign created!");
       }
 
@@ -188,9 +205,9 @@ const AdminCampaigns = () => {
       setEditingCampaign(null);
       setFormData(initialFormState);
       fetchCampaigns();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving campaign:", error);
-      toast.error("Failed to save campaign");
+      toast.error(error?.message || "Failed to save campaign");
     } finally {
       setSubmitting(false);
     }
