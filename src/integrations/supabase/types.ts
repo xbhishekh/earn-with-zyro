@@ -414,6 +414,7 @@ export type Database = {
           updated_at: string
           video_url: string | null
           waitlist_questions: string[] | null
+          welcome_message: string | null
         }
         Insert: {
           affiliate_commission_percent?: number | null
@@ -439,6 +440,7 @@ export type Database = {
           updated_at?: string
           video_url?: string | null
           waitlist_questions?: string[] | null
+          welcome_message?: string | null
         }
         Update: {
           affiliate_commission_percent?: number | null
@@ -464,6 +466,7 @@ export type Database = {
           updated_at?: string
           video_url?: string | null
           waitlist_questions?: string[] | null
+          welcome_message?: string | null
         }
         Relationships: []
       }

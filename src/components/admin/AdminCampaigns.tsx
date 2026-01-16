@@ -17,6 +17,7 @@ import {
   Bold,
   List,
   Package,
+  MessageCircle,
 } from "lucide-react";
 import { CampaignAssetsManager } from "./CampaignAssetsManager";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,7 @@ const initialFormState = {
   video_url: "",
   rules_guidelines: "",
   rules_link: "",
+  welcome_message: "",
 };
 
 const categories = ["gaming", "lifestyle", "tech", "food", "travel", "fashion", "education", "entertainment"];
@@ -165,6 +167,7 @@ const AdminCampaigns = () => {
         video_url: formData.video_url || null,
         rules_guidelines: formData.rules_guidelines || null,
         rules_link: formData.rules_link || null,
+        welcome_message: formData.welcome_message || null,
       };
 
       if (editingCampaign) {
@@ -227,6 +230,7 @@ const AdminCampaigns = () => {
       video_url: campaign.video_url || "",
       rules_guidelines: campaign.rules_guidelines || "",
       rules_link: campaign.rules_link || "",
+      welcome_message: (campaign as any).welcome_message || "",
     });
     setIsModalOpen(true);
   };
@@ -806,6 +810,30 @@ Example:
                   onChange={(e) => setFormData({ ...formData, rules_link: e.target.value })}
                 />
               </div>
+            </div>
+
+            {/* Welcome Message - Auto DM on Join */}
+            <div className="border-t pt-4 mt-4">
+              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                Welcome Message (Auto DM)
+              </label>
+              <p className="text-xs text-muted-foreground mb-2">
+                This message will be automatically sent to the user's DM when they join this campaign
+              </p>
+              <Textarea
+                placeholder="Welcome to our campaign! 🎉
+
+Here's how to get started:
+1. Read the campaign rules carefully
+2. Create your content following our guidelines
+3. Submit your video for review
+
+If you have any questions, feel free to reach out to our support team. Good luck!"
+                value={formData.welcome_message}
+                onChange={(e) => setFormData({ ...formData, welcome_message: e.target.value })}
+                rows={6}
+              />
             </div>
 
             {/* Campaign Assets Manager - Only show when editing */}

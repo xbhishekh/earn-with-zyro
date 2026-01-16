@@ -24,25 +24,29 @@ interface SupportChat {
   unread_count: number;
 }
 
-const SupportChatWidget = () => {
+interface SupportChatWidgetProps {
+  forceOpen?: boolean;
+  onClose?: () => void;
+}
+
+const SupportChatWidget = ({ forceOpen = false, onClose }: SupportChatWidgetProps) => {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(forceOpen);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [chat, setChat] = useState<SupportChat | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Listen for custom event to open chat from Support page
+  // Sync isOpen with forceOpen prop
   useEffect(() => {
-    const handleOpenChat = () => setIsOpen(true);
-    window.addEventListener('open-support-chat', handleOpenChat);
-    return () => window.removeEventListener('open-support-chat', handleOpenChat);
-  }, []);
+    if (forceOpen) {
+      setIsOpen(true);
+    }
+  }, [forceOpen]);
 
   useEffect(() => {
     if (!user) return;
@@ -67,9 +71,6 @@ const SupportChatWidget = () => {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages(prev => [...prev, newMsg]);
-          if (newMsg.sender_type === 'admin' && !isOpen) {
-            setUnreadCount(prev => prev + 1);
-          }
           scrollToBottom();
         }
       )
@@ -83,11 +84,15 @@ const SupportChatWidget = () => {
   useEffect(() => {
     if (isOpen && chat) {
       markMessagesAsRead();
-      setUnreadCount(0);
       scrollToBottom();
       inputRef.current?.focus();
     }
   }, [isOpen, chat]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose?.();
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -124,7 +129,6 @@ const SupportChatWidget = () => {
 
       if (existingChat) {
         setChat(existingChat);
-        setUnreadCount(existingChat.unread_count || 0);
         await fetchMessages(existingChat.id);
       } else {
         // Create new chat
@@ -211,128 +215,100 @@ const SupportChatWidget = () => {
   if (!user) return null;
 
   return (
-    <>
-      {/* Floating Button */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
-          >
-            <Button
-              onClick={() => setIsOpen(true)}
-              size="lg"
-              className="rounded-full w-14 h-14 shadow-lg gradient-bg hover:opacity-90"
-            >
-              <MessageCircle className="w-6 h-6" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Chat Window */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 w-[380px] h-[500px] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-          >
-            {/* Header */}
-            <div className="gradient-bg p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10 border-2 border-white/20">
-                  <AvatarFallback className="bg-white/20 text-white">Z</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold text-white">Zyrozo Support</h3>
-                  <p className="text-xs text-white/70">We typically reply within minutes</p>
-                </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] h-[500px] max-h-[calc(100vh-6rem)] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        >
+          {/* Header */}
+          <div className="gradient-bg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 border-2 border-white/20">
+                <AvatarFallback className="bg-white/20 text-white">Z</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-semibold text-white">Zyrozo Support</h3>
+                <p className="text-xs text-white/70">We typically reply within minutes</p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/10"
-              >
-                <X className="w-5 h-5" />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="text-white hover:bg-white/10"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-4">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <h4 className="font-medium mb-1">Start a conversation</h4>
+                <p className="text-sm text-muted-foreground px-4">
+                  {welcomeMessage || "Send us a message and we'll get back to you soon!"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.sender_type === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                        message.sender_type === "user"
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted rounded-bl-sm"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className={`text-xs mt-1 ${
+                        message.sender_type === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                      }`}>
+                        {format(new Date(message.created_at), "HH:mm")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={scrollRef} />
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Input */}
+          <form onSubmit={sendMessage} className="p-4 border-t bg-muted/30">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1"
+                disabled={sending}
+              />
+              <Button type="submit" size="icon" disabled={!newMessage.trim() || sending}>
+                {sending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
-
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <h4 className="font-medium mb-1">Start a conversation</h4>
-                  <p className="text-sm text-muted-foreground px-4">
-                    {welcomeMessage || "Send us a message and we'll get back to you soon!"}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.sender_type === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                          message.sender_type === "user"
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-muted rounded-bl-sm"
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender_type === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
-                        }`}>
-                          {format(new Date(message.created_at), "HH:mm")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={scrollRef} />
-                </div>
-              )}
-            </ScrollArea>
-
-            {/* Input */}
-            <form onSubmit={sendMessage} className="p-4 border-t bg-muted/30">
-              <div className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                  disabled={sending}
-                />
-                <Button type="submit" size="icon" disabled={!newMessage.trim() || sending}>
-                  {sending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+          </form>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
