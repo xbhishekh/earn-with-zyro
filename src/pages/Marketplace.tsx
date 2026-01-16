@@ -283,12 +283,7 @@ const Marketplace = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
+                  <div key={product.id}>
                     <Link
                       to={`/marketplace/${product.slug || product.id}`}
                       className="block bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all group"
@@ -364,7 +359,7 @@ const Marketplace = () => {
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -406,12 +401,7 @@ const Marketplace = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+                <div key={product.id}>
                   <Link
                     to={`/marketplace/${product.slug || product.id}`}
                     className="block bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all group"
@@ -485,7 +475,7 @@ const Marketplace = () => {
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}

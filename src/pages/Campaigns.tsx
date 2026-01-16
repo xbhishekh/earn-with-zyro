@@ -330,16 +330,16 @@ const Campaigns = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+          <div className="text-center mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
               Active <span className="gradient-text">Campaigns</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               Browse our active campaigns and start earning from your content today
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input placeholder="Search campaigns..." className="pl-10 h-12 bg-card border-border" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -351,7 +351,7 @@ const Campaigns = () => {
                 </Button>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -371,7 +371,7 @@ const Campaigns = () => {
                 const timeAgo = formatDistanceToNow(new Date(campaign.created_at), { addSuffix: false });
                 
                 return (
-                  <motion.div key={campaign.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
+                  <motion.div key={campaign.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
                     <div className="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
                       {/* Header with Creator & Badges */}
                       <Link to={`/campaigns/${campaign.id}`} className="block">
