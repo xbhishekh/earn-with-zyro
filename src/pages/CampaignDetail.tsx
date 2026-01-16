@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -17,7 +17,15 @@ import {
   XCircle,
   AlertCircle,
   Instagram,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Video
 } from "lucide-react";
 import { CampaignChatSidebar } from "@/components/campaigns/CampaignChatSidebar";
 import { Button } from "@/components/ui/button";
@@ -38,6 +46,7 @@ interface Campaign {
   slug: string | null;
   description: string | null;
   thumbnail_url: string | null;
+  video_url: string | null;
   platforms: string[];
   category: string | null;
   campaign_type: string | null;
@@ -52,6 +61,18 @@ interface Campaign {
   join_type: string | null;
   waitlist_questions: string[];
   created_by: string | null;
+}
+
+interface CampaignAsset {
+  id: string;
+  asset_type: 'video' | 'image' | 'file' | 'link';
+  title: string;
+  description: string | null;
+  url: string;
+  file_name: string | null;
+  file_size: number | null;
+  is_required: boolean;
+  sort_order: number;
 }
 
 interface CreatorProfile {
@@ -75,12 +96,19 @@ const CampaignDetail = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [campaignAssets, setCampaignAssets] = useState<CampaignAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rewards");
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
+  
+  // Video player state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
   
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -148,14 +176,16 @@ const CampaignDetail = () => {
         }
       }
 
-      const [memberRes, submissionRes, roomRes] = await Promise.all([
+      const [memberRes, submissionRes, roomRes, assetsRes] = await Promise.all([
         supabase.from("campaign_members").select("id").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
         supabase.from("submissions").select("*").eq("user_id", user!.id).eq("campaign_id", campaignId).order("created_at", { ascending: false }),
         supabase.from("chat_rooms").select("id").eq("campaign_id", campaignId).eq("type", "campaign").maybeSingle(),
+        supabase.from("campaign_assets").select("*").eq("campaign_id", campaignId).order("sort_order", { ascending: true }),
       ]);
 
       setIsMember(!!memberRes.data);
       setSubmissions(submissionRes.data as Submission[] || []);
+      setCampaignAssets(assetsRes.data as CampaignAsset[] || []);
       if (roomRes.data) setChatRoomId(roomRes.data.id);
     } catch (error) {
       console.error("Error:", error);
@@ -386,14 +416,88 @@ const CampaignDetail = () => {
           </div>
         )}
 
-        {/* Large Thumbnail - Whop Style */}
+        {/* Video/Thumbnail Preview - Whop Style */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <div className="relative rounded-2xl overflow-hidden">
-            {campaign.thumbnail_url ? (
+          <div className="relative rounded-2xl overflow-hidden group">
+            {campaign.video_url ? (
+              <>
+                {showVideoPreview ? (
+                  <div className="relative">
+                    <video
+                      ref={videoRef}
+                      src={campaign.video_url}
+                      className="w-full aspect-video object-cover"
+                      muted={isMuted}
+                      loop
+                      playsInline
+                      autoPlay
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                    />
+                    {/* Video Controls Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20"
+                            onClick={() => {
+                              if (videoRef.current) {
+                                if (isPlaying) {
+                                  videoRef.current.pause();
+                                } else {
+                                  videoRef.current.play();
+                                }
+                              }
+                            }}
+                          >
+                            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20"
+                            onClick={() => setIsMuted(!isMuted)}
+                          >
+                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => setShowVideoPreview(true)}
+                  >
+                    {campaign.thumbnail_url ? (
+                      <img 
+                        src={campaign.thumbnail_url} 
+                        alt={campaign.name} 
+                        className="w-full aspect-video object-cover"
+                      />
+                    ) : (
+                      <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20" />
+                    )}
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                      <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                        <Play className="w-8 h-8 text-primary ml-1" />
+                      </div>
+                    </div>
+                    <Badge className="absolute top-3 left-3 bg-black/70 text-white border-0">
+                      <Video className="w-3 h-3 mr-1" />
+                      Video
+                    </Badge>
+                  </div>
+                )}
+              </>
+            ) : campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name} 
@@ -470,12 +574,64 @@ const CampaignDetail = () => {
           </div>
         )}
 
-        {/* Assets Section - Whop Style */}
-        {assets.length > 0 && (
+        {/* Assets Section - From Database */}
+        {(campaignAssets.length > 0 || assets.length > 0) && (
           <div className="mb-6">
             <h3 className="text-xs text-muted-foreground uppercase mb-3">ASSETS</h3>
             <div className="space-y-2">
-              {assets.map((asset, i) => (
+              {/* Database assets first */}
+              {campaignAssets.map((asset) => {
+                const getAssetIcon = () => {
+                  switch (asset.asset_type) {
+                    case 'video': return <Video className="w-5 h-5 text-primary" />;
+                    case 'image': return <ImageIcon className="w-5 h-5 text-primary" />;
+                    case 'file': return <FileText className="w-5 h-5 text-primary" />;
+                    case 'link': return <LinkIcon className="w-5 h-5 text-primary" />;
+                    default: return <ExternalLink className="w-5 h-5 text-primary" />;
+                  }
+                };
+                
+                const formatFileSize = (bytes: number | null) => {
+                  if (!bytes) return '';
+                  if (bytes < 1024) return `${bytes} B`;
+                  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+                };
+
+                return (
+                  <a
+                    key={asset.id}
+                    href={asset.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      {getAssetIcon()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground group-hover:text-primary truncate">{asset.title}</p>
+                        {asset.is_required && (
+                          <Badge variant="destructive" className="text-xs">Required</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {asset.description || asset.file_name || asset.url}
+                        {asset.file_size && ` • ${formatFileSize(asset.file_size)}`}
+                      </p>
+                    </div>
+                    {asset.asset_type === 'file' ? (
+                      <Download className="w-4 h-4 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
+                  </a>
+                );
+              })}
+              
+              {/* Fallback: Legacy assets from rules_guidelines */}
+              {campaignAssets.length === 0 && assets.map((asset, i) => (
                 <a
                   key={i}
                   href={asset.url}
