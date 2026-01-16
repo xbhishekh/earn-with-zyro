@@ -45,9 +45,9 @@ const Auth = () => {
     }
   }, [user, authLoading, isAdmin, isOwner, navigate]);
 
-  // Auto-verify when OTP is complete (6 digits)
+  // Auto-verify when OTP is complete (6 or 8 digits)
   useEffect(() => {
-    if (otpCode.length === 6 && step === "otp") {
+    if ((otpCode.length === 6 || otpCode.length === 8) && step === "otp") {
       handleVerifyOtp();
     }
   }, [otpCode]);
@@ -104,8 +104,8 @@ const Auth = () => {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      toast.error("Please enter the complete 6-digit code");
+    if (otpCode.length !== 6 && otpCode.length !== 8) {
+      toast.error("Please enter the complete 6–8 digit code");
       return;
     }
 
@@ -218,7 +218,7 @@ const Auth = () => {
             )}
             {step === "signup-info" && "Choose a unique username for your profile"}
             {step === "otp" && (
-              <>We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>. Check your inbox (and spam folder) for the code.</>
+              <>We sent a verification code to <span className="text-foreground font-medium">{email}</span>. Enter the 6–8 digit code from your email.</>
             )}
           </p>
 
@@ -323,18 +323,19 @@ const Auth = () => {
             <div className="space-y-6">
               <div className="flex justify-center">
                 <InputOTP
-                  maxLength={6}
+                  maxLength={8}
                   value={otpCode}
                   onChange={(value) => setOtpCode(value)}
                   disabled={isLoading}
                 >
                   <InputOTPGroup className="gap-2">
-                    <InputOTPSlot index={0} className="w-12 h-14 text-xl border-border bg-card" />
-                    <InputOTPSlot index={1} className="w-12 h-14 text-xl border-border bg-card" />
-                    <InputOTPSlot index={2} className="w-12 h-14 text-xl border-border bg-card" />
-                    <InputOTPSlot index={3} className="w-12 h-14 text-xl border-border bg-card" />
-                    <InputOTPSlot index={4} className="w-12 h-14 text-xl border-border bg-card" />
-                    <InputOTPSlot index={5} className="w-12 h-14 text-xl border-border bg-card" />
+                    {Array.from({ length: 8 }).map((_, idx) => (
+                      <InputOTPSlot
+                        key={idx}
+                        index={idx}
+                        className="w-12 h-14 text-xl border-border bg-card"
+                      />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
               </div>
