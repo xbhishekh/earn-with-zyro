@@ -26,8 +26,8 @@ import {
   Edit,
   Trash2,
   Video,
-  DollarSign,
-  UserCog
+  UserCog,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +49,6 @@ import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
 import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
 import AccountSwitcher from "@/components/profile/AccountSwitcher";
-import PayUserModal from "@/components/profile/PayUserModal";
-import TransactionHistory from "@/components/profile/TransactionHistory";
 
 interface ProfileData {
   id: string;
@@ -95,8 +93,6 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showSupportChat, setShowSupportChat] = useState(false);
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [availableBalance, setAvailableBalance] = useState(0);
   
   // Check if user is an admin (can create products/campaigns)
   const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin";
@@ -126,26 +122,9 @@ const Profile = () => {
     if (user) {
       fetchProfile();
       fetchMyProducts();
-      fetchAvailableBalance();
     }
   }, [user]);
 
-  const fetchAvailableBalance = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("balance_transactions")
-        .select("amount, status")
-        .eq("user_id", user!.id)
-        .eq("status", "completed");
-
-      if (error) throw error;
-
-      const total = (data || []).reduce((sum, tx) => sum + (tx.amount || 0), 0);
-      setAvailableBalance(Math.max(0, total));
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-    }
-  };
 
   const fetchProfile = async () => {
     try {
@@ -320,44 +299,71 @@ const Profile = () => {
           </p>
         </motion.div>
 
-        {/* Avatar Section */}
+        {/* Avatar Section with Account Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="bg-card border border-border rounded-2xl p-6 mb-6"
         >
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar className="w-24 h-24 cursor-pointer" onClick={handleAvatarClick}>
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                  {displayName?.charAt(0)?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={handleAvatarClick}
-                disabled={uploading}
-                className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {uploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Camera className="w-4 h-4" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Profile Info */}
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="relative">
+                <Avatar className="w-20 h-20 sm:w-24 sm:h-24 cursor-pointer" onClick={handleAvatarClick}>
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {displayName?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={handleAvatarClick}
+                  disabled={uploading}
+                  className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-lg sm:text-xl font-bold truncate">{displayName || "Creator"}</h2>
+                <p className="text-muted-foreground text-sm sm:text-base truncate">@{username || "username"}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">{user?.email}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-display text-xl font-bold">{displayName || "Creator"}</h2>
-              <p className="text-muted-foreground">@{username || "username"}</p>
-              <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+
+            {/* Account Actions */}
+            <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+              <AccountSwitcher
+                currentEmail={user?.email || ""}
+                currentAvatar={profile?.avatar_url || null}
+                currentDisplayName={profile?.display_name || null}
+                onLogout={signOut}
+                compact
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Are you sure you want to log out?")) {
+                    signOut();
+                  }
+                }}
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Log Out</span>
+              </Button>
             </div>
           </div>
         </motion.div>
@@ -781,7 +787,7 @@ const Profile = () => {
               </div>
             </TabsContent>
 
-            {/* Account Tab - Logout & Account Switching */}
+            {/* Account Tab - Simplified */}
             <TabsContent value="account" className="space-y-6">
               <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div>
@@ -791,34 +797,27 @@ const Profile = () => {
                   </p>
                 </div>
 
-                {/* Pay Button */}
-                <Button
-                  onClick={() => setShowPayModal(true)}
-                  variant="outline"
-                  className="w-full flex items-center justify-between p-4 h-auto"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">Send Payment</p>
-                      <p className="text-sm text-muted-foreground">Transfer balance to another user</p>
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-primary">₹{availableBalance.toLocaleString()} available</span>
-                </Button>
-
-                {/* Transaction History */}
-                <TransactionHistory userId={user?.id || ""} />
-
-                {/* Account Switcher */}
+                {/* Account Switcher - Full View */}
                 <AccountSwitcher
                   currentEmail={user?.email || ""}
                   currentAvatar={profile?.avatar_url || null}
                   currentDisplayName={profile?.display_name || null}
                   onLogout={signOut}
                 />
+
+                {/* Logout Button */}
+                <Button
+                  variant="destructive"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    if (confirm("Are you sure you want to log out?")) {
+                      signOut();
+                    }
+                  }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log Out
+                </Button>
               </div>
             </TabsContent>
           </Tabs>
@@ -827,15 +826,6 @@ const Profile = () => {
 
       {/* Support Chat Widget - Only shown when triggered from this page */}
       {showSupportChat && <SupportChatWidget forceOpen onClose={() => setShowSupportChat(false)} />}
-
-      {/* Pay User Modal */}
-      <PayUserModal
-        open={showPayModal}
-        onOpenChange={setShowPayModal}
-        currentUserId={user?.id || ""}
-        availableBalance={availableBalance}
-        onSuccess={fetchAvailableBalance}
-      />
     </MainLayout>
   );
 };
