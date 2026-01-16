@@ -1,12 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Ban, MessageCircle, LogOut } from "lucide-react";
+import { Ban, MessageCircle, LogOut, Mail } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
 import { toast } from "sonner";
 
 const Suspended = () => {
@@ -109,13 +108,24 @@ const Suspended = () => {
 
           {/* Actions */}
           <div className="space-y-3">
-            <Button variant="hero" size="lg" className="w-full" asChild>
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="w-full" 
+              asChild
+            >
+              <a href="mailto:zyrozoofficial@gmail.com?subject=Account%20Suspension%20Appeal&body=Hi%20Zyrozo%20Team%2C%0A%0AI%20would%20like%20to%20appeal%20my%20account%20suspension.%0A%0AAccount%20Email%3A%20%0AReason%20for%20appeal%3A%20%0A%0AThank%20you.">
+                <Mail className="w-5 h-5 mr-2" />
+                Email Support
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" className="w-full" asChild>
               <Link to="/support">
                 <MessageCircle className="w-5 h-5 mr-2" />
-                Contact Support
+                Help Center
               </Link>
             </Button>
-            <Button variant="outline" size="lg" className="w-full" onClick={handleSignOut}>
+            <Button variant="ghost" size="lg" className="w-full" onClick={handleSignOut}>
               <LogOut className="w-5 h-5 mr-2" />
               Sign Out
             </Button>
@@ -123,7 +133,10 @@ const Suspended = () => {
         </div>
 
         <p className="text-sm text-muted-foreground mt-6">
-          If you believe this is a mistake, please contact our support team.
+          If you believe this is a mistake, email us at{" "}
+          <a href="mailto:zyrozoofficial@gmail.com" className="text-primary hover:underline">
+            zyrozoofficial@gmail.com
+          </a>
         </p>
       </motion.div>
     </div>
