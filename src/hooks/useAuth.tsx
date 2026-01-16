@@ -68,6 +68,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    const REMEMBER_ME_KEY = "zyrozo_remember_me";
+    
+    // Check if user should be logged out (session-only preference)
+    const checkRememberMe = async () => {
+      const remembered = localStorage.getItem(REMEMBER_ME_KEY);
+      const sessionOnly = sessionStorage.getItem(REMEMBER_ME_KEY);
+      
+      // If there's no remember flag and no session flag, user closed browser without "remember me"
+      if (!remembered && !sessionOnly) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Check if this is a fresh browser session
+          const lastActivity = localStorage.getItem("zyrozo_last_activity");
+          if (lastActivity) {
+            const lastTime = parseInt(lastActivity, 10);
+            const now = Date.now();
+            const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+            
+            // If more than 30 days and no remember me, sign out
+            if (now - lastTime > thirtyDays) {
+              await supabase.auth.signOut();
+            }
+          }
+        }
+      }
+    };
+    
+    checkRememberMe();
+    
+    // Update last activity timestamp
+    localStorage.setItem("zyrozo_last_activity", Date.now().toString());
+    
     // Set up auth state listener FIRST
     const {
       data: { subscription },
@@ -78,6 +110,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Fetch role after auth state change (deferred to avoid deadlock)
       if (session?.user) {
+        // Update last activity on any auth event
+        localStorage.setItem("zyrozo_last_activity", Date.now().toString());
         setTimeout(() => {
           fetchUserRole(session.user.id);
         }, 0);
