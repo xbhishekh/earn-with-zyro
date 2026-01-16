@@ -118,8 +118,8 @@ const Profile = () => {
   const [showSupportChat, setShowSupportChat] = useState(false);
   
   // Check if user is an admin (can create products/campaigns)
-  const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin";
-  
+  const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder";
+
   // Seller Dashboard states
   const [myProducts, setMyProducts] = useState<MyProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -157,9 +157,11 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchMyProducts();
+      if (isAdminUser) {
+        fetchMyProducts();
+      }
     }
-  }, [user]);
+  }, [user, isAdminUser]);
 
 
   const fetchProfile = async () => {
