@@ -1,22 +1,34 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, Trash2 } from 'lucide-react';
+import { Send, Loader2, Trash2, SmilePlus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface Profile {
   username: string | null;
   avatar_url: string | null;
+}
+
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
 }
 
 interface Message {
@@ -25,12 +37,15 @@ interface Message {
   content: string;
   created_at: string;
   profiles?: Profile;
+  reactions?: Reaction[];
 }
 
 interface Props {
   roomId: string;
   roomName: string;
 }
+
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '🎉'];
 
 export const ChatRoom = ({ roomId, roomName }: Props) => {
   const { user } = useAuth();
@@ -63,7 +78,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
             .eq('user_id', newMsg.user_id)
             .single();
 
-          setMessages(prev => [...prev, { ...newMsg, profiles: profile || undefined }]);
+          setMessages(prev => [...prev, { ...newMsg, profiles: profile || undefined, reactions: [] }]);
         }
       )
       .on(
@@ -81,8 +96,26 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       )
       .subscribe();
 
+    // Subscribe to reactions
+    const reactionsChannel = supabase
+      .channel(`reactions-${roomId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_message_reactions',
+        },
+        () => {
+          // Refetch messages to get updated reactions
+          fetchMessages();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(reactionsChannel);
     };
   }, [roomId]);
 
@@ -101,19 +134,29 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     if (!error && data) {
       // Fetch profiles for all messages
       const userIds = [...new Set(data.map(m => m.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, username, avatar_url')
-        .in('user_id', userIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const messageIds = data.map(m => m.id);
       
-      const messagesWithProfiles = data.map(m => ({
+      const [profilesRes, reactionsRes] = await Promise.all([
+        supabase.from('profiles').select('user_id, username, avatar_url').in('user_id', userIds),
+        supabase.from('chat_message_reactions').select('*').in('message_id', messageIds)
+      ]);
+
+      const profileMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
+      const reactionsMap = new Map<string, Reaction[]>();
+      
+      reactionsRes.data?.forEach(r => {
+        const existing = reactionsMap.get(r.message_id) || [];
+        existing.push(r);
+        reactionsMap.set(r.message_id, existing);
+      });
+      
+      const messagesWithData = data.map(m => ({
         ...m,
-        profiles: profileMap.get(m.user_id) as Profile | undefined
+        profiles: profileMap.get(m.user_id) as Profile | undefined,
+        reactions: reactionsMap.get(m.id) || []
       }));
       
-      setMessages(messagesWithProfiles);
+      setMessages(messagesWithData);
     }
     setLoading(false);
   };
@@ -150,6 +193,53 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     if (error) {
       toast.error('Failed to delete message');
     }
+  };
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+
+    // Check if user already reacted with this emoji
+    const message = messages.find(m => m.id === messageId);
+    const existingReaction = message?.reactions?.find(
+      r => r.user_id === user.id && r.emoji === emoji
+    );
+
+    if (existingReaction) {
+      // Remove reaction
+      await supabase
+        .from('chat_message_reactions')
+        .delete()
+        .eq('id', existingReaction.id);
+    } else {
+      // Add reaction
+      await supabase.from('chat_message_reactions').insert({
+        message_id: messageId,
+        user_id: user.id,
+        emoji: emoji,
+      });
+    }
+  };
+
+  const getReactionCounts = (reactions: Reaction[] = []) => {
+    const counts: { emoji: string; count: number; hasUserReacted: boolean }[] = [];
+    const emojiMap = new Map<string, { count: number; users: string[] }>();
+
+    reactions.forEach(r => {
+      const existing = emojiMap.get(r.emoji) || { count: 0, users: [] };
+      existing.count++;
+      existing.users.push(r.user_id);
+      emojiMap.set(r.emoji, existing);
+    });
+
+    emojiMap.forEach((value, emoji) => {
+      counts.push({
+        emoji,
+        count: value.count,
+        hasUserReacted: value.users.includes(user?.id || '')
+      });
+    });
+
+    return counts;
   };
 
   const formatTime = (date: string) => {
@@ -203,11 +293,12 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
               </div>
 
               {/* Messages for this date */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {group.messages.map((msg, i) => {
                   const isOwn = msg.user_id === user?.id;
                   const showAvatar = i === 0 || group.messages[i - 1].user_id !== msg.user_id;
                   const showTime = i === group.messages.length - 1 || group.messages[i + 1].user_id !== msg.user_id;
+                  const reactionCounts = getReactionCounts(msg.reactions);
 
                   return (
                     <motion.div
@@ -240,28 +331,83 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                             </span>
                           </Link>
                         )}
-                        {isOwn ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <div className="bg-primary text-primary-foreground px-3 py-2 rounded-2xl rounded-tr-sm cursor-pointer hover:opacity-90 transition-opacity">
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                              </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => deleteMessage(msg.id)}
-                                className="text-destructive focus:text-destructive"
+                        
+                        <div className="group relative">
+                          {isOwn ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <div className="bg-primary text-primary-foreground px-3 py-2 rounded-2xl rounded-tr-sm cursor-pointer hover:opacity-90 transition-opacity">
+                                  <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                                </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => deleteMessage(msg.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <div className="bg-muted px-3 py-2 rounded-2xl rounded-tl-sm">
+                              <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                            </div>
+                          )}
+
+                          {/* Reaction button */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button 
+                                className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted`}
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <div className="bg-muted px-3 py-2 rounded-2xl rounded-tl-sm">
-                            <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                          </div>
-                        )}
+                                <SmilePlus className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-2" side="top">
+                              <div className="flex gap-1">
+                                {REACTION_EMOJIS.map(emoji => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => toggleReaction(msg.id, emoji)}
+                                    className="p-1.5 hover:bg-muted rounded transition-colors text-lg"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        {/* Reactions display */}
+                        <AnimatePresence>
+                          {reactionCounts.length > 0 && (
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="flex gap-1 mt-1"
+                            >
+                              {reactionCounts.map(({ emoji, count, hasUserReacted }) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => toggleReaction(msg.id, emoji)}
+                                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
+                                    hasUserReacted 
+                                      ? 'bg-primary/20 border border-primary/30' 
+                                      : 'bg-muted hover:bg-muted/80 border border-transparent'
+                                  }`}
+                                >
+                                  <span>{emoji}</span>
+                                  <span className="text-muted-foreground">{count}</span>
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
                         {showTime && (
                           <span className="text-[10px] text-muted-foreground mt-1">
                             {formatTime(msg.created_at)}
