@@ -19,6 +19,8 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Marketplace from "./pages/Marketplace";
+import MarketplaceProductDetail from "./pages/MarketplaceProductDetail";
+import MarketplaceCreate from "./pages/MarketplaceCreate";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import Gallery from "./pages/Gallery";
@@ -51,6 +53,9 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/create" element={<MarketplaceCreate />} />
+              <Route path="/marketplace/edit/:id" element={<MarketplaceCreate />} />
+              <Route path="/marketplace/:id" element={<MarketplaceProductDetail />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/profile" element={<Profile />} />

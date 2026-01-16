@@ -1,242 +1,354 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { BookOpen, Play, Users, Star, Clock, TrendingUp } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { 
+  Search, Star, Users, Tag, Filter, Plus, BookOpen, 
+  Wrench, Crown, MessageSquare, FileText, Package,
+  Loader2, X
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-// Demo courses data
-const courses = [
-  {
-    id: "1",
-    title: "YouTube Growth Masterclass",
-    description: "Learn the secrets to growing your YouTube channel from 0 to 100K subscribers",
-    thumbnail: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=400&h=300&fit=crop",
-    creator: "Raj Sharma",
-    price: 2999,
-    originalPrice: 4999,
-    rating: 4.8,
-    reviews: 234,
-    students: 1250,
-    lessons: 45,
-    duration: "8 hours",
-    category: "YouTube",
-    isFeatured: true,
-  },
-  {
-    id: "2",
-    title: "Instagram Reels Mastery",
-    description: "Create viral reels that get millions of views and grow your following",
-    thumbnail: "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=300&fit=crop",
-    creator: "Priya Kapoor",
-    price: 1999,
-    originalPrice: 3499,
-    rating: 4.9,
-    reviews: 189,
-    students: 890,
-    lessons: 32,
-    duration: "5 hours",
-    category: "Instagram",
-    isFeatured: true,
-  },
-  {
-    id: "3",
-    title: "TikTok Content Strategy",
-    description: "Master the TikTok algorithm and create content that goes viral",
-    thumbnail: "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=400&h=300&fit=crop",
-    creator: "Amit Verma",
-    price: 1499,
-    originalPrice: 2499,
-    rating: 4.7,
-    reviews: 156,
-    students: 720,
-    lessons: 28,
-    duration: "4 hours",
-    category: "TikTok",
-    isFeatured: false,
-  },
-  {
-    id: "4",
-    title: "Video Editing with Premiere Pro",
-    description: "Professional video editing techniques used by top YouTubers",
-    thumbnail: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400&h=300&fit=crop",
-    creator: "Vikram Singh",
-    price: 3499,
-    originalPrice: 5999,
-    rating: 4.9,
-    reviews: 312,
-    students: 1800,
-    lessons: 60,
-    duration: "12 hours",
-    category: "Editing",
-    isFeatured: true,
-  },
-  {
-    id: "5",
-    title: "Brand Deals & Sponsorships",
-    description: "How to pitch brands and negotiate sponsorship deals like a pro",
-    thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop",
-    creator: "Neha Gupta",
-    price: 2499,
-    originalPrice: 3999,
-    rating: 4.6,
-    reviews: 98,
-    students: 450,
-    lessons: 20,
-    duration: "3 hours",
-    category: "Business",
-    isFeatured: false,
-  },
-  {
-    id: "6",
-    title: "Monetization Masterclass",
-    description: "Multiple income streams for content creators: ads, merch, courses & more",
-    thumbnail: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop",
-    creator: "Arjun Mehta",
-    price: 3999,
-    originalPrice: 6999,
-    rating: 4.8,
-    reviews: 267,
-    students: 1100,
-    lessons: 50,
-    duration: "10 hours",
-    category: "Business",
-    isFeatured: true,
-  },
+interface Product {
+  id: string;
+  seller_id: string;
+  title: string;
+  slug: string;
+  short_description: string;
+  category: string;
+  product_type: string;
+  price: number;
+  currency: string;
+  subscription_interval: string | null;
+  thumbnail_url: string | null;
+  members_count: number;
+  is_featured: boolean;
+  avg_rating?: number;
+  review_count?: number;
+  seller?: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+
+const CATEGORIES = [
+  { id: "all", label: "All", icon: Package },
+  { id: "courses", label: "Coaching and courses", icon: BookOpen },
+  { id: "memberships", label: "Paid groups", icon: Crown },
+  { id: "software", label: "Software", icon: Wrench },
+  { id: "communities", label: "Communities", icon: MessageSquare },
+  { id: "templates", label: "Templates", icon: FileText },
+  { id: "services", label: "Services", icon: Users },
 ];
 
-const categories = ["All", "YouTube", "Instagram", "TikTok", "Editing", "Business"];
-
 const Marketplace = () => {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
+
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCategory, searchParams]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    
+    let query = supabase
+      .from("marketplace_products")
+      .select("*")
+      .eq("is_active", true)
+      .order("is_featured", { ascending: false })
+      .order("members_count", { ascending: false });
+
+    if (selectedCategory !== "all") {
+      query = query.eq("category", selectedCategory);
+    }
+
+    const searchQ = searchParams.get("q");
+    if (searchQ) {
+      query = query.ilike("title", `%${searchQ}%`);
+    }
+
+    const { data: productsData, error } = await query;
+
+    if (error) {
+      console.error("Error fetching products:", error);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch seller profiles and reviews
+    const sellerIds = [...new Set(productsData?.map(p => p.seller_id) || [])];
+    const productIds = productsData?.map(p => p.id) || [];
+
+    const [profilesResult, reviewsResult] = await Promise.all([
+      supabase.from("profiles").select("user_id, display_name, username, avatar_url").in("user_id", sellerIds),
+      supabase.from("product_reviews").select("product_id, rating").in("product_id", productIds)
+    ]);
+
+    const profilesMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
+    
+    // Calculate average ratings
+    const ratingsMap = new Map<string, { total: number; count: number }>();
+    reviewsResult.data?.forEach(review => {
+      const existing = ratingsMap.get(review.product_id) || { total: 0, count: 0 };
+      ratingsMap.set(review.product_id, {
+        total: existing.total + review.rating,
+        count: existing.count + 1
+      });
+    });
+
+    const enrichedProducts: Product[] = productsData?.map(product => {
+      const ratings = ratingsMap.get(product.id);
+      return {
+        ...product,
+        seller: profilesMap.get(product.seller_id),
+        avg_rating: ratings ? ratings.total / ratings.count : 0,
+        review_count: ratings?.count || 0
+      };
+    }) || [];
+
+    setProducts(enrichedProducts);
+    setLoading(false);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setSearchParams({ q: searchQuery, category: selectedCategory });
+    } else {
+      setSearchParams({ category: selectedCategory });
+    }
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    const newParams: Record<string, string> = { category };
+    if (searchQuery.trim()) {
+      newParams.q = searchQuery;
+    }
+    setSearchParams(newParams);
+  };
+
+  const formatPrice = (price: number, type: string, interval: string | null) => {
+    if (type === "free" || price === 0) return "Free";
+    const formatted = `₹${price.toLocaleString()}`;
+    if (type === "subscription" && interval) {
+      return `${formatted} / ${interval}`;
+    }
+    return formatted;
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`w-4 h-4 ${
+              star <= Math.round(rating)
+                ? "text-yellow-500 fill-yellow-500"
+                : "text-muted-foreground"
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-20 pb-16">
         <div className="container mx-auto px-4">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Creator <span className="gradient-text">Marketplace</span>
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Learn from successful creators and level up your content game
-            </p>
-          </motion.div>
+          {/* Search Header */}
+          <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm py-4 border-b border-border mb-6">
+            <div className="flex items-center gap-4">
+              <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search products, creators, categories..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 pr-10 h-12 rounded-full border-2 focus:border-primary"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchParams({ category: selectedCategory });
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2"
+                    >
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              </form>
+              
+              {user && (
+                <Link to="/marketplace/create">
+                  <Button className="h-12 px-6 rounded-full">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create a business
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
 
           {/* Categories */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex gap-2 overflow-x-auto pb-4 mb-8 justify-center"
-          >
-            {categories.map((category) => (
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+            {CATEGORIES.map((category) => (
               <Button
-                key={category}
-                variant={category === "All" ? "default" : "outline"}
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "ghost"}
                 size="sm"
-                className="whitespace-nowrap"
+                onClick={() => handleCategoryChange(category.id)}
+                className={`whitespace-nowrap rounded-full ${
+                  selectedCategory === category.id 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted"
+                }`}
               >
-                {category}
+                {category.label}
               </Button>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Courses Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course, index) => (
-              <motion.div
-                key={course.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-              >
-                <Link
-                  to={`/course/${course.id}`}
-                  className="block glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all"
+          {/* Results Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                <Tag className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl">Best products</h2>
+                <p className="text-sm text-muted-foreground">
+                  {products.length} results • Based on our ranking system
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-20">
+              <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-bold mb-2">No products found</h3>
+              <p className="text-muted-foreground mb-6">
+                Be the first to list a product in this category!
+              </p>
+              {user && (
+                <Link to="/marketplace/create">
+                  <Button>Create your first product</Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video overflow-hidden">
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {course.isFeatured && (
-                      <Badge className="absolute top-3 left-3 gradient-bg border-0">
-                        Featured
+                  <Link
+                    to={`/marketplace/${product.slug || product.id}`}
+                    className="block bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all group"
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video overflow-hidden bg-muted">
+                      {product.thumbnail_url ? (
+                        <img
+                          src={product.thumbnail_url}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-12 h-12 text-muted-foreground" />
+                        </div>
+                      )}
+                      
+                      {/* Price Badge */}
+                      <Badge 
+                        className={`absolute bottom-3 right-3 ${
+                          product.product_type === "free" || product.price === 0
+                            ? "bg-green-500 hover:bg-green-600"
+                            : "bg-primary hover:bg-primary/90"
+                        }`}
+                      >
+                        {formatPrice(product.price, product.product_type, product.subscription_interval)}
                       </Badge>
-                    )}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Play className="w-6 h-6 text-white fill-white" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                        {product.title}
+                      </h3>
+                      
+                      {product.short_description && (
+                        <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
+                          {product.short_description}
+                        </p>
+                      )}
+
+                      {/* Seller Info */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={product.seller?.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {product.seller?.display_name?.[0] || product.seller?.username?.[0] || "S"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-muted-foreground">
+                          {product.seller?.display_name || product.seller?.username || "Seller"}
+                        </span>
+                      </div>
+
+                      {/* Rating & Stats */}
+                      <div className="flex items-center gap-4">
+                        {product.review_count && product.review_count > 0 ? (
+                          <div className="flex items-center gap-1">
+                            {renderStars(product.avg_rating || 0)}
+                            <span className="text-sm font-medium ml-1">
+                              {(product.avg_rating || 0).toFixed(1)}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              ({product.review_count})
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No reviews yet</span>
+                        )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
-                        {course.category}
-                      </span>
-                    </div>
-                    
-                    <h3 className="font-display font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {course.description}
-                    </p>
-
-                    <p className="text-sm text-muted-foreground mb-4">
-                      by {course.creator}
-                    </p>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <span className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        {course.rating}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {course.students}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {course.duration}
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-border">
-                      <span className="font-display text-xl font-bold">₹{course.price}</span>
-                      <span className="text-sm text-muted-foreground line-through">
-                        ₹{course.originalPrice}
-                      </span>
-                      <span className="text-xs px-2 py-1 rounded bg-success/20 text-success font-semibold">
-                        {Math.round((1 - course.price / course.originalPrice) * 100)}% OFF
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Load More */}
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg">
-              Load More Courses
-            </Button>
-          </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
