@@ -497,7 +497,7 @@ const Profile = () => {
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className={cn(
               "grid w-full lg:w-auto lg:inline-grid",
-              isAdminUser ? "grid-cols-7" : "grid-cols-6"
+              isAdminUser ? "grid-cols-6" : "grid-cols-5"
             )}>
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
@@ -517,10 +517,6 @@ const Profile = () => {
                   <span className="hidden sm:inline">Dashboard</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="privacy" className="gap-2">
-                <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">Privacy</span>
-              </TabsTrigger>
               <TabsTrigger value="support" className="gap-2">
                 <HelpCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Help</span>
@@ -773,85 +769,6 @@ const Profile = () => {
               </TabsContent>
             )}
 
-            {/* Privacy Tab */}
-            <TabsContent value="privacy" className="space-y-6">
-              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
-                <div>
-                  <h3 className="font-display text-lg font-semibold mb-1">More details</h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Choose what appears on your profile and other discovery surfaces.
-                  </p>
-
-                  <div className="space-y-4">
-                    {/* Total Earned Toggle */}
-                    <div className="flex items-center justify-between py-3 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                          <CreditCard className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">Total earned</span>
-                      </div>
-                      <Switch
-                        checked={showTotalEarned}
-                        onCheckedChange={setShowTotalEarned}
-                      />
-                    </div>
-
-                    {/* Location Toggle */}
-                    <div className="flex items-center justify-between py-3 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">Location</span>
-                      </div>
-                      <Switch
-                        checked={showLocation}
-                        onCheckedChange={setShowLocation}
-                      />
-                    </div>
-
-                    {/* Owned Products Toggle */}
-                    <div className="flex items-center justify-between py-3 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                          <Shield className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">Owned products</span>
-                      </div>
-                      <Switch
-                        checked={showOwnedProducts}
-                        onCheckedChange={setShowOwnedProducts}
-                      />
-                    </div>
-
-                    {/* Joined Products Toggle */}
-                    <div className="flex items-center justify-between py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                          <User className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="font-medium">Joined products</span>
-                      </div>
-                      <Switch
-                        checked={showJoinedProducts}
-                        onCheckedChange={setShowJoinedProducts}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  Save Privacy Settings
-                </Button>
-              </div>
-            </TabsContent>
-
             {/* Support Tab */}
             <TabsContent value="support" className="space-y-6">
               <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
@@ -1030,6 +947,83 @@ const Profile = () => {
                     </DialogContent>
                   </Dialog>
                 </div>
+              </div>
+
+              {/* Privacy Settings Section */}
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-1">Privacy Settings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Choose what appears on your profile and other discovery surfaces.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Total Earned Toggle */}
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium">Total earned</span>
+                    </div>
+                    <Switch
+                      checked={showTotalEarned}
+                      onCheckedChange={setShowTotalEarned}
+                    />
+                  </div>
+
+                  {/* Location Toggle */}
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium">Location</span>
+                    </div>
+                    <Switch
+                      checked={showLocation}
+                      onCheckedChange={setShowLocation}
+                    />
+                  </div>
+
+                  {/* Owned Products Toggle */}
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium">Owned products</span>
+                    </div>
+                    <Switch
+                      checked={showOwnedProducts}
+                      onCheckedChange={setShowOwnedProducts}
+                    />
+                  </div>
+
+                  {/* Joined Products Toggle */}
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium">Joined products</span>
+                    </div>
+                    <Switch
+                      checked={showJoinedProducts}
+                      onCheckedChange={setShowJoinedProducts}
+                    />
+                  </div>
+                </div>
+
+                <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Privacy Settings
+                </Button>
               </div>
 
               {/* Danger Zone */}
