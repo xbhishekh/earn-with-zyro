@@ -6,13 +6,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, Trash2, SmilePlus } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Send, Loader2, SmilePlus } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -45,7 +39,7 @@ interface Props {
   roomName: string;
 }
 
-const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '🎉'];
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '🔥', '👏', '🎉'];
 
 export const ChatRoom = ({ roomId, roomName }: Props) => {
   const { user } = useAuth();
@@ -71,7 +65,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
         },
         async (payload) => {
           const newMsg = payload.new as Message;
-          // Fetch the profile for this message
           const { data: profile } = await supabase
             .from('profiles')
             .select('username, avatar_url')
@@ -79,19 +72,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
             .single();
 
           setMessages(prev => [...prev, { ...newMsg, profiles: profile || undefined, reactions: [] }]);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `room_id=eq.${roomId}`,
-        },
-        (payload) => {
-          const deletedMsg = payload.old as { id: string };
-          setMessages(prev => prev.filter(m => m.id !== deletedMsg.id));
         }
       )
       .subscribe();
@@ -107,7 +87,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
           table: 'chat_message_reactions',
         },
         () => {
-          // Refetch messages to get updated reactions
           fetchMessages();
         }
       )
@@ -132,7 +111,6 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       .limit(100);
 
     if (!error && data) {
-      // Fetch profiles for all messages
       const userIds = [...new Set(data.map(m => m.user_id))];
       const messageIds = data.map(m => m.id);
       
@@ -184,34 +162,20 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     }
   };
 
-  const deleteMessage = async (messageId: string) => {
-    const { error } = await supabase
-      .from('chat_messages')
-      .delete()
-      .eq('id', messageId);
-
-    if (error) {
-      toast.error('Failed to delete message');
-    }
-  };
-
   const toggleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
 
-    // Check if user already reacted with this emoji
     const message = messages.find(m => m.id === messageId);
     const existingReaction = message?.reactions?.find(
       r => r.user_id === user.id && r.emoji === emoji
     );
 
     if (existingReaction) {
-      // Remove reaction
       await supabase
         .from('chat_message_reactions')
         .delete()
         .eq('id', existingReaction.id);
     } else {
-      // Add reaction
       await supabase.from('chat_message_reactions').insert({
         message_id: messageId,
         user_id: user.id,
@@ -254,7 +218,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
 
     if (d.toDateString() === today.toDateString()) return 'Today';
     if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
   // Group messages by date
@@ -270,173 +234,175 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   });
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full bg-background">
+      {/* Messages Area - Whop Style */}
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <p className="text-sm font-medium">No messages yet</p>
-            <p className="text-xs">Start the conversation!</p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground px-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Send className="h-7 w-7 text-primary" />
+            </div>
+            <p className="font-medium text-foreground">No messages yet</p>
+            <p className="text-sm text-center mt-1">Be the first to send a message!</p>
           </div>
         ) : (
-          groupedMessages.map((group, groupIndex) => (
-            <div key={groupIndex}>
-              {/* Date Separator */}
-              <div className="flex items-center justify-center my-4">
-                <div className="bg-muted px-3 py-1 rounded-full">
-                  <span className="text-xs text-muted-foreground">{group.date}</span>
+          <div className="px-4 py-2">
+            {groupedMessages.map((group, groupIndex) => (
+              <div key={groupIndex}>
+                {/* Date Divider - Whop Style */}
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground px-2">{group.date}</span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
-              </div>
 
-              {/* Messages for this date */}
-              <div className="space-y-3">
-                {group.messages.map((msg, i) => {
-                  const isOwn = msg.user_id === user?.id;
-                  const showAvatar = i === 0 || group.messages[i - 1].user_id !== msg.user_id;
-                  const showTime = i === group.messages.length - 1 || group.messages[i + 1].user_id !== msg.user_id;
-                  const reactionCounts = getReactionCounts(msg.reactions);
+                {/* Messages */}
+                <div className="space-y-1">
+                  {group.messages.map((msg, i) => {
+                    const isOwn = msg.user_id === user?.id;
+                    const showHeader = i === 0 || group.messages[i - 1].user_id !== msg.user_id;
+                    const reactionCounts = getReactionCounts(msg.reactions);
 
-                  return (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}
-                    >
-                      {/* Avatar */}
-                      {showAvatar ? (
-                        <Link to={`/profile/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-medium overflow-hidden">
-                            {msg.profiles?.avatar_url ? (
-                              <img src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              msg.profiles?.username?.[0]?.toUpperCase() || '?'
-                            )}
-                          </div>
-                        </Link>
-                      ) : (
-                        <div className="w-8 flex-shrink-0" />
-                      )}
-
-                      {/* Message Bubble */}
-                      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[75%]`}>
-                        {showAvatar && (
-                          <Link to={`/profile/${msg.profiles?.username || msg.user_id}`}>
-                            <span className="text-xs text-muted-foreground mb-1 hover:text-primary transition-colors">
-                              {msg.profiles?.username || 'Unknown'}
-                            </span>
-                          </Link>
-                        )}
-                        
-                        <div className="group relative">
-                          {isOwn ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <div className="bg-primary text-primary-foreground px-3 py-2 rounded-2xl rounded-tr-sm cursor-pointer hover:opacity-90 transition-opacity">
-                                  <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                                </div>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => deleteMessage(msg.id)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group hover:bg-muted/30 rounded-lg px-2 py-1 -mx-2 transition-colors"
+                      >
+                        {/* Message with Avatar - Whop Style */}
+                        <div className="flex gap-3">
+                          {/* Avatar Column */}
+                          {showHeader ? (
+                            <Link to={`/profile/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-sm font-semibold overflow-hidden ring-2 ring-background">
+                                {msg.profiles?.avatar_url ? (
+                                  <img src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  msg.profiles?.username?.[0]?.toUpperCase() || '?'
+                                )}
+                              </div>
+                            </Link>
                           ) : (
-                            <div className="bg-muted px-3 py-2 rounded-2xl rounded-tl-sm">
-                              <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                            <div className="w-10 flex-shrink-0 flex items-center justify-center">
+                              <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                {formatTime(msg.created_at)}
+                              </span>
                             </div>
                           )}
 
-                          {/* Reaction button */}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button 
-                                className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted`}
-                              >
-                                <SmilePlus className="h-4 w-4 text-muted-foreground" />
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-2" side="top">
-                              <div className="flex gap-1">
-                                {REACTION_EMOJIS.map(emoji => (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => toggleReaction(msg.id, emoji)}
-                                    className="p-1.5 hover:bg-muted rounded transition-colors text-lg"
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-
-                        {/* Reactions display */}
-                        <AnimatePresence>
-                          {reactionCounts.length > 0 && (
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              className="flex gap-1 mt-1"
-                            >
-                              {reactionCounts.map(({ emoji, count, hasUserReacted }) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => toggleReaction(msg.id, emoji)}
-                                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
-                                    hasUserReacted 
-                                      ? 'bg-primary/20 border border-primary/30' 
-                                      : 'bg-muted hover:bg-muted/80 border border-transparent'
-                                  }`}
+                          {/* Content Column */}
+                          <div className="flex-1 min-w-0">
+                            {showHeader && (
+                              <div className="flex items-baseline gap-2 mb-0.5">
+                                <Link 
+                                  to={`/profile/${msg.profiles?.username || msg.user_id}`}
+                                  className="font-semibold text-sm text-foreground hover:underline"
                                 >
-                                  <span>{emoji}</span>
-                                  <span className="text-muted-foreground">{count}</span>
-                                </button>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                                  {msg.profiles?.username || 'Unknown'}
+                                </Link>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatTime(msg.created_at)}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Message Content */}
+                            <div className="relative">
+                              <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
+                                {msg.content}
+                              </p>
 
-                        {showTime && (
-                          <span className="text-[10px] text-muted-foreground mt-1">
-                            {formatTime(msg.created_at)}
-                          </span>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                              {/* Reaction Button - Shows on Hover */}
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button 
+                                    className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted bg-background border border-border shadow-sm"
+                                  >
+                                    <SmilePlus className="h-4 w-4 text-muted-foreground" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-1.5" side="top" align="end">
+                                  <div className="flex gap-0.5">
+                                    {REACTION_EMOJIS.map(emoji => (
+                                      <button
+                                        key={emoji}
+                                        onClick={() => toggleReaction(msg.id, emoji)}
+                                        className="p-1.5 hover:bg-muted rounded-md transition-colors text-base hover:scale-110 active:scale-95"
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {/* Reactions Display */}
+                            <AnimatePresence>
+                              {reactionCounts.length > 0 && (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: -5 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -5 }}
+                                  className="flex flex-wrap gap-1 mt-1.5"
+                                >
+                                  {reactionCounts.map(({ emoji, count, hasUserReacted }) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => toggleReaction(msg.id, emoji)}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all hover:scale-105 ${
+                                        hasUserReacted 
+                                          ? 'bg-primary/15 text-primary border border-primary/30' 
+                                          : 'bg-muted/80 text-muted-foreground border border-transparent hover:bg-muted'
+                                      }`}
+                                    >
+                                      <span>{emoji}</span>
+                                      <span>{count}</span>
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <form onSubmit={sendMessage} className="p-4 border-t border-border flex gap-2">
-        <Input
-          placeholder="Type a message..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          disabled={sending}
-          className="bg-muted/50 border-border focus:border-primary"
-        />
-        <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </form>
+      {/* Input Area - Whop Style */}
+      <div className="border-t border-border p-3 bg-background">
+        <form onSubmit={sendMessage} className="flex gap-2">
+          <div className="flex-1 relative">
+            <Input
+              placeholder="Send a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              disabled={sending}
+              className="bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary pr-12 rounded-xl"
+            />
+          </div>
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={sending || !newMessage.trim()}
+            className="rounded-xl h-10 w-10 shrink-0"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
