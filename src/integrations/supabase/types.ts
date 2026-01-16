@@ -419,6 +419,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          read_at: string | null
           reply_to_id: string | null
           room_id: string
           user_id: string
@@ -430,6 +431,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          read_at?: string | null
           reply_to_id?: string | null
           room_id: string
           user_id: string
@@ -441,6 +443,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          read_at?: string | null
           reply_to_id?: string | null
           room_id?: string
           user_id?: string
