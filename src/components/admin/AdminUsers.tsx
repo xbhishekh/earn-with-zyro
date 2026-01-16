@@ -341,13 +341,25 @@ const AdminUsers = () => {
                         </Button>
                       )}
 
-                      {/* Quick unsuspend (global) */}
-                      {hasFullAccess && isGloballySuspended && (
+                      {/* Unsuspend */}
+                      {(isGloballySuspended || campaignBanCount > 0) && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleLiftBan(summary!.globalId!)}
-                          title="Unsuspend user"
+                          onClick={() => {
+                            // If it's only a global suspension and we have full access, allow one-click unsuspend.
+                            if (hasFullAccess && isGloballySuspended && campaignBanCount === 0) {
+                              handleLiftBan(summary!.globalId!);
+                              return;
+                            }
+                            // Otherwise open bans modal so you can choose what to lift.
+                            openViewBansModal(p);
+                          }}
+                          title={
+                            hasFullAccess && isGloballySuspended && campaignBanCount === 0
+                              ? "Unsuspend user"
+                              : "View bans / Unsuspend"
+                          }
                         >
                           <Unlock className="w-4 h-4" />
                         </Button>
