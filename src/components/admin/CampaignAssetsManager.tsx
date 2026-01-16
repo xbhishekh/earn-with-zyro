@@ -1,5 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Plus,
   Trash2,
@@ -9,15 +26,18 @@ import {
   Link as LinkIcon,
   ExternalLink,
   GripVertical,
-  Download,
   Upload,
   Loader2,
+  X,
+  CheckCircle2,
+  Files,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +73,14 @@ interface CampaignAssetsManagerProps {
   campaignName: string;
 }
 
+interface BulkUploadFile {
+  file: File;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  url?: string;
+  error?: string;
+}
+
 const assetTypeIcons = {
   video: Video,
   image: ImageIcon,
@@ -68,13 +96,106 @@ const initialAssetForm = {
   is_required: false,
 };
 
+// Sortable Asset Item Component
+const SortableAssetItem = ({ 
+  asset, 
+  onDelete, 
+  formatFileSize 
+}: { 
+  asset: CampaignAsset; 
+  onDelete: (id: string) => void;
+  formatFileSize: (bytes: number | null) => string;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: asset.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+
+  const getAssetIcon = (type: CampaignAsset['asset_type']) => {
+    const Icon = assetTypeIcons[type];
+    return <Icon className="w-5 h-5" />;
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group ${isDragging ? 'shadow-lg' : ''}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </button>
+      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+        {getAssetIcon(asset.asset_type)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium truncate">{asset.title}</p>
+          {asset.is_required && (
+            <Badge variant="destructive" className="text-xs">Required</Badge>
+          )}
+          <Badge variant="outline" className="text-xs capitalize">{asset.asset_type}</Badge>
+        </div>
+        <p className="text-xs text-muted-foreground truncate">
+          {asset.description || asset.url}
+          {asset.file_size && ` • ${formatFileSize(asset.file_size)}`}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+        >
+          <a href={asset.url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={() => onDelete(asset.id)}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAssetsManagerProps) => {
   const [assets, setAssets] = useState<CampaignAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [assetForm, setAssetForm] = useState(initialAssetForm);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<BulkUploadFile[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchAssets();
@@ -95,6 +216,43 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
       toast.error("Failed to load assets");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = assets.findIndex((a) => a.id === active.id);
+      const newIndex = assets.findIndex((a) => a.id === over.id);
+
+      const newAssets = arrayMove(assets, oldIndex, newIndex);
+      setAssets(newAssets);
+
+      // Update sort_order in database
+      try {
+        const updates = newAssets.map((asset, index) => ({
+          id: asset.id,
+          campaign_id: asset.campaign_id,
+          asset_type: asset.asset_type,
+          title: asset.title,
+          url: asset.url,
+          sort_order: index,
+        }));
+
+        for (const update of updates) {
+          await supabase
+            .from("campaign_assets")
+            .update({ sort_order: update.sort_order })
+            .eq("id", update.id);
+        }
+        
+        toast.success("Order updated!");
+      } catch (error) {
+        console.error("Error updating order:", error);
+        toast.error("Failed to update order");
+        fetchAssets(); // Revert on error
+      }
     }
   };
 
@@ -182,9 +340,95 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
     }
   };
 
-  const getAssetIcon = (type: CampaignAsset['asset_type']) => {
-    const Icon = assetTypeIcons[type];
-    return <Icon className="w-5 h-5" />;
+  // Bulk upload functions
+  const handleBulkFilesSelect = (files: FileList | null) => {
+    if (!files) return;
+    
+    const newFiles: BulkUploadFile[] = Array.from(files).map(file => ({
+      file,
+      status: 'pending' as const,
+      progress: 0,
+    }));
+    
+    setBulkFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeBulkFile = (index: number) => {
+    setBulkFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileAssetType = (file: File): 'video' | 'image' | 'file' => {
+    if (file.type.startsWith('video/')) return 'video';
+    if (file.type.startsWith('image/')) return 'image';
+    return 'file';
+  };
+
+  const uploadBulkFiles = async () => {
+    if (bulkFiles.length === 0) return;
+    
+    setBulkUploading(true);
+    
+    for (let i = 0; i < bulkFiles.length; i++) {
+      const bulkFile = bulkFiles[i];
+      if (bulkFile.status !== 'pending') continue;
+      
+      setBulkFiles(prev => prev.map((f, idx) => 
+        idx === i ? { ...f, status: 'uploading' as const, progress: 0 } : f
+      ));
+      
+      try {
+        if (bulkFile.file.size > 50 * 1024 * 1024) {
+          throw new Error("File size must be less than 50MB");
+        }
+
+        const fileExt = bulkFile.file.name.split('.').pop();
+        const fileName = `${campaignId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('campaign-assets')
+          .upload(fileName, bulkFile.file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('campaign-assets')
+          .getPublicUrl(fileName);
+
+        // Create asset record
+        const { error: insertError } = await supabase.from("campaign_assets").insert({
+          campaign_id: campaignId,
+          asset_type: getFileAssetType(bulkFile.file),
+          title: bulkFile.file.name.replace(/\.[^/.]+$/, ''),
+          url: publicUrl,
+          file_name: bulkFile.file.name,
+          file_size: bulkFile.file.size,
+          is_required: false,
+          sort_order: assets.length + i,
+        });
+
+        if (insertError) throw insertError;
+
+        setBulkFiles(prev => prev.map((f, idx) => 
+          idx === i ? { ...f, status: 'success' as const, progress: 100, url: publicUrl } : f
+        ));
+      } catch (error: any) {
+        console.error("Bulk upload error:", error);
+        setBulkFiles(prev => prev.map((f, idx) => 
+          idx === i ? { ...f, status: 'error' as const, error: error.message } : f
+        ));
+      }
+    }
+    
+    setBulkUploading(false);
+    toast.success("Bulk upload complete!");
+    fetchAssets();
+  };
+
+  const closeBulkModal = () => {
+    if (!bulkUploading) {
+      setIsBulkModalOpen(false);
+      setBulkFiles([]);
+    }
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -193,6 +437,17 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleBulkFilesSelect(e.dataTransfer.files);
+  }, []);
 
   if (loading) {
     return (
@@ -209,69 +464,62 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
           <h3 className="font-medium">Campaign Assets</h3>
           <p className="text-sm text-muted-foreground">Manage downloadable files and links for {campaignName}</p>
         </div>
-        <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Asset
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsBulkModalOpen(true)}>
+            <Files className="w-4 h-4 mr-1" />
+            Bulk Upload
+          </Button>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Asset
+          </Button>
+        </div>
       </div>
 
       {assets.length === 0 ? (
-        <div className="text-center py-8 border border-dashed rounded-lg">
-          <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+        <div 
+          className="text-center py-8 border-2 border-dashed rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
+          onClick={() => setIsBulkModalOpen(true)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => {
+            handleDrop(e);
+            setIsBulkModalOpen(true);
+          }}
+        >
+          <Upload className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">No assets added yet</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsAddModalOpen(true)}>
-            Add First Asset
+          <p className="text-xs text-muted-foreground mt-1">Drop files here or click to upload</p>
+          <Button variant="outline" size="sm" className="mt-3">
+            Add Assets
           </Button>
         </div>
       ) : (
-        <div className="space-y-2">
-          {assets.map((asset, index) => (
-            <motion.div
-              key={asset.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-                {getAssetIcon(asset.asset_type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium truncate">{asset.title}</p>
-                  {asset.is_required && (
-                    <Badge variant="destructive" className="text-xs">Required</Badge>
-                  )}
-                  <Badge variant="outline" className="text-xs capitalize">{asset.asset_type}</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {asset.description || asset.url}
-                  {asset.file_size && ` • ${formatFileSize(asset.file_size)}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                >
-                  <a href={asset.url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleDeleteAsset(asset.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={assets.map(a => a.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {assets.map((asset) => (
+                <SortableAssetItem
+                  key={asset.id}
+                  asset={asset}
+                  onDelete={handleDeleteAsset}
+                  formatFileSize={formatFileSize}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        Drag and drop to reorder assets
+      </p>
 
       {/* Add Asset Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -385,6 +633,95 @@ export const CampaignAssetsManager = ({ campaignId, campaignName }: CampaignAsse
               {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Add Asset
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Modal */}
+      <Dialog open={isBulkModalOpen} onOpenChange={closeBulkModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Files className="w-5 h-5" />
+              Bulk Upload Assets
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Drop Zone */}
+            <label
+              className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-colors"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <Upload className="w-10 h-10 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground text-center">
+                <span className="font-medium text-primary">Click to select files</span>
+                <br />or drag and drop multiple files
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">Max 50MB per file</p>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => handleBulkFilesSelect(e.target.files)}
+                disabled={bulkUploading}
+              />
+            </label>
+
+            {/* File List */}
+            {bulkFiles.length > 0 && (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {bulkFiles.map((bf, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                  >
+                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                      {bf.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {bf.status === 'success' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                      {bf.status === 'error' && <X className="w-4 h-4 text-destructive" />}
+                      {bf.status === 'pending' && (
+                        getFileAssetType(bf.file) === 'image' ? <ImageIcon className="w-4 h-4" /> :
+                        getFileAssetType(bf.file) === 'video' ? <Video className="w-4 h-4" /> :
+                        <FileText className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{bf.file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(bf.file.size)}
+                        {bf.error && <span className="text-destructive ml-2">{bf.error}</span>}
+                      </p>
+                      {bf.status === 'uploading' && (
+                        <Progress value={bf.progress} className="h-1 mt-1" />
+                      )}
+                    </div>
+                    {bf.status === 'pending' && !bulkUploading && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBulkFile(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeBulkModal} disabled={bulkUploading}>
+              {bulkFiles.every(f => f.status === 'success') ? 'Done' : 'Cancel'}
+            </Button>
+            {bulkFiles.some(f => f.status === 'pending') && (
+              <Button onClick={uploadBulkFiles} disabled={bulkUploading || bulkFiles.length === 0}>
+                {bulkUploading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Upload {bulkFiles.filter(f => f.status === 'pending').length} Files
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
