@@ -1521,6 +1521,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_admin_role_if_user_exists: {
+        Args: {
+          invite_email: string
+          invite_type: string
+          invited_by_user: string
+        }
+        Returns: Json
+      }
       can_access_support_chat: { Args: { chat_id: string }; Returns: boolean }
       has_role: {
         Args: {
