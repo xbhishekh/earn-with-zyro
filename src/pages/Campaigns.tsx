@@ -11,6 +11,12 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 
+interface CampaignStats {
+  total_submissions: number;
+  approved_submissions: number;
+  total_views: number;
+}
+
 interface Campaign {
   id: string;
   name: string;
@@ -28,6 +34,7 @@ interface Campaign {
   created_by: string | null;
   creator_name?: string | null;
   creator_avatar?: string | null;
+  stats?: CampaignStats;
 }
 
 const categories = ["All", "Gaming", "Fitness", "Technology", "Travel", "Food", "Fashion", "Sports", "Entertainment"];
@@ -52,26 +59,51 @@ const Campaigns = () => {
 
       if (error) throw error;
       
-      // Fetch creator profiles for campaigns
-      const campaignsWithCreators = await Promise.all(
+      // Fetch creator profiles and stats for campaigns
+      const campaignsWithData = await Promise.all(
         (data || []).map(async (campaign) => {
+          // Fetch creator profile
+          let creator_name = "Zyrozo";
+          let creator_avatar = null;
+          
           if (campaign.created_by) {
             const { data: profile } = await supabase
               .from("profiles")
               .select("display_name, avatar_url")
               .eq("user_id", campaign.created_by)
               .single();
-            return {
-              ...campaign,
-              creator_name: profile?.display_name || "Zyrozo",
-              creator_avatar: profile?.avatar_url,
-            };
+            creator_name = profile?.display_name || "Zyrozo";
+            creator_avatar = profile?.avatar_url;
           }
-          return { ...campaign, creator_name: "Zyrozo", creator_avatar: null };
+          
+          // Fetch submission stats for this campaign
+          const { data: submissions } = await supabase
+            .from("submissions")
+            .select("status, views_count")
+            .eq("campaign_id", campaign.id);
+          
+          const total_submissions = submissions?.length || 0;
+          const approved_submissions = submissions?.filter(
+            s => s.status === "approved" || s.status === "paid"
+          ).length || 0;
+          const total_views = submissions?.reduce(
+            (sum, s) => sum + (s.views_count || 0), 0
+          ) || 0;
+          
+          return {
+            ...campaign,
+            creator_name,
+            creator_avatar,
+            stats: {
+              total_submissions,
+              approved_submissions,
+              total_views,
+            },
+          };
         })
       );
       
-      setCampaigns(campaignsWithCreators);
+      setCampaigns(campaignsWithData);
     } catch (error) {
       console.error("Error fetching campaigns:", error);
     } finally {
@@ -207,11 +239,27 @@ const Campaigns = () => {
                       <div className="px-4 py-3 border-t border-border grid grid-cols-3 gap-4">
                         <div>
                           <p className="text-xs text-muted-foreground mb-0.5">Approval</p>
-                          <p className="font-semibold text-sm">High</p>
+                          <p className="font-semibold text-sm">
+                            {campaign.stats?.total_submissions ? (
+                              `${Math.round((campaign.stats.approved_submissions / campaign.stats.total_submissions) * 100)}%`
+                            ) : (
+                              "N/A"
+                            )}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-0.5">Views</p>
-                          <p className="font-semibold text-sm">--</p>
+                          <p className="font-semibold text-sm">
+                            {campaign.stats?.total_views ? (
+                              campaign.stats.total_views >= 1000000
+                                ? `${(campaign.stats.total_views / 1000000).toFixed(1)}M`
+                                : campaign.stats.total_views >= 1000
+                                ? `${(campaign.stats.total_views / 1000).toFixed(1)}K`
+                                : campaign.stats.total_views.toString()
+                            ) : (
+                              "0"
+                            )}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-0.5">Budget Left</p>
