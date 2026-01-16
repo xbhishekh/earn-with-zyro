@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download } from 'lucide-react';
+import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download, Reply, CornerDownRight } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -36,6 +36,8 @@ interface Message {
   attachment_url?: string | null;
   attachment_type?: string | null;
   attachment_name?: string | null;
+  reply_to_id?: string | null;
+  reply_to?: Message | null;
 }
 
 interface Props {
@@ -75,6 +77,9 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -320,6 +325,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     if (!error && data) {
       const userIds = [...new Set(data.map(m => m.user_id))];
       const messageIds = data.map(m => m.id);
+      const replyToIds = data.filter(m => m.reply_to_id).map(m => m.reply_to_id);
       
       const [profilesRes, reactionsRes] = await Promise.all([
         supabase.from('profiles').select('user_id, username, avatar_url').in('user_id', userIds),
@@ -334,12 +340,22 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
         existing.push(r);
         reactionsMap.set(r.message_id, existing);
       });
+
+      // Create a map of all messages for reply lookup
+      const messageMap = new Map(data.map(m => [m.id, m]));
       
-      const messagesWithData = data.map(m => ({
-        ...m,
-        profiles: profileMap.get(m.user_id) as Profile | undefined,
-        reactions: reactionsMap.get(m.id) || []
-      }));
+      const messagesWithData = data.map(m => {
+        const replyToMsg = m.reply_to_id ? messageMap.get(m.reply_to_id) : null;
+        return {
+          ...m,
+          profiles: profileMap.get(m.user_id) as Profile | undefined,
+          reactions: reactionsMap.get(m.id) || [],
+          reply_to: replyToMsg ? {
+            ...replyToMsg,
+            profiles: profileMap.get(replyToMsg.user_id) as Profile | undefined
+          } : null
+        };
+      });
       
       setMessages(messagesWithData);
     }
@@ -430,6 +446,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       attachment_url: attachment?.url || null,
       attachment_type: attachment?.type || null,
       attachment_name: attachment?.name || null,
+      reply_to_id: replyingTo?.id || null,
     });
     
     setSending(false);
@@ -440,7 +457,17 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     } else {
       setNewMessage('');
       clearSelectedFile();
+      setReplyingTo(null);
     }
+  };
+
+  const handleReply = (message: Message) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
   };
 
   const toggleReaction = async (messageId: string, emoji: string) => {
@@ -776,6 +803,24 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                                 </span>
                               </div>
                             )}
+
+                            {/* Reply Preview */}
+                            {msg.reply_to && (
+                              <button
+                                onClick={() => scrollToMessage(msg.reply_to!.id)}
+                                className="flex items-start gap-2 mb-1.5 p-2 bg-muted/50 rounded-lg border-l-2 border-primary/50 hover:bg-muted/70 transition-colors text-left w-full max-w-md"
+                              >
+                                <CornerDownRight className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-xs font-medium text-primary">
+                                    {msg.reply_to.profiles?.username || 'Unknown'}
+                                  </span>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {msg.reply_to.content || (msg.reply_to.attachment_name ? `📎 ${msg.reply_to.attachment_name}` : 'Attachment')}
+                                  </p>
+                                </div>
+                              </button>
+                            )}
                             
                             {/* Message Content */}
                             <div className="relative">
@@ -788,29 +833,39 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                               {/* Attachment */}
                               {renderAttachment(msg)}
 
-                              {/* Reaction Button */}
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button 
-                                    className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-muted bg-background border border-border shadow-sm"
-                                  >
-                                    <SmilePlus className="h-4 w-4 text-muted-foreground" />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-1.5" side="top" align="end">
-                                  <div className="flex gap-0.5">
-                                    {REACTION_EMOJIS.map(emoji => (
-                                      <button
-                                        key={emoji}
-                                        onClick={() => toggleReaction(msg.id, emoji)}
-                                        className="p-1.5 hover:bg-muted rounded-md transition-colors text-base hover:scale-110 active:scale-95"
-                                      >
-                                        {emoji}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                              {/* Action Buttons */}
+                              <div className="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-background border border-border rounded-md shadow-sm">
+                                {/* Reply Button */}
+                                <button
+                                  onClick={() => handleReply(msg)}
+                                  className="p-1.5 hover:bg-muted rounded-l-md transition-colors"
+                                  title="Reply"
+                                >
+                                  <Reply className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                                
+                                {/* Reaction Button */}
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button className="p-1.5 hover:bg-muted rounded-r-md transition-colors">
+                                      <SmilePlus className="h-4 w-4 text-muted-foreground" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-1.5" side="top" align="end">
+                                    <div className="flex gap-0.5">
+                                      {REACTION_EMOJIS.map(emoji => (
+                                        <button
+                                          key={emoji}
+                                          onClick={() => toggleReaction(msg.id, emoji)}
+                                          className="p-1.5 hover:bg-muted rounded-md transition-colors text-base hover:scale-110 active:scale-95"
+                                        >
+                                          {emoji}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
                             </div>
 
                             {/* Reactions Display */}
@@ -910,6 +965,38 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                 className="h-8 w-8 shrink-0"
               >
                 <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reply Preview Bar */}
+      <AnimatePresence>
+        {replyingTo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-3 py-2 border-t border-border bg-muted/30"
+          >
+            <div className="flex items-center gap-3 p-2 bg-background rounded-lg border-l-2 border-primary">
+              <Reply className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-primary">
+                  Replying to {replyingTo.profiles?.username || 'Unknown'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {replyingTo.content || (replyingTo.attachment_name ? `📎 ${replyingTo.attachment_name}` : 'Attachment')}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={cancelReply}
+                className="h-6 w-6 shrink-0"
+              >
+                <X className="h-3 w-3" />
               </Button>
             </div>
           </motion.div>
