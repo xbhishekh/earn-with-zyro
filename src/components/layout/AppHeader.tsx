@@ -241,12 +241,12 @@ export const AppHeader = () => {
                   </div>
 
                   {/* Admin Button - Desktop */}
-                  {isAdmin && (
+                  {(isAdmin || role === 'normal_admin') && (
                     <Button
                       variant="outline"
                       size="sm"
                       asChild
-                      className="hidden md:flex"
+                      className="hidden lg:flex"
                     >
                       <Link to="/admin">
                         <Shield className="w-4 h-4 mr-1" />
