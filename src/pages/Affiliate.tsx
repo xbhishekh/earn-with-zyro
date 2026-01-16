@@ -119,7 +119,8 @@ const Affiliate = () => {
 
     setGeneratingLink(true);
     try {
-      const code = `${profile.username}_${selectedCampaign.slice(0, 8)}`;
+      // Use just the username as the code (Whop style)
+      const code = profile.username;
       
       const { error } = await supabase.from("affiliate_links").insert({
         user_id: user.id,
@@ -140,10 +141,25 @@ const Affiliate = () => {
     }
   };
 
+  // Create URL-friendly slug from campaign name
+  const createSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  };
+
   const getFullLink = (code: string, campaignId: string | null) => {
-    const baseUrl = window.location.origin;
+    // Use zyrozo.com domain with campaign slug
+    const baseUrl = "https://zyrozo.com";
+    
     if (campaignId) {
-      return `${baseUrl}/campaigns/${campaignId}?ref=${code}`;
+      const campaign = campaigns.find(c => c.id === campaignId);
+      const campaignName = campaign?.name || "campaign";
+      const slug = createSlug(campaignName);
+      return `${baseUrl}/${slug}?ref=${code}`;
     }
     return `${baseUrl}?ref=${code}`;
   };
