@@ -45,6 +45,7 @@ import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
 import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
+import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
 
 interface ProfileData {
   id: string;
@@ -345,7 +346,7 @@ const Profile = () => {
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className={cn(
               "grid w-full lg:w-auto lg:inline-grid",
-              isAdminUser ? "grid-cols-5" : "grid-cols-4"
+              isAdminUser ? "grid-cols-6" : "grid-cols-5"
             )}>
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
@@ -354,6 +355,10 @@ const Profile = () => {
               <TabsTrigger value="social" className="gap-2">
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Social</span>
+              </TabsTrigger>
+              <TabsTrigger value="affiliate" className="gap-2">
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Affiliate</span>
               </TabsTrigger>
               {isAdminUser && (
                 <TabsTrigger value="dashboard" className="gap-2">
@@ -442,6 +447,11 @@ const Profile = () => {
             {/* Social Tab */}
             <TabsContent value="social" className="space-y-6">
               <LinkedSocialAccounts isOwnProfile={true} />
+            </TabsContent>
+
+            {/* Affiliate Tab - Available for ALL users */}
+            <TabsContent value="affiliate" className="space-y-6">
+              <AffiliateCenter />
             </TabsContent>
 
             {/* Dashboard Tab - Only for Admin Users */}
