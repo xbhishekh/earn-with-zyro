@@ -361,33 +361,37 @@ const Campaigns = () => {
                 return (
                   <div key={campaign.id}>
                     <div className="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
-                      {/* Header with Creator & Badges */}
                       <Link to={`/c/${campaign.slug || campaign.id}`} className="block">
-                        <div className="p-4 flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden">
-                              <AvatarImageOptimized
-                                src={campaign.creator_avatar || campaign.thumbnail_url}
-                                alt={campaign.name}
-                                size="lg"
-                                fallbackInitial={campaign.name.charAt(0)}
-                                className="w-12 h-12 rounded-xl"
-                              />
+                        {/* Campaign Thumbnail - Prominent Display */}
+                        <div className="relative aspect-video w-full overflow-hidden">
+                          {campaign.thumbnail_url ? (
+                            <img 
+                              src={campaign.thumbnail_url} 
+                              alt={campaign.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                              <span className="text-4xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              <Badge variant="outline" className="text-xs">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
-                              {campaign.category && <Badge variant="outline" className="text-xs">{campaign.category}</Badge>}
-                            </div>
+                          )}
+                          {/* Badges Overlay */}
+                          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                            <Badge className="bg-black/70 text-white border-0 text-xs">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
+                            {campaign.category && <Badge className="bg-black/70 text-white border-0 text-xs">{campaign.category}</Badge>}
                           </div>
-                          <span className="text-xs text-muted-foreground">{timeAgo} ago</span>
+                          <span className="absolute top-3 right-3 text-xs text-white bg-black/50 px-2 py-1 rounded-full">{timeAgo} ago</span>
                         </div>
 
                         {/* Campaign Title & Creator */}
-                        <div className="px-4 pb-3">
+                        <div className="p-4">
                           <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">
-                            {campaign.name} - ${campaign.reward_per_1k_views} Per 1,000 Views
+                            {campaign.name}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1">
+                          <p className="text-primary font-semibold text-sm mt-1">
+                            ${campaign.reward_per_1k_views} Per 1,000 Views
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
                             <Link 
                               to={campaign.created_by ? `/u/${campaign.creator_name}` : "#"}
                               className="text-sm text-muted-foreground hover:text-primary transition-colors"
