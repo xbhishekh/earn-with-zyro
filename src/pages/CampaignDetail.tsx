@@ -232,15 +232,31 @@ const CampaignDetail = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("submissions").insert({
-        user_id: user!.id,
-        campaign_id: id,
-        video_url: videoUrl,
-        social_link: socialLink
-      });
+      const { data: submissionData, error } = await supabase
+        .from("submissions")
+        .insert({
+          user_id: user!.id,
+          campaign_id: id,
+          video_url: videoUrl,
+          social_link: socialLink
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
-      toast.success("Submission sent!");
+
+      // Notify admin via edge function (fire and forget)
+      supabase.functions.invoke("notify-submission", {
+        body: {
+          submission_id: submissionData.id,
+          video_url: videoUrl,
+          social_link: socialLink,
+          campaign_id: id,
+          user_id: user!.id
+        }
+      }).catch(err => console.log("Notification error (non-blocking):", err));
+
+      toast.success("Submission sent for review!");
       setShowSubmitModal(false);
       setVideoUrl("");
       setSocialLink("");
