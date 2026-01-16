@@ -9,6 +9,9 @@ import {
   Users,
   DollarSign,
   Eye,
+  Upload,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +92,7 @@ const AdminCampaigns = () => {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState(initialFormState);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -521,11 +525,86 @@ const AdminCampaigns = () => {
               </div>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Thumbnail URL</label>
+              <label className="text-sm text-muted-foreground mb-2 block">Campaign Thumbnail</label>
+              {formData.thumbnail_url ? (
+                <div className="relative rounded-lg overflow-hidden border bg-muted">
+                  <img 
+                    src={formData.thumbnail_url} 
+                    alt="Thumbnail preview" 
+                    className="w-full h-40 object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8"
+                    onClick={() => setFormData({ ...formData, thumbnail_url: "" })}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    {uploading ? (
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <ImageIcon className="w-10 h-10 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium text-primary">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP up to 5MB</p>
+                      </>
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("File size must be less than 5MB");
+                        return;
+                      }
+                      
+                      setUploading(true);
+                      try {
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+                        
+                        const { error: uploadError } = await supabase.storage
+                          .from('campaign-thumbnails')
+                          .upload(fileName, file);
+                          
+                        if (uploadError) throw uploadError;
+                        
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('campaign-thumbnails')
+                          .getPublicUrl(fileName);
+                          
+                        setFormData({ ...formData, thumbnail_url: publicUrl });
+                        toast.success("Thumbnail uploaded!");
+                      } catch (error) {
+                        console.error("Upload error:", error);
+                        toast.error("Failed to upload thumbnail");
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">Or enter URL directly:</p>
               <Input
                 placeholder="https://..."
                 value={formData.thumbnail_url}
                 onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                className="mt-1"
               />
             </div>
           </div>
