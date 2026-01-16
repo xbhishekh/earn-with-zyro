@@ -23,6 +23,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import Gallery from "./pages/Gallery";
 import Messages from "./pages/Messages";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/support" element={<Support />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SuspensionGuard>

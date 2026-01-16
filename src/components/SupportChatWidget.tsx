@@ -33,12 +33,21 @@ const SupportChatWidget = () => {
   const [sending, setSending] = useState(false);
   const [chat, setChat] = useState<SupportChat | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Listen for custom event to open chat from Support page
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('open-support-chat', handleOpenChat);
+    return () => window.removeEventListener('open-support-chat', handleOpenChat);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
     fetchOrCreateChat();
+    fetchWelcomeMessage();
   }, [user]);
 
   useEffect(() => {
@@ -84,6 +93,21 @@ const SupportChatWidget = () => {
     setTimeout(() => {
       scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
+  };
+
+  const fetchWelcomeMessage = async () => {
+    try {
+      const { data } = await supabase
+        .from("support_config")
+        .select("welcome_message")
+        .limit(1)
+        .maybeSingle();
+      if (data?.welcome_message) {
+        setWelcomeMessage(data.welcome_message);
+      }
+    } catch (error) {
+      console.error("Error fetching welcome message:", error);
+    }
   };
 
   const fetchOrCreateChat = async () => {
@@ -253,8 +277,8 @@ const SupportChatWidget = () => {
                 <div className="text-center py-8">
                   <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <h4 className="font-medium mb-1">Start a conversation</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Send us a message and we'll get back to you soon!
+                  <p className="text-sm text-muted-foreground px-4">
+                    {welcomeMessage || "Send us a message and we'll get back to you soon!"}
                   </p>
                 </div>
               ) : (
