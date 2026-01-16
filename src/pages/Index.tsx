@@ -1,6 +1,9 @@
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Benefits } from "@/components/landing/Benefits";
+import { MarketplaceShowcase } from "@/components/landing/MarketplaceShowcase";
+import { SocialProof } from "@/components/landing/SocialProof";
+import { MidPageCTA } from "@/components/landing/MidPageCTA";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
@@ -15,8 +18,11 @@ const Index = () => {
     return (
       <MainLayout>
         <HeroSection />
-        <HowItWorks />
         <Benefits />
+        <HowItWorks />
+        <MarketplaceShowcase />
+        <MidPageCTA />
+        <SocialProof />
         <FinalCTA />
         <Footer />
       </MainLayout>
@@ -29,8 +35,11 @@ const Index = () => {
       <Navbar />
       <main className="pt-16 md:pt-20">
         <HeroSection />
-        <HowItWorks />
         <Benefits />
+        <HowItWorks />
+        <MarketplaceShowcase />
+        <MidPageCTA />
+        <SocialProof />
         <FinalCTA />
         <Footer />
       </main>
