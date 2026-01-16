@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Check, LogOut, User } from "lucide-react";
+import { Plus, Check, ChevronDown, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +32,7 @@ interface AccountSwitcherProps {
   currentAvatar: string | null;
   currentDisplayName: string | null;
   onLogout: () => void;
+  compact?: boolean;
 }
 
 const ACCOUNTS_STORAGE_KEY = "zyrozo_saved_accounts";
@@ -34,6 +42,7 @@ export const AccountSwitcher = ({
   currentAvatar,
   currentDisplayName,
   onLogout,
+  compact = false,
 }: AccountSwitcherProps) => {
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [showAddAccount, setShowAddAccount] = useState(false);
@@ -152,6 +161,69 @@ export const AccountSwitcher = ({
     toast.success("Account removed");
   };
 
+  const otherAccounts = savedAccounts.filter((a) => a.email !== currentEmail);
+
+  // Compact mode - Dropdown for header
+  if (compact) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <User className="w-4 h-4" />
+            <span className="hidden sm:inline">Switch</span>
+            <ChevronDown className="w-3 h-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          {/* Current Account */}
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={currentAvatar || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {currentDisplayName?.charAt(0)?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{currentDisplayName || "User"}</p>
+                <p className="text-xs text-muted-foreground truncate">{currentEmail}</p>
+              </div>
+              <Check className="w-4 h-4 text-primary" />
+            </div>
+          </div>
+          
+          {otherAccounts.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              {otherAccounts.map((account) => (
+                <DropdownMenuItem
+                  key={account.email}
+                  onClick={() => handleSwitchAccount(account)}
+                  className="cursor-pointer"
+                >
+                  <Avatar className="w-6 h-6 mr-2">
+                    <AvatarImage src={account.avatar_url || undefined} />
+                    <AvatarFallback className="bg-muted text-xs">
+                      {account.display_name?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{account.display_name || account.email}</span>
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+          
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setShowAddAccount(true)} className="cursor-pointer">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Account
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Full mode - For Account tab
   return (
     <div className="space-y-4">
       {/* Current Account */}
@@ -170,37 +242,35 @@ export const AccountSwitcher = ({
       </div>
 
       {/* Other Saved Accounts */}
-      {savedAccounts
-        .filter((a) => a.email !== currentEmail)
-        .map((account) => (
-          <div
-            key={account.email}
-            className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border hover:bg-muted transition-colors cursor-pointer group"
-            onClick={() => handleSwitchAccount(account)}
-          >
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={account.avatar_url || undefined} />
-              <AvatarFallback className="bg-muted">
-                {account.display_name?.charAt(0)?.toUpperCase() || account.email?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{account.display_name || "User"}</p>
-              <p className="text-sm text-muted-foreground truncate">{account.email}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveAccount(account.email);
-              }}
-            >
-              Remove
-            </Button>
+      {otherAccounts.map((account) => (
+        <div
+          key={account.email}
+          className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border hover:bg-muted transition-colors cursor-pointer group"
+          onClick={() => handleSwitchAccount(account)}
+        >
+          <Avatar className="w-10 h-10">
+            <AvatarImage src={account.avatar_url || undefined} />
+            <AvatarFallback className="bg-muted">
+              {account.display_name?.charAt(0)?.toUpperCase() || account.email?.charAt(0)?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{account.display_name || "User"}</p>
+            <p className="text-sm text-muted-foreground truncate">{account.email}</p>
           </div>
-        ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveAccount(account.email);
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
 
       {/* Add Account */}
       <Dialog open={showAddAccount} onOpenChange={setShowAddAccount}>
@@ -245,16 +315,6 @@ export const AccountSwitcher = ({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Logout Button */}
-      <Button
-        variant="destructive"
-        className="w-full"
-        onClick={onLogout}
-      >
-        <LogOut className="w-4 h-4 mr-2" />
-        Log Out
-      </Button>
     </div>
   );
 };
