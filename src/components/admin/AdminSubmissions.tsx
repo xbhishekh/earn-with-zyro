@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, CheckCircle, XCircle, ExternalLink, Download, RefreshCw, DollarSign, Ban, Play, X } from "lucide-react";
+import { Search, Filter, CheckCircle, XCircle, ExternalLink, Download, RefreshCw, DollarSign, Ban, Play, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,11 +54,13 @@ const AdminSubmissions = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   
-  // Approve modal
+  // Approve/Update Views modal
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [viewsInput, setViewsInput] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [updateMode, setUpdateMode] = useState<"approve" | "update">("approve");
+  const [markPaidAfterUpdate, setMarkPaidAfterUpdate] = useState(false);
   
   // Mark Paid modal
   const [markPaidSubmission, setMarkPaidSubmission] = useState<Submission | null>(null);
@@ -126,7 +128,7 @@ const AdminSubmissions = () => {
     return earnings;
   };
 
-  const handleApprove = async () => {
+  const handleApproveOrUpdate = async () => {
     if (!selectedSubmission || !viewsInput) { 
       toast.error("Enter views count"); 
       return; 
@@ -146,14 +148,16 @@ const AdminSubmissions = () => {
     setActionLoading(true);
     try {
       const earnings = calculateEarnings(views, campaign);
+      const isUpdate = updateMode === "update";
       
+      // Update submission with new views and earnings
       const { error } = await supabase
         .from("submissions")
         .update({ 
-          status: "approved", 
+          status: isUpdate ? selectedSubmission.status : "approved", 
           views_count: views, 
           estimated_earnings: earnings,
-          admin_notes: adminNotes || null,
+          admin_notes: adminNotes || selectedSubmission.admin_notes || null,
           reviewed_at: new Date().toISOString(),
           reviewed_by: user?.id,
         })
@@ -161,14 +165,86 @@ const AdminSubmissions = () => {
 
       if (error) throw error;
       
-      toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
+      // If updating views for approved submission, create pending balance transaction
+      if (isUpdate && selectedSubmission.status === "approved") {
+        // Add earnings to pending balance
+        const { error: txError } = await supabase
+          .from("balance_transactions")
+          .insert({
+            user_id: selectedSubmission.user_id,
+            amount: earnings,
+            type: "pending_payout",
+            status: "pending",
+            campaign_id: selectedSubmission.campaign_id,
+            submission_id: selectedSubmission.id,
+            processed_by: user?.id,
+            processed_at: new Date().toISOString(),
+            notes: `Views update: ${views.toLocaleString()} views`,
+          });
+
+        if (txError) throw txError;
+
+        // Update campaign budget
+        const newBudgetSpent = (campaign.budget_spent || 0) + earnings;
+        const updateData: any = { budget_spent: newBudgetSpent };
+
+        if (campaign.budget_total && newBudgetSpent >= campaign.budget_total) {
+          updateData.status = "paused";
+          toast.warning("Campaign auto-paused: Budget depleted");
+        }
+
+        await supabase.from("campaigns").update(updateData).eq("id", campaign.id);
+
+        // Notify user
+        await supabase.from("notifications").insert({
+          user_id: selectedSubmission.user_id,
+          type: "payment_pending",
+          title: "Earnings Added to Pending!",
+          message: `$${earnings.toLocaleString()} has been added to your pending balance for ${views.toLocaleString()} views.`,
+          metadata: { 
+            amount: earnings, 
+            views,
+            campaign_id: campaign.id,
+            submission_id: selectedSubmission.id,
+          },
+        });
+
+        // Update submission to paid status after adding to pending
+        await supabase.from("submissions").update({ status: "paid" }).eq("id", selectedSubmission.id);
+
+        // If mark paid after update is checked, also move to available
+        if (markPaidAfterUpdate) {
+          await supabase
+            .from("balance_transactions")
+            .update({ status: "available" })
+            .eq("submission_id", selectedSubmission.id)
+            .eq("status", "pending");
+
+          await supabase.from("notifications").insert({
+            user_id: selectedSubmission.user_id,
+            type: "payment_available",
+            title: "Payment Available!",
+            message: `$${earnings.toLocaleString()} is now available in your balance.`,
+            metadata: { amount: earnings },
+          });
+
+          toast.success(`Updated & Paid! $${earnings.toLocaleString()} added to available balance`);
+        } else {
+          toast.success(`Updated! $${earnings.toLocaleString()} added to pending balance`);
+        }
+      } else {
+        toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
+      }
+      
       setSelectedSubmission(null);
       setViewsInput("");
       setAdminNotes("");
+      setMarkPaidAfterUpdate(false);
+      setUpdateMode("approve");
       fetchData();
     } catch (error) {
-      console.error("Error approving:", error);
-      toast.error("Failed to approve submission");
+      console.error("Error:", error);
+      toast.error(updateMode === "update" ? "Failed to update views" : "Failed to approve submission");
     } finally {
       setActionLoading(false);
     }
@@ -208,22 +284,59 @@ const AdminSubmissions = () => {
     try {
       const amount = markPaidSubmission.estimated_earnings;
 
-      // Add to pending balance first (status: pending)
-      const { error: txError } = await supabase
+      // Check if there's already a pending transaction for this submission
+      const { data: existingTx } = await supabase
         .from("balance_transactions")
-        .insert({
-          user_id: markPaidSubmission.user_id,
-          amount: amount,
-          type: "pending_payout",
-          status: "pending",
-          campaign_id: markPaidSubmission.campaign_id,
-          submission_id: markPaidSubmission.id,
-          processed_by: user?.id,
-          processed_at: new Date().toISOString(),
-          notes: `Payout for submission ${markPaidSubmission.id.slice(0, 8)}`,
-        });
+        .select("id, status")
+        .eq("submission_id", markPaidSubmission.id)
+        .eq("status", "pending")
+        .single();
 
-      if (txError) throw txError;
+      if (existingTx) {
+        // Move existing pending to available
+        const { error: updateError } = await supabase
+          .from("balance_transactions")
+          .update({ 
+            status: "available",
+            processed_at: new Date().toISOString(),
+            processed_by: user?.id,
+          })
+          .eq("id", existingTx.id);
+
+        if (updateError) throw updateError;
+
+        toast.success(`Moved $${amount.toLocaleString()} from pending to available balance`);
+      } else {
+        // Create new available balance transaction directly
+        const { error: txError } = await supabase
+          .from("balance_transactions")
+          .insert({
+            user_id: markPaidSubmission.user_id,
+            amount: amount,
+            type: "payout",
+            status: "available",
+            campaign_id: markPaidSubmission.campaign_id,
+            submission_id: markPaidSubmission.id,
+            processed_by: user?.id,
+            processed_at: new Date().toISOString(),
+            notes: `Payout for submission ${markPaidSubmission.id.slice(0, 8)}`,
+          });
+
+        if (txError) throw txError;
+
+        // Update campaign budget only for new transactions
+        const newBudgetSpent = (campaign.budget_spent || 0) + amount;
+        const updateData: any = { budget_spent: newBudgetSpent };
+
+        if (campaign.budget_total && newBudgetSpent >= campaign.budget_total) {
+          updateData.status = "paused";
+          toast.warning("Campaign auto-paused: Budget depleted");
+        }
+
+        await supabase.from("campaigns").update(updateData).eq("id", campaign.id);
+
+        toast.success(`Marked paid! $${amount.toLocaleString()} added to available balance`);
+      }
 
       const { error: subError } = await supabase
         .from("submissions")
@@ -232,26 +345,11 @@ const AdminSubmissions = () => {
 
       if (subError) throw subError;
 
-      const newBudgetSpent = (campaign.budget_spent || 0) + amount;
-      const updateData: any = { budget_spent: newBudgetSpent };
-
-      if (campaign.budget_total && newBudgetSpent >= campaign.budget_total) {
-        updateData.status = "paused";
-        toast.warning("Campaign auto-paused: Budget depleted");
-      }
-
-      const { error: campError } = await supabase
-        .from("campaigns")
-        .update(updateData)
-        .eq("id", campaign.id);
-
-      if (campError) throw campError;
-
       await supabase.from("notifications").insert({
         user_id: markPaidSubmission.user_id,
-        type: "payment_pending",
-        title: "Payout Added to Pending!",
-        message: `$${amount.toLocaleString()} has been added to your pending balance. It will be released soon.`,
+        type: "payment_available",
+        title: "Payment Available!",
+        message: `$${amount.toLocaleString()} is now available in your balance for withdrawal.`,
         metadata: { 
           amount, 
           campaign_id: campaign.id,
@@ -259,7 +357,6 @@ const AdminSubmissions = () => {
         },
       });
 
-      toast.success(`Marked paid! $${amount.toLocaleString()} added to user's pending balance`);
       setMarkPaidSubmission(null);
       fetchData();
     } catch (error) {
@@ -442,6 +539,8 @@ const AdminSubmissions = () => {
                                 setSelectedSubmission(s); 
                                 setViewsInput(""); 
                                 setAdminNotes("");
+                                setUpdateMode("approve");
+                                setMarkPaidAfterUpdate(false);
                               }}
                             >
                               <CheckCircle className="w-4 h-4 mr-1" />
@@ -458,14 +557,48 @@ const AdminSubmissions = () => {
                           </>
                         )}
                         {s.status === "approved" && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                              onClick={() => { 
+                                setSelectedSubmission(s); 
+                                setViewsInput(s.views_count?.toString() || ""); 
+                                setAdminNotes(s.admin_notes || "");
+                                setUpdateMode("update");
+                                setMarkPaidAfterUpdate(false);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Update Views
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              className="bg-green-500 hover:bg-green-600"
+                              onClick={() => setMarkPaidSubmission(s)}
+                            >
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              Mark Paid
+                            </Button>
+                          </>
+                        )}
+                        {s.status === "paid" && (
                           <Button 
                             size="sm" 
-                            variant="default"
-                            className="bg-green-500 hover:bg-green-600"
-                            onClick={() => setMarkPaidSubmission(s)}
+                            variant="outline"
+                            className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                            onClick={() => { 
+                              setSelectedSubmission(s); 
+                              setViewsInput(s.views_count?.toString() || ""); 
+                              setAdminNotes(s.admin_notes || "");
+                              setUpdateMode("update");
+                              setMarkPaidAfterUpdate(false);
+                            }}
                           >
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            Mark Paid
+                            <Eye className="w-4 h-4 mr-1" />
+                            Update Views
                           </Button>
                         )}
                       </div>
@@ -478,12 +611,16 @@ const AdminSubmissions = () => {
         </Table>
       </motion.div>
 
-      {/* Approve Modal */}
-      <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
+      {/* Approve/Update Views Modal */}
+      <Dialog open={!!selectedSubmission} onOpenChange={() => { setSelectedSubmission(null); setUpdateMode("approve"); setMarkPaidAfterUpdate(false); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Submission</DialogTitle>
-            <DialogDescription>Enter the view count to calculate earnings</DialogDescription>
+            <DialogTitle>{updateMode === "update" ? "Update Views" : "Approve Submission"}</DialogTitle>
+            <DialogDescription>
+              {updateMode === "update" 
+                ? "Update views to recalculate earnings → adds to pending balance" 
+                : "Enter the view count to calculate earnings"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -498,7 +635,9 @@ const AdminSubmissions = () => {
             
             {viewsInput && selectedSubmission && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-sm text-muted-foreground">Estimated Earnings</p>
+                <p className="text-sm text-muted-foreground">
+                  {updateMode === "update" ? "Earnings (→ Pending Balance)" : "Estimated Earnings"}
+                </p>
                 <p className="font-display text-2xl font-bold text-green-500">
                   ${(() => {
                     const campaign = getCampaign(selectedSubmission.campaign_id);
@@ -507,6 +646,18 @@ const AdminSubmissions = () => {
                   })()}
                 </p>
               </div>
+            )}
+
+            {updateMode === "update" && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={markPaidAfterUpdate}
+                  onChange={(e) => setMarkPaidAfterUpdate(e.target.checked)}
+                  className="w-4 h-4 rounded border-border"
+                />
+                <span className="text-sm">Also move to Available Balance (Mark Paid)</span>
+              </label>
             )}
 
             <div>
@@ -519,9 +670,13 @@ const AdminSubmissions = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedSubmission(null)}>Cancel</Button>
-            <Button onClick={handleApprove} disabled={actionLoading || !viewsInput}>
-              {actionLoading ? "Approving..." : "Approve"}
+            <Button variant="outline" onClick={() => { setSelectedSubmission(null); setUpdateMode("approve"); setMarkPaidAfterUpdate(false); }}>Cancel</Button>
+            <Button onClick={handleApproveOrUpdate} disabled={actionLoading || !viewsInput}>
+              {actionLoading 
+                ? (updateMode === "update" ? "Updating..." : "Approving...") 
+                : (updateMode === "update" 
+                    ? (markPaidAfterUpdate ? "Update & Pay" : "Update Views") 
+                    : "Approve")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -531,11 +686,11 @@ const AdminSubmissions = () => {
       <Dialog open={!!markPaidSubmission} onOpenChange={() => setMarkPaidSubmission(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
-            <DialogDescription>This will add funds to the user's balance</DialogDescription>
+            <DialogTitle>Move to Available Balance</DialogTitle>
+            <DialogDescription>This will make funds available for withdrawal</DialogDescription>
           </DialogHeader>
           <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground">Amount to Pay (Pending Balance)</p>
+            <p className="text-sm text-muted-foreground">Amount to Pay</p>
             <p className="font-display text-4xl font-bold text-green-500">
               ${markPaidSubmission?.estimated_earnings?.toLocaleString() || 0}
             </p>
@@ -543,7 +698,7 @@ const AdminSubmissions = () => {
               to @{markPaidSubmission ? getUsername(markPaidSubmission.user_id) : ""}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              This will add to pending balance first
+              → Moves to Available Balance (Withdrawable)
             </p>
           </div>
           <DialogFooter>
