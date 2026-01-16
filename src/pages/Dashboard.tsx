@@ -54,6 +54,7 @@ interface MyProduct {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
+  const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder";
   const [stats, setStats] = useState<DashboardStats>({
     totalEarnings: 0,
     pendingEarnings: 0,
@@ -75,9 +76,11 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
-      fetchMyProducts();
+      if (isAdminUser) {
+        fetchMyProducts();
+      }
     }
-  }, [user]);
+  }, [user, isAdminUser]);
 
   const fetchMyProducts = async () => {
     setProductsLoading(true);
@@ -275,164 +278,162 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Seller Dashboard Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass-card rounded-2xl p-6 mb-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-primary" />
+        {isAdminUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="glass-card rounded-2xl p-6 mb-8"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-display text-xl font-bold">Seller Dashboard</h2>
+                  <p className="text-sm text-muted-foreground">Manage your products, buyers & analytics</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-display text-xl font-bold">Seller Dashboard</h2>
-                <p className="text-sm text-muted-foreground">Manage your products, buyers & analytics</p>
-              </div>
-            </div>
-            {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
               <Button asChild>
                 <Link to="/marketplace/create">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Product
                 </Link>
               </Button>
-            )}
-          </div>
+            </div>
 
-          <Tabs defaultValue="products" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 mb-6">
-              <TabsTrigger value="products" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                <span className="hidden sm:inline">Products</span>
-              </TabsTrigger>
-              <TabsTrigger value="buyers" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">Buyers</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Analytics</span>
-              </TabsTrigger>
-              <TabsTrigger value="discounts" className="flex items-center gap-2">
-                <Tags className="w-4 h-4" />
-                <span className="hidden sm:inline">Discounts</span>
-              </TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="products" className="w-full">
+              <TabsList className="w-full grid grid-cols-4 mb-6">
+                <TabsTrigger value="products" className="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  <span className="hidden sm:inline">Products</span>
+                </TabsTrigger>
+                <TabsTrigger value="buyers" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Buyers</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="discounts" className="flex items-center gap-2">
+                  <Tags className="w-4 h-4" />
+                  <span className="hidden sm:inline">Discounts</span>
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Products Tab */}
-            <TabsContent value="products">
-              {productsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : myProducts.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-bold mb-2">No products yet</h3>
-                  <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
-                    Start selling your courses, memberships, or digital products
-                  </p>
-                  {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
+              {/* Products Tab */}
+              <TabsContent value="products">
+                {productsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : myProducts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-bold mb-2">No products yet</h3>
+                    <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                      Start selling your courses, memberships, or digital products
+                    </p>
                     <Button variant="outline" asChild>
                       <Link to="/marketplace/create">Create your first product</Link>
                     </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {myProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-colors"
-                    >
-                      {/* Thumbnail */}
-                      <div className="relative aspect-video overflow-hidden bg-muted">
-                        {product.thumbnail_url ? (
-                          <img
-                            src={product.thumbnail_url}
-                            alt={product.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        {!product.is_active && (
-                          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                            <span className="text-sm font-medium text-muted-foreground">Inactive</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="font-bold line-clamp-1">{product.title}</h3>
-                          <span className="text-sm font-medium text-primary whitespace-nowrap">
-                            {formatPrice(product.price, product.product_type, product.subscription_interval)}
-                          </span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {myProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-colors"
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative aspect-video overflow-hidden bg-muted">
+                          {product.thumbnail_url ? (
+                            <img
+                              src={product.thumbnail_url}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          {!product.is_active && (
+                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                              <span className="text-sm font-medium text-muted-foreground">Inactive</span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {product.members_count || 0}
+                        {/* Content */}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <h3 className="font-bold line-clamp-1">{product.title}</h3>
+                            <span className="text-sm font-medium text-primary whitespace-nowrap">
+                              {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-4 h-4" />
-                            {product.views_count || 0}
-                          </div>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" className="flex-1" asChild>
-                            <Link to={`/marketplace/edit/${product.id}`}>
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to={`/marketplace/${product.slug || product.id}`}>
+                          {/* Stats */}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              {product.members_count || 0}
+                            </div>
+                            <div className="flex items-center gap-1">
                               <Eye className="w-4 h-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                              {product.views_count || 0}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" className="flex-1" asChild>
+                              <Link to={`/marketplace/edit/${product.id}`}>
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to={`/marketplace/${product.slug || product.id}`}>
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Buyers Tab */}
-            <TabsContent value="buyers">
-              <SellerBuyersManager />
-            </TabsContent>
+              {/* Buyers Tab */}
+              <TabsContent value="buyers">
+                <SellerBuyersManager />
+              </TabsContent>
 
-            {/* Analytics Tab */}
-            <TabsContent value="analytics">
-              <SellerAnalytics />
-            </TabsContent>
+              {/* Analytics Tab */}
+              <TabsContent value="analytics">
+                <SellerAnalytics />
+              </TabsContent>
 
-            {/* Discounts Tab */}
-            <TabsContent value="discounts">
-              <DiscountCodesManager />
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+              {/* Discounts Tab */}
+              <TabsContent value="discounts">
+                <DiscountCodesManager />
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+        )}
 
         {/* Empty State for Submissions */}
         {stats.totalSubmissions === 0 && (

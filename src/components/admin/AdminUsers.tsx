@@ -89,6 +89,7 @@ const AdminUsers = () => {
   };
 
   const fetchProfiles = async () => {
+    setLoading(true);
     try {
       let nextProfiles: any[] = [];
 
@@ -185,7 +186,7 @@ const AdminUsers = () => {
           campaign_id: null,
           reason: banReason,
           suspended_by: user.id,
-          is_active: true
+          is_active: true,
         });
         if (error) throw error;
         toast.success(`${selectedUser.display_name || selectedUser.username} has been globally suspended`);
@@ -194,17 +195,23 @@ const AdminUsers = () => {
           toast.error("Please select at least one campaign");
           return;
         }
-        const inserts = selectedCampaigns.map(campaignId => ({
+        const inserts = selectedCampaigns.map((campaignId) => ({
           user_id: selectedUser.user_id,
           campaign_id: campaignId,
           reason: banReason,
           suspended_by: user.id,
-          is_active: true
+          is_active: true,
         }));
         const { error } = await supabase.from("user_suspensions").insert(inserts);
         if (error) throw error;
-        toast.success(`${selectedUser.display_name || selectedUser.username} has been banned from ${selectedCampaigns.length} campaign(s)`);
+        toast.success(
+          `${selectedUser.display_name || selectedUser.username} has been banned`
+        );
       }
+
+      // Refresh list + badges so buttons update immediately
+      await fetchProfiles();
+
       setSelectedUser(null);
       setBanReason("");
       setSelectedCampaigns([]);
@@ -221,10 +228,14 @@ const AdminUsers = () => {
         .update({ is_active: false })
         .eq("id", suspensionId);
       if (error) throw error;
+
       toast.success("Ban lifted successfully");
+
+      // Refresh modal + table badges/buttons
       if (viewBansUser) {
         await fetchUserSuspensions(viewBansUser.user_id);
       }
+      await fetchProfiles();
     } catch (error) {
       console.error("Lift ban error:", error);
       toast.error("Failed to lift ban");
@@ -334,43 +345,61 @@ const AdminUsers = () => {
                       {hasFullAccess && (
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => handleVerify(p.user_id, p.is_verified)}
                           title={p.is_verified ? "Remove verification" : "Verify user"}
                         >
-                          {p.is_verified ? <Shield className="w-4 h-4 text-success" /> : <CheckCircle className="w-4 h-4" />}
+                          {p.is_verified ? (
+                            <>
+                              <Shield className="w-4 h-4" />
+                              <span className="hidden md:inline">Verified</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="hidden md:inline">Verify</span>
+                            </>
+                          )}
                         </Button>
                       )}
 
-                      {/* Unsuspend */}
                       {(isGloballySuspended || campaignBanCount > 0) && (
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => {
-                            // If it's only a global suspension and we have full access, allow one-click unsuspend.
                             if (hasFullAccess && isGloballySuspended && campaignBanCount === 0) {
                               handleLiftBan(summary!.globalId!);
                               return;
                             }
-                            // Otherwise open bans modal so you can choose what to lift.
                             openViewBansModal(p);
                           }}
                           title={
                             hasFullAccess && isGloballySuspended && campaignBanCount === 0
                               ? "Unsuspend user"
-                              : "View bans / Unsuspend"
+                              : "Manage bans"
                           }
                         >
                           <Unlock className="w-4 h-4" />
+                          <span className="hidden md:inline">
+                            {hasFullAccess && isGloballySuspended && campaignBanCount === 0 ? "Unsuspend" : "Unban"}
+                          </span>
                         </Button>
                       )}
 
-                      <Button size="sm" variant="ghost" onClick={() => openViewBansModal(p)} title="View bans / Unsuspend">
+                      <Button size="sm" variant="outline" onClick={() => openViewBansModal(p)} title="View bans">
                         <Eye className="w-4 h-4" />
+                        <span className="hidden md:inline">Bans</span>
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => openBanModal(p)} title="Ban user">
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => openBanModal(p)}
+                        title="Ban user"
+                      >
                         <Ban className="w-4 h-4" />
+                        <span className="hidden md:inline">Ban</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -530,12 +559,11 @@ const AdminUsers = () => {
                   {(hasFullAccess || (suspension.campaign_id && myCampaignIds.includes(suspension.campaign_id))) && (
                     <Button 
                       size="sm" 
-                      variant="destructive"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      variant="outline"
                       onClick={() => handleLiftBan(suspension.id)}
                     >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Unsuspend
+                      <Unlock className="w-4 h-4 mr-1" />
+                      Lift
                     </Button>
                   )}
                 </div>
