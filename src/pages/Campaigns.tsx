@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Search, Filter, Users, DollarSign } from "lucide-react";
+import { Search, DollarSign, Eye, TrendingUp, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
 interface Campaign {
   id: string;
@@ -18,8 +20,14 @@ interface Campaign {
   platforms: string[] | null;
   reward_per_1k_views: number;
   budget_total: number | null;
+  budget_spent: number | null;
   campaign_type: string | null;
   status: string | null;
+  join_type: string | null;
+  created_at: string;
+  created_by: string | null;
+  creator_name?: string | null;
+  creator_avatar?: string | null;
 }
 
 const categories = ["All", "Gaming", "Fitness", "Technology", "Travel", "Food", "Fashion", "Sports", "Entertainment"];
@@ -43,7 +51,27 @@ const Campaigns = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setCampaigns(data || []);
+      
+      // Fetch creator profiles for campaigns
+      const campaignsWithCreators = await Promise.all(
+        (data || []).map(async (campaign) => {
+          if (campaign.created_by) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name, avatar_url")
+              .eq("user_id", campaign.created_by)
+              .single();
+            return {
+              ...campaign,
+              creator_name: profile?.display_name || "Zyrozo",
+              creator_avatar: profile?.avatar_url,
+            };
+          }
+          return { ...campaign, creator_name: "Zyrozo", creator_avatar: null };
+        })
+      );
+      
+      setCampaigns(campaignsWithCreators);
     } catch (error) {
       console.error("Error fetching campaigns:", error);
     } finally {
@@ -53,9 +81,19 @@ const Campaigns = () => {
 
   const filteredCampaigns = campaigns.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || c.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All" || c.category?.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
+
+  const getPlatformIcon = (platform: string) => {
+    const p = platform.toLowerCase();
+    if (p.includes("tiktok")) return "🎵";
+    if (p.includes("youtube")) return "📺";
+    if (p.includes("instagram")) return "📸";
+    if (p.includes("twitter") || p.includes("x")) return "𝕏";
+    if (p.includes("facebook")) return "📘";
+    return "🌐";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,40 +134,94 @@ const Campaigns = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCampaigns.map((campaign, index) => (
-                <motion.div key={campaign.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
-                  <Link to={`/campaigns/${campaign.id}`} className="block glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
-                    <div className="relative aspect-video overflow-hidden bg-muted">
-                      {campaign.thumbnail_url ? (
-                        <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
-                      )}
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
-                        <Badge variant="default" className="gradient-bg border-0">Active</Badge>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-display font-bold text-lg mb-1 group-hover:text-primary transition-colors">{campaign.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{campaign.description || "No description"}</p>
-                      <div className="flex gap-2 mb-4">
-                        {campaign.platforms?.slice(0, 3).map((platform) => (
-                          <span key={platform} className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">{platform}</span>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-border">
-                        <div className="flex items-center gap-1 text-sm">
-                          <DollarSign className="w-4 h-4 text-success" />
-                          <span className="font-semibold">₹{campaign.reward_per_1k_views}</span>
-                          <span className="text-muted-foreground">/1K views</span>
+              {filteredCampaigns.map((campaign, index) => {
+                const budgetTotal = campaign.budget_total || 0;
+                const budgetSpent = campaign.budget_spent || 0;
+                const budgetRemaining = Math.max(0, budgetTotal - budgetSpent);
+                const budgetPercent = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
+                const timeAgo = formatDistanceToNow(new Date(campaign.created_at), { addSuffix: false });
+                
+                return (
+                  <motion.div key={campaign.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
+                    <Link to={`/campaigns/${campaign.id}`} className="block glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all">
+                      {/* Header with Creator & Badges */}
+                      <div className="p-4 flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                            {campaign.creator_avatar ? (
+                              <img src={campaign.creator_avatar} alt="" className="w-full h-full object-cover" />
+                            ) : campaign.thumbnail_url ? (
+                              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-white font-bold text-lg">{campaign.name.charAt(0)}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Badge variant="outline" className="text-xs">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
+                            {campaign.category && <Badge variant="outline" className="text-xs">{campaign.category}</Badge>}
+                          </div>
                         </div>
-                        {campaign.category && <Badge variant="outline">{campaign.category}</Badge>}
+                        <span className="text-xs text-muted-foreground">{timeAgo} ago</span>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+
+                      {/* Campaign Title & Creator */}
+                      <div className="px-4 pb-3">
+                        <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">
+                          {campaign.name} - ₹{campaign.reward_per_1k_views} Per 1,000 Views
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground">{campaign.creator_name}</span>
+                          <CheckCircle className="w-4 h-4 text-primary" />
+                          {campaign.platforms && campaign.platforms.length > 0 && (
+                            <div className="flex gap-1 ml-2">
+                              {campaign.platforms.map((p) => (
+                                <span key={p} className="text-sm">{getPlatformIcon(p)}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Budget Progress */}
+                      <div className="px-4 pb-3">
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">Paid Out</span>
+                          <span className="text-muted-foreground">CPM</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-lg">₹{(budgetSpent / 1000).toFixed(2)}k</span>
+                            <span className="text-muted-foreground text-sm"> / ₹{(budgetTotal / 1000).toFixed(0)}k</span>
+                          </div>
+                          <div>
+                            <span className="font-bold text-primary text-lg">₹{campaign.reward_per_1k_views}</span>
+                            <span className="text-muted-foreground text-sm"> / 1k views</span>
+                          </div>
+                        </div>
+                        {budgetTotal > 0 && (
+                          <Progress value={budgetPercent} className="h-1.5 mt-2" />
+                        )}
+                      </div>
+
+                      {/* Stats Footer */}
+                      <div className="px-4 py-3 border-t border-border grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Approval</p>
+                          <p className="font-semibold text-sm">High</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Views</p>
+                          <p className="font-semibold text-sm">--</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Budget Left</p>
+                          <p className="font-semibold text-sm text-success">₹{(budgetRemaining / 1000).toFixed(2)}k</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>

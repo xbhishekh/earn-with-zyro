@@ -51,6 +51,12 @@ interface Campaign {
   status: string | null;
   join_type: string | null;
   waitlist_questions: string[];
+  created_by: string | null;
+}
+
+interface CreatorProfile {
+  display_name: string | null;
+  avatar_url: string | null;
 }
 
 interface Submission {
@@ -77,7 +83,7 @@ const CampaignDetail = () => {
   const [waitlistStatus, setWaitlistStatus] = useState<string | null>(null);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rewards");
-  
+  const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
@@ -135,6 +141,18 @@ const CampaignDetail = () => {
       setWaitlistAnswers(new Array(campaignData.waitlist_questions?.length || 0).fill(""));
 
       const campaignId = campaignData.id;
+
+      // Fetch creator profile if created_by exists
+      if (campaignData.created_by) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, avatar_url")
+          .eq("user_id", campaignData.created_by)
+          .single();
+        if (profile) {
+          setCreatorProfile(profile);
+        }
+      }
 
       const [memberRes, banRes, waitlistRes, submissionRes, roomRes] = await Promise.all([
         supabase.from("campaign_members").select("id").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
@@ -384,33 +402,88 @@ const CampaignDetail = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-6xl pb-24">
-        {/* Back & Title - Centered like Whop */}
-        <div className="text-center mb-6">
-          <button onClick={() => navigate("/campaigns")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+        {/* Creator Info Section - Whop Style */}
+        <div className="flex items-center gap-4 mb-6">
+          <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
           </button>
-          <h1 className="font-display text-xl md:text-2xl font-bold">
-            {campaign.name}
-          </h1>
         </div>
 
-        {/* Large Centered Thumbnail - Whop Style */}
-        {campaign.thumbnail_url && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }} 
-            animate={{ opacity: 1, scale: 1 }}
-            className="max-w-2xl mx-auto mb-8"
-          >
-            <div className="rounded-2xl overflow-hidden shadow-2xl">
+        {/* Creator Header - Large icon + name like Whop */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            {creatorProfile?.avatar_url ? (
+              <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : campaign.thumbnail_url ? (
+              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-2xl">{campaign.name.charAt(0)}</span>
+            )}
+          </div>
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold">
+              {creatorProfile?.display_name || "Zyrozo"}
+            </h1>
+          </div>
+        </div>
+
+        {/* Campaign Card - Whop Style */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-2xl overflow-hidden mb-8"
+        >
+          {/* Thumbnail with Waitlist Badge */}
+          <div className="relative">
+            {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name} 
-                className="w-full aspect-[4/3] object-cover"
+                className="w-full aspect-video object-cover"
               />
+            ) : (
+              <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <span className="text-4xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
+              </div>
+            )}
+            {campaign.join_type === "waitlist" && (
+              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">Waitlist</Badge>
+            )}
+            {/* Small creator icon overlay */}
+            <div className="absolute bottom-4 right-4 w-12 h-12 rounded-xl overflow-hidden bg-background/80 backdrop-blur border border-border shadow-lg">
+              {creatorProfile?.avatar_url ? (
+                <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <span className="text-white font-bold">{campaign.name.charAt(0)}</span>
+                </div>
+              )}
             </div>
-          </motion.div>
-        )}
+          </div>
+
+          {/* Campaign Info */}
+          <div className="p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                {creatorProfile?.avatar_url ? (
+                  <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold">{campaign.name.charAt(0)}</span>
+                )}
+              </div>
+              <div>
+                <h2 className="font-display font-bold text-lg">{campaign.name}</h2>
+                <p className="text-sm text-muted-foreground">{campaign.description || "Join and start earning!"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <span className="text-primary font-bold">Free</span>
+              <span className="text-yellow-500">⭐</span>
+              <span className="text-sm text-muted-foreground">4.9</span>
+            </div>
+          </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
