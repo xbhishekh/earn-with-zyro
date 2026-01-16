@@ -94,9 +94,14 @@ export const AppHeader = () => {
       if (balanceRes.data) {
         const available = balanceRes.data.reduce((acc, tx) => {
           if (tx.status === 'available') {
-            return tx.type === 'earning' || tx.type === 'referral' 
-              ? acc + tx.amount 
-              : acc - tx.amount;
+            // Add earnings: earning, referral, payout, pending_payout (when available)
+            if (tx.type === 'earning' || tx.type === 'referral' || tx.type === 'payout' || tx.type === 'pending_payout') {
+              return acc + tx.amount;
+            }
+            // Subtract withdrawals
+            if (tx.type === 'withdrawal') {
+              return acc - tx.amount;
+            }
           }
           return acc;
         }, 0);

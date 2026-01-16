@@ -160,7 +160,8 @@ const Affiliate = () => {
       const campaign = campaigns.find(c => c.id === campaignId);
       // Use the slug from database, fallback to generated slug from name
       const slug = campaign?.slug || createSlug(campaign?.name || "campaign");
-      return `${baseUrl}/${slug}?ref=${code}`;
+      // Use /c/ prefix for clean campaign URLs
+      return `${baseUrl}/c/${slug}?ref=${code}`;
     }
     return `${baseUrl}?ref=${code}`;
   };

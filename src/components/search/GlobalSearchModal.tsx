@@ -76,7 +76,7 @@ export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => 
       const [campaignsRes, productsRes] = await Promise.all([
         supabase
           .from('campaigns')
-          .select('id, name, description, thumbnail_url, category')
+          .select('id, name, slug, description, thumbnail_url, category')
           .eq('status', 'active')
           .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
           .limit(10),
@@ -106,13 +106,13 @@ export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => 
     return () => clearTimeout(timer);
   }, [query, performSearch]);
 
-  const handleResultClick = (type: 'campaign' | 'product', id: string, name: string) => {
+  const handleResultClick = (type: 'campaign' | 'product', idOrSlug: string, name: string) => {
     saveRecentSearch(name);
     onClose();
     if (type === 'campaign') {
-      navigate(`/campaigns/${id}`);
+      navigate(`/c/${idOrSlug}`);
     } else {
-      navigate(`/marketplace/${id}`);
+      navigate(`/marketplace/${idOrSlug}`);
     }
   };
 
@@ -272,10 +272,10 @@ export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => 
                       Campaigns
                     </h3>
                     <div className="space-y-2">
-                      {campaigns.map((campaign) => (
+                      {campaigns.map((campaign: any) => (
                         <button
                           key={campaign.id}
-                          onClick={() => handleResultClick('campaign', campaign.id, campaign.name)}
+                          onClick={() => handleResultClick('campaign', campaign.slug || campaign.id, campaign.name)}
                           className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors text-left group"
                         >
                           <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">

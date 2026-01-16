@@ -19,6 +19,7 @@ interface ApprovedSubmission {
   campaign: {
     id: string;
     name: string;
+    slug: string | null;
     thumbnail_url: string | null;
     category: string | null;
   } | null;
@@ -54,7 +55,7 @@ const Gallery = () => {
       const userIds = [...new Set(submissionsData?.map(s => s.user_id) || [])];
 
       const [campaignsRes, profilesRes] = await Promise.all([
-        supabase.from("campaigns").select("id, name, thumbnail_url, category").in("id", campaignIds),
+        supabase.from("campaigns").select("id, name, slug, thumbnail_url, category").in("id", campaignIds),
         supabase.from("profiles").select("user_id, username, display_name, avatar_url").in("user_id", userIds)
       ]);
 
@@ -251,7 +252,7 @@ const Gallery = () => {
 
                       {/* Campaign Name */}
                       <Link 
-                        to={`/campaigns/${submission.campaign?.id}`}
+                        to={`/c/${submission.campaign?.slug || submission.campaign?.id}`}
                         className="text-sm text-muted-foreground hover:text-primary transition-colors line-clamp-1"
                       >
                         {submission.campaign?.name || "Campaign"}

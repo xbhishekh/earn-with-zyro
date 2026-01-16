@@ -92,11 +92,17 @@ const Balance = () => {
 
       txns?.forEach((tx) => {
         const amount = Number(tx.amount);
+        // Available: status is 'available' or 'paid'
         if (tx.status === "available" || tx.status === "paid") {
-          available += amount;
+          if (tx.type !== "withdrawal") {
+            available += amount;
+          } else {
+            available -= amount; // Subtract withdrawals
+          }
         } else if (tx.status === "pending") {
           pending += amount;
         }
+        // Total earned (exclude withdrawals)
         if (tx.type !== "withdrawal") {
           total += amount;
         }
