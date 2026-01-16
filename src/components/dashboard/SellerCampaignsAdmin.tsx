@@ -845,24 +845,42 @@ const SellerCampaignsAdmin = () => {
                                     <DollarSign className="w-4 h-4 mr-1" />
                                     Pay
                                   </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-destructive border-destructive/50"
+                                    onClick={() => handleRejectSubmission(s.id)}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
                                 </>
                               )}
                               {s.status === "paid" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-blue-500 border-blue-500/50"
-                                  onClick={() => {
-                                    setApproveSubmission(s);
-                                    setViewsInput(s.views_count?.toString() || "");
-                                    setAdminNotes(s.admin_notes || "");
-                                    setUpdateMode("update");
-                                    setMarkPaidAfterUpdate(false);
-                                  }}
-                                >
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  Update
-                                </Button>
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-500 border-blue-500/50"
+                                    onClick={() => {
+                                      setApproveSubmission(s);
+                                      setViewsInput(s.views_count?.toString() || "");
+                                      setAdminNotes(s.admin_notes || "");
+                                      setUpdateMode("update");
+                                      setMarkPaidAfterUpdate(false);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Update
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-destructive border-destructive/50"
+                                    onClick={() => handleRejectSubmission(s.id)}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </TableCell>

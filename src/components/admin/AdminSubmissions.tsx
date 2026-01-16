@@ -634,24 +634,42 @@ const AdminSubmissions = () => {
                               <DollarSign className="w-4 h-4 mr-1" />
                               Mark Paid
                             </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-destructive border-destructive/50 hover:bg-destructive/10" 
+                              onClick={() => handleReject(s.id)}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
                           </>
                         )}
                         {s.status === "paid" && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
-                            onClick={() => { 
-                              setSelectedSubmission(s); 
-                              setViewsInput(s.views_count?.toString() || ""); 
-                              setAdminNotes(s.admin_notes || "");
-                              setUpdateMode("update");
-                              setMarkPaidAfterUpdate(false);
-                            }}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Update Views
-                          </Button>
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                              onClick={() => { 
+                                setSelectedSubmission(s); 
+                                setViewsInput(s.views_count?.toString() || ""); 
+                                setAdminNotes(s.admin_notes || "");
+                                setUpdateMode("update");
+                                setMarkPaidAfterUpdate(false);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Update Views
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-destructive border-destructive/50 hover:bg-destructive/10" 
+                              onClick={() => handleReject(s.id)}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
