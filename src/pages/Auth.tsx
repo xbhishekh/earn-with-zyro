@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Zap, Mail, User, ArrowRight, Loader2 } from "lucide-react";
+import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,10 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Validation schemas
 const emailSchema = z.string().email("Please enter a valid email address");
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
-type AuthStep = "email" | "otp";
+type AuthStep = "email" | "otp" | "forgot-password";
+type AuthMethod = "password" | "otp";
 
 const REMEMBER_ME_KEY = "zyrozo_remember_me";
 
@@ -28,6 +30,9 @@ const Auth = () => {
     isOwner, 
     sendOtp, 
     verifyOtp,
+    signInWithPassword,
+    signUpWithPassword,
+    resetPassword,
     signInWithGoogle,
   } = useAuth();
 
@@ -35,11 +40,14 @@ const Auth = () => {
   const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
@@ -54,6 +62,65 @@ const Auth = () => {
       }
     }
   }, [user, authLoading, isAdmin, isOwner, navigate]);
+
+  const saveRememberMe = () => {
+    if (rememberMe) {
+      localStorage.setItem(REMEMBER_ME_KEY, "true");
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+      sessionStorage.setItem(REMEMBER_ME_KEY, "session");
+    }
+  };
+
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isSignup) {
+        const { error } = await signUpWithPassword(email, password, {
+          username: username || email.split("@")[0],
+          displayName: displayName || username || email.split("@")[0],
+        });
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Email already registered. Please login instead.");
+            setIsSignup(false);
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          saveRememberMe();
+          toast.success("Account created successfully!");
+        }
+      } else {
+        const { error } = await signInWithPassword(email, password);
+
+        if (error) {
+          toast.error(error.message);
+        } else {
+          saveRememberMe();
+          toast.success("Logged in successfully!");
+        }
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,18 +179,42 @@ const Auth = () => {
         toast.error("Invalid or expired code. Please try again.");
         setOtp("");
       } else {
-        // Save remember me preference
-        if (rememberMe) {
-          localStorage.setItem(REMEMBER_ME_KEY, "true");
-        } else {
-          localStorage.removeItem(REMEMBER_ME_KEY);
-          sessionStorage.setItem(REMEMBER_ME_KEY, "session");
-        }
+        saveRememberMe();
         toast.success("Logged in successfully!");
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
       setOtp("");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(email);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await resetPassword(email);
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password reset link sent to your email!");
+        setStep("email");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -217,20 +308,16 @@ const Auth = () => {
     </>
   );
 
-  const renderEmailForm = () => (
+  const renderForgotPasswordForm = () => (
     <>
       <h1 className="font-display text-3xl font-bold mb-2">
-        {isSignup ? "Create Account" : "Welcome Back"}
+        Reset Password
       </h1>
       <p className="text-muted-foreground mb-6">
-        {isSignup 
-          ? "Join thousands of creators earning on Zyrozo" 
-          : "Sign in to your account"
-        }
+        Enter your email and we'll send you a reset link
       </p>
 
-      {/* OTP Auth Form */}
-      <form onSubmit={handleSendOtp} className="space-y-5">
+      <form onSubmit={handleForgotPassword} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
@@ -247,6 +334,125 @@ const Auth = () => {
             />
           </div>
         </div>
+
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              Send Reset Link
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => setStep("email")}
+          className="w-full text-center text-muted-foreground hover:text-foreground text-sm"
+        >
+          ← Back to login
+        </button>
+      </form>
+    </>
+  );
+
+  const renderEmailForm = () => (
+    <>
+      <h1 className="font-display text-3xl font-bold mb-2">
+        {isSignup ? "Create Account" : "Welcome Back"}
+      </h1>
+      <p className="text-muted-foreground mb-6">
+        {isSignup 
+          ? "Join thousands of creators earning on Zyrozo" 
+          : "Sign in to your account"
+        }
+      </p>
+
+      {/* Auth Method Toggle */}
+      <div className="flex gap-2 p-1 bg-muted rounded-lg mb-6">
+        <button
+          onClick={() => setAuthMethod("password")}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            authMethod === "password"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Password
+        </button>
+        <button
+          onClick={() => setAuthMethod("otp")}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            authMethod === "otp"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Email Code
+        </button>
+      </div>
+
+      {/* Auth Form */}
+      <form onSubmit={authMethod === "password" ? handlePasswordAuth : handleSendOtp} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-12 bg-card border-border"
+              required
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {authMethod === "password" && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="password">Password</Label>
+              {!isSignup && (
+                <button
+                  type="button"
+                  onClick={() => setStep("forgot-password")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10 h-12 bg-card border-border"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        )}
 
         {isSignup && (
           <>
@@ -308,7 +514,7 @@ const Auth = () => {
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              Send Code
+              {authMethod === "password" ? (isSignup ? "Create Account" : "Sign In") : "Send Code"}
               <ArrowRight className="w-5 h-5 ml-2" />
             </>
           )}
@@ -406,6 +612,7 @@ const Auth = () => {
 
           {step === "email" && renderEmailForm()}
           {step === "otp" && renderOtpForm()}
+          {step === "forgot-password" && renderForgotPasswordForm()}
         </div>
       </div>
 
