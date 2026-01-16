@@ -1,81 +1,68 @@
-import { Search, MousePointer, Download, CheckCircle } from "lucide-react";
+import { UserPlus, Video, Eye, Wallet } from "lucide-react";
 
 const steps = [
   {
-    icon: Search,
-    number: "01",
-    title: "Browse",
-    description: "Explore thousands of digital products, clips, courses, and tools from top creators.",
-    color: "from-blue-500 to-cyan-500",
+    icon: UserPlus,
+    title: "Sign Up Free",
+    description: "Create your account in under 60 seconds. No fees, no commitments.",
   },
   {
-    icon: MousePointer,
-    number: "02",
-    title: "Select",
-    description: "Find exactly what you need with powerful filters and curated collections.",
-    color: "from-purple-500 to-pink-500",
+    icon: Video,
+    title: "Join Campaigns",
+    description: "Browse active campaigns from top brands and join the ones you love.",
   },
   {
-    icon: Download,
-    number: "03",
-    title: "Download",
-    description: "Complete your purchase securely and get instant access to your digital assets.",
-    color: "from-orange-500 to-amber-500",
+    icon: Eye,
+    title: "Create & Submit",
+    description: "Create engaging content, post on your socials, and submit for review.",
+  },
+  {
+    icon: Wallet,
+    title: "Get Paid",
+    description: "Earn money for every 1,000 views. Withdraw anytime to your account.",
   },
 ];
 
 export const HowItWorks = () => {
   return (
-    <section className="py-20 md:py-28 relative bg-muted/30">
+    <section className="py-20 md:py-24 relative bg-muted/30">
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 md:mb-16">
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            How It <span className="gradient-text">Works</span>
+            How <span className="gradient-text">Zyrozo</span> Works
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Getting started is simple. Browse, buy, and download in seconds.
+            Start earning in 4 simple steps. No experience required.
           </p>
         </div>
 
         {/* Steps */}
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 relative">
-            {/* Connector Lines */}
-            <div className="hidden md:block absolute top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-primary/30 via-secondary/30 to-primary/30" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {steps.map((step, index) => (
+            <div key={step.title} className="relative group">
+              {/* Connector Line */}
+              {index < steps.length - 1 && (
+                <div className="hidden lg:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary/30 to-secondary/30" />
+              )}
 
-            {steps.map((step, index) => (
-              <div key={step.title} className="relative group">
-                <div className="text-center">
-                  {/* Step Number */}
-                  <div className="inline-flex items-center justify-center mb-6">
-                    <div className={`relative w-24 h-24 rounded-3xl bg-gradient-to-br ${step.color} p-[2px] group-hover:scale-105 transition-transform duration-300`}>
-                      <div className="w-full h-full rounded-3xl bg-background flex items-center justify-center">
-                        <step.icon className="w-10 h-10 text-foreground" />
-                      </div>
-                      {/* Number Badge */}
-                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white shadow-lg">
-                        {index + 1}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="font-display text-2xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground max-w-xs mx-auto">{step.description}</p>
+              <div className="relative bg-card border border-border rounded-2xl p-6 md:p-8 h-full card-hover">
+                {/* Step Number */}
+                <div className="absolute -top-3 -left-3 w-8 h-8 gradient-bg rounded-full flex items-center justify-center font-display font-bold text-sm text-white shadow-lg">
+                  {index + 1}
                 </div>
 
-                {/* Arrow for mobile */}
-                {index < steps.length - 1 && (
-                  <div className="md:hidden flex justify-center my-6">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <CheckCircle className="w-4 h-4 text-primary" />
-                    </div>
-                  </div>
-                )}
+                {/* Icon */}
+                <div className="w-14 h-14 gradient-bg rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <step.icon className="w-7 h-7 text-white" />
+                </div>
+
+                {/* Content */}
+                <h3 className="font-display text-lg font-bold mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Zap, Twitter, Instagram, Youtube, Shield, CreditCard, Lock } from "lucide-react";
+import { Zap, Twitter, Instagram, Youtube } from "lucide-react";
 
 const footerLinks = {
   platform: [
@@ -26,17 +26,11 @@ const socialLinks = [
   { icon: Youtube, href: "https://youtube.com/@zyrozo", label: "YouTube" },
 ];
 
-const trustBadges = [
-  { icon: Shield, label: "Secure Platform" },
-  { icon: Lock, label: "SSL Encrypted" },
-  { icon: CreditCard, label: "Safe Payments" },
-];
-
 export const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-12">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -48,12 +42,10 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              The all-in-one marketplace for creators. Buy, sell, and discover 
-              premium digital products, clips, courses, and tools.
+              India's leading creator rewards platform. Turn your content into 
+              sustainable income with brand campaigns.
             </p>
-            
-            {/* Social Links */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-4">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -65,16 +57,6 @@ export const Footer = () => {
                 >
                   <social.icon className="w-5 h-5" />
                 </a>
-              ))}
-            </div>
-
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center gap-4">
-              {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <badge.icon className="w-4 h-4" />
-                  <span>{badge.label}</span>
-                </div>
               ))}
             </div>
           </div>
@@ -131,7 +113,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {/* Bottom */}
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Zyrozo. All rights reserved.
