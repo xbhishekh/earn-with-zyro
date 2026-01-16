@@ -112,7 +112,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ otpType: otpType ?? verificationType }), {
+    // For OTP verification on the client, use `type: "email"`.
+    return new Response(JSON.stringify({ otpType: "email" }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
