@@ -158,7 +158,7 @@ const AdminSubmissions = () => {
 
       if (error) throw error;
       
-      toast.success(`Approved! Estimated earnings: ₹${earnings.toLocaleString()}`);
+      toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
       setSelectedSubmission(null);
       setViewsInput("");
       setAdminNotes("");
@@ -205,13 +205,14 @@ const AdminSubmissions = () => {
     try {
       const amount = markPaidSubmission.estimated_earnings;
 
+      // Add to pending balance first (status: pending)
       const { error: txError } = await supabase
         .from("balance_transactions")
         .insert({
           user_id: markPaidSubmission.user_id,
           amount: amount,
-          type: "pending_payout",
-          status: "available",
+          type: "payout",
+          status: "pending",
           campaign_id: markPaidSubmission.campaign_id,
           submission_id: markPaidSubmission.id,
           processed_by: user?.id,
@@ -245,9 +246,9 @@ const AdminSubmissions = () => {
 
       await supabase.from("notifications").insert({
         user_id: markPaidSubmission.user_id,
-        type: "payment_added",
-        title: "Payment Added!",
-        message: `₹${amount.toLocaleString()} has been added to your available balance.`,
+        type: "payment_pending",
+        title: "Payout Added to Pending!",
+        message: `$${amount.toLocaleString()} has been added to your pending balance. It will be released soon.`,
         metadata: { 
           amount, 
           campaign_id: campaign.id,
@@ -255,7 +256,7 @@ const AdminSubmissions = () => {
         },
       });
 
-      toast.success(`Marked paid! ₹${amount.toLocaleString()} added to user's balance`);
+      toast.success(`Marked paid! $${amount.toLocaleString()} added to user's pending balance`);
       setMarkPaidSubmission(null);
       fetchData();
     } catch (error) {
@@ -408,7 +409,7 @@ const AdminSubmissions = () => {
                       {s.views_count?.toLocaleString() || "-"}
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">
-                      {s.estimated_earnings ? `₹${s.estimated_earnings.toLocaleString()}` : "-"}
+                      {s.estimated_earnings ? `$${s.estimated_earnings.toLocaleString()}` : "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {format(new Date(s.created_at), "dd MMM")}
@@ -483,7 +484,7 @@ const AdminSubmissions = () => {
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">Estimated Earnings</p>
                 <p className="font-display text-2xl font-bold text-green-500">
-                  ₹{(() => {
+                  ${(() => {
                     const campaign = getCampaign(selectedSubmission.campaign_id);
                     if (!campaign) return 0;
                     return calculateEarnings(parseInt(viewsInput) || 0, campaign).toLocaleString();
@@ -518,12 +519,15 @@ const AdminSubmissions = () => {
             <DialogDescription>This will add funds to the user's balance</DialogDescription>
           </DialogHeader>
           <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground">Amount to Pay</p>
+            <p className="text-sm text-muted-foreground">Amount to Pay (Pending Balance)</p>
             <p className="font-display text-4xl font-bold text-green-500">
-              ₹{markPaidSubmission?.estimated_earnings?.toLocaleString() || 0}
+              ${markPaidSubmission?.estimated_earnings?.toLocaleString() || 0}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               to @{markPaidSubmission ? getUsername(markPaidSubmission.user_id) : ""}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              This will add to pending balance first
             </p>
           </div>
           <DialogFooter>

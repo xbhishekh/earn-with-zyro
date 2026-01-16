@@ -117,6 +117,13 @@ const CampaignDetail = () => {
   // Form data
   const [videoUrl, setVideoUrl] = useState("");
   const [socialLink, setSocialLink] = useState("");
+  
+  // Video upload state
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Track affiliate clicks from ref param
   useEffect(() => {
@@ -195,6 +202,67 @@ const CampaignDetail = () => {
     }
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload MP4, WebM, MOV or AVI video");
+      return;
+    }
+
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (file.size > maxSize) {
+      toast.error("Video must be less than 100MB");
+      return;
+    }
+
+    setSelectedVideo(file);
+    const url = URL.createObjectURL(file);
+    setVideoPreviewUrl(url);
+  };
+
+  const clearSelectedVideo = () => {
+    setSelectedVideo(null);
+    if (videoPreviewUrl) {
+      URL.revokeObjectURL(videoPreviewUrl);
+      setVideoPreviewUrl(null);
+    }
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
+
+  const uploadVideo = async (): Promise<string | null> => {
+    if (!selectedVideo || !user || !campaign) return null;
+
+    setUploadingVideo(true);
+    setUploadProgress(0);
+    
+    try {
+      const fileExt = selectedVideo.name.split(".").pop();
+      const fileName = `${campaign.id}/${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("submissions")
+        .upload(fileName, selectedVideo);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("submissions")
+        .getPublicUrl(fileName);
+
+      setUploadProgress(100);
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      toast.error("Failed to upload video");
+      return null;
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleSubmission = async () => {
     if (!socialLink || !campaign) {
       toast.error("Please provide the social media link");
@@ -203,12 +271,22 @@ const CampaignDetail = () => {
 
     setSubmitting(true);
     try {
+      let uploadedVideoUrl = videoUrl;
+      
+      // Upload video from device if selected
+      if (selectedVideo) {
+        const url = await uploadVideo();
+        if (url) {
+          uploadedVideoUrl = url;
+        }
+      }
+
       const { data: submissionData, error } = await supabase
         .from("submissions")
         .insert({
           user_id: user!.id,
           campaign_id: campaign.id,
-          video_url: videoUrl || socialLink,
+          video_url: uploadedVideoUrl || socialLink,
           social_link: socialLink
         })
         .select("id")
@@ -217,13 +295,14 @@ const CampaignDetail = () => {
       if (error) throw error;
 
       supabase.functions.invoke("notify-submission", {
-        body: { submission_id: submissionData.id, video_url: videoUrl || socialLink, social_link: socialLink, campaign_id: campaign.id, user_id: user!.id }
+        body: { submission_id: submissionData.id, video_url: uploadedVideoUrl || socialLink, social_link: socialLink, campaign_id: campaign.id, user_id: user!.id }
       }).catch(() => {});
 
       toast.success("Submission sent for review!");
       setShowSubmitModal(false);
       setVideoUrl("");
       setSocialLink("");
+      clearSelectedVideo();
       fetchCampaignData();
     } catch (error) {
       console.error("Error:", error);
@@ -527,7 +606,7 @@ const CampaignDetail = () => {
               <span className="font-medium">{budgetPercent}%</span>
             </div>
             <p className="text-sm mb-2">
-              ₹{budgetSpent.toLocaleString()} of ₹{budgetTotal.toLocaleString()} paid out
+              ${budgetSpent.toLocaleString()} of ${budgetTotal.toLocaleString()} paid out
             </p>
             <Progress value={budgetPercent} className="h-2" />
           </div>
@@ -537,7 +616,7 @@ const CampaignDetail = () => {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border mb-6">
           <div>
             <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
-            <Badge className="bg-primary text-primary-foreground">₹{campaign.reward_per_1k_views} / 1K</Badge>
+            <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views} / 1K</Badge>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
@@ -545,11 +624,11 @@ const CampaignDetail = () => {
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
-            <Badge variant="outline">₹{campaign.min_payout || 0}</Badge>
+            <Badge variant="outline">${campaign.min_payout || 0}</Badge>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
-            <Badge variant="outline">₹{campaign.max_payout || "∞"}</Badge>
+            <Badge variant="outline">${campaign.max_payout || "∞"}</Badge>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
@@ -739,7 +818,7 @@ const CampaignDetail = () => {
                         )}
                         {(sub.estimated_earnings ?? 0) > 0 && (
                           <div className="flex items-center gap-1 text-xs text-success font-medium mt-1 justify-end">
-                            <DollarSign className="w-3 h-3" /> ₹{Number(sub.estimated_earnings).toLocaleString()}
+                            <DollarSign className="w-3 h-3" /> ${Number(sub.estimated_earnings).toLocaleString()}
                           </div>
                         )}
                       </div>
@@ -758,7 +837,7 @@ const CampaignDetail = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display font-bold">{campaign.name}</h3>
-              <p className="text-sm text-muted-foreground">₹{campaign.reward_per_1k_views} / 1K</p>
+              <p className="text-sm text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
             </div>
             
             <Button onClick={() => setShowSubmitModal(true)} size="lg" className="bg-primary hover:bg-primary/90 px-8 rounded-xl">
@@ -768,12 +847,24 @@ const CampaignDetail = () => {
         </div>
       </div>
 
-      {/* Submit Modal - Whop Style */}
-      <Dialog open={showSubmitModal} onOpenChange={setShowSubmitModal}>
+      {/* Submit Modal - Whop Style with Video Upload */}
+      <Dialog open={showSubmitModal} onOpenChange={(open) => {
+        setShowSubmitModal(open);
+        if (!open) clearSelectedVideo();
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-center text-xl">Create submission</DialogTitle>
           </DialogHeader>
+          
+          {/* Hidden file input for video */}
+          <input
+            type="file"
+            ref={videoInputRef}
+            onChange={handleVideoSelect}
+            accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+            className="hidden"
+          />
           
           {/* Info Banner */}
           <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3">
@@ -787,13 +878,13 @@ const CampaignDetail = () => {
             <div>
               <h3 className="font-medium mb-1">Submit your social media post</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Share your post's link and the original image or video below. Once approved, you'll start earning rewards based on the views your content generates.
+                Share your post's link and upload the original video below. Once approved, you'll start earning rewards based on the views your content generates.
               </p>
             </div>
 
             <div>
               <Label className="text-sm">
-                Provide link <span className="text-destructive">*</span>
+                Social Media Link <span className="text-destructive">*</span>
               </Label>
               <Input 
                 value={socialLink} 
@@ -805,28 +896,85 @@ const CampaignDetail = () => {
 
             <div>
               <Label className="text-sm">
-                Media (Optional)
+                Upload Video <span className="text-muted-foreground">(Recommended)</span>
               </Label>
-              <div className="mt-1 border-2 border-dashed border-border rounded-xl p-6 text-center">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Upload the original media file you posted (not a screenshot). For videos, upload the video file. For posts with multiple files, upload the first file.
-                </p>
-                <Input 
-                  value={videoUrl} 
-                  onChange={(e) => setVideoUrl(e.target.value)} 
-                  placeholder="Paste Google Drive or Dropbox link..." 
-                  className="mb-3"
-                />
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Upload className="w-4 h-4" />
-                  <span>Or paste a file link above</span>
+              
+              {selectedVideo ? (
+                <div className="mt-2 border border-border rounded-xl overflow-hidden">
+                  {videoPreviewUrl && (
+                    <video 
+                      src={videoPreviewUrl} 
+                      className="w-full max-h-48 object-contain bg-black"
+                      controls
+                    />
+                  )}
+                  <div className="p-3 bg-muted/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Video className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-sm truncate">{selectedVideo.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        ({(selectedVideo.size / (1024 * 1024)).toFixed(1)} MB)
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearSelectedVideo}
+                      className="shrink-0"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {uploadingVideo && (
+                    <div className="px-3 pb-3">
+                      <Progress value={uploadProgress} className="h-2" />
+                      <p className="text-xs text-muted-foreground mt-1">Uploading... {uploadProgress}%</p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div 
+                  onClick={() => videoInputRef.current?.click()}
+                  className="mt-2 border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                >
+                  <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium mb-1">Click to upload video</p>
+                  <p className="text-xs text-muted-foreground">
+                    MP4, WebM, MOV, AVI (max 100MB)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="text-center text-xs text-muted-foreground">
+              — OR paste a link —
+            </div>
+
+            <div>
+              <Label className="text-sm text-muted-foreground">
+                Video URL (Google Drive, Dropbox, etc.)
+              </Label>
+              <Input 
+                value={videoUrl} 
+                onChange={(e) => setVideoUrl(e.target.value)} 
+                placeholder="https://drive.google.com/..." 
+                className="mt-1"
+                disabled={!!selectedVideo}
+              />
             </div>
           </div>
 
-          <Button onClick={handleSubmission} disabled={submitting || !socialLink.trim()} className="w-full mt-4" size="lg">
-            {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit"}
+          <Button 
+            onClick={handleSubmission} 
+            disabled={submitting || uploadingVideo || !socialLink.trim()} 
+            className="w-full mt-4" 
+            size="lg"
+          >
+            {submitting || uploadingVideo ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploadingVideo ? "Uploading..." : "Submitting..."}</>
+            ) : (
+              "Submit"
+            )}
           </Button>
         </DialogContent>
       </Dialog>
