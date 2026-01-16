@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, Zap, Shield, LogOut, Wallet, Home, Compass, 
-  MessageCircle, TrendingUp, Users, Crown, Sparkles
+  MessageCircle, TrendingUp, Users, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,10 +32,6 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-// Special users with custom badges
-const FOUNDER_EMAIL = 'xbhishekh@gmail.com';
-const CEO_EMAIL = 'just4abhii@gmail.com';
-
 const desktopNavItems: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Campaigns', href: '/campaigns', icon: TrendingUp },
@@ -52,20 +48,14 @@ export const AppHeader = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [balance, setBalance] = useState(0);
 
-  // Get special badge for founders/CEO
+  // Get badge based on role only (no hardcoded emails)
   const getSpecialBadge = () => {
-    if (!user?.email) return null;
-    if (user.email === FOUNDER_EMAIL) {
-      return { label: 'Founder', icon: Crown, className: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0' };
-    }
-    if (user.email === CEO_EMAIL) {
-      return { label: 'CEO', icon: Sparkles, className: 'bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0' };
-    }
+    if (!user) return null;
     if (isOwner) {
       return { label: 'Owner', icon: Crown, className: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0' };
     }
     if (isSuperAdmin) {
-      return { label: 'Admin', icon: Crown, className: 'bg-primary text-primary-foreground border-0' };
+      return { label: 'Super Admin', icon: Crown, className: 'bg-primary text-primary-foreground border-0' };
     }
     if (isAdmin || role === 'normal_admin') {
       return { label: 'Admin', icon: Shield, className: 'bg-muted text-foreground' };
