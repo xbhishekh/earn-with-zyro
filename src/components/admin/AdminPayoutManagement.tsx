@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Clock, Wallet, TrendingUp } from "lucide-react";
+import { Search, Plus, Clock, Wallet, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const AdminPayoutManagement = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,13 +24,29 @@ const AdminPayoutManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ user_id: "", amount: "", type: "pending_payout", notes: "" });
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    if (!accessLoading) fetchData(); 
+  }, [accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   const fetchData = async () => {
     try {
+      let transactionsQuery = supabase.from("balance_transactions").select("*").order("created_at", { ascending: false }).limit(100);
+      let profilesQuery = supabase.from("profiles").select("user_id, username, display_name").limit(500);
+      
+      // Filter for normal admin
+      if (!hasFullAccess && myCampaignMemberUserIds.length > 0) {
+        transactionsQuery = transactionsQuery.in("user_id", myCampaignMemberUserIds);
+        profilesQuery = profilesQuery.in("user_id", myCampaignMemberUserIds);
+      } else if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+        setTransactions([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+      
       const [t, p] = await Promise.all([
-        supabase.from("balance_transactions").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("profiles").select("user_id, username, display_name").limit(500),
+        transactionsQuery,
+        profilesQuery,
       ]);
       setTransactions(t.data || []);
       setProfiles(p.data || []);
@@ -62,12 +80,27 @@ const AdminPayoutManagement = () => {
   const totalPending = transactions.filter(t => t.status === "pending").reduce((a, t) => a + t.amount, 0);
   const totalAvailable = transactions.filter(t => t.status === "available").reduce((a, t) => a + t.amount, 0);
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading || accessLoading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaign Members</h3>
+        <p className="text-muted-foreground">Create a campaign and get members to manage payouts here.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between gap-4">
-        <div><h1 className="font-display text-2xl font-bold mb-1">Payout Management</h1><p className="text-muted-foreground">Manage transactions</p></div>
+        <div>
+          <h1 className="font-display text-2xl font-bold mb-1">Payout Management</h1>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Manage all transactions" : "Manage transactions for your campaign members"}
+          </p>
+        </div>
         <Button onClick={() => setIsModalOpen(true)}><Plus className="w-4 h-4 mr-2" />Add Transaction</Button>
       </div>
 
@@ -86,7 +119,11 @@ const AdminPayoutManagement = () => {
         <Table>
           <TableHeader><TableRow><TableHead>User ID</TableHead><TableHead>Amount</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
           <TableBody>
-            {transactions.slice(0, 20).map(t => (
+            {transactions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No transactions found</TableCell>
+              </TableRow>
+            ) : transactions.slice(0, 20).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-mono text-xs">{t.user_id.slice(0, 8)}</TableCell>
                 <TableCell className={`font-display font-bold ${t.amount < 0 ? "text-destructive" : "text-success"}`}>{t.amount < 0 ? "-" : "+"}₹{Math.abs(t.amount).toLocaleString()}</TableCell>
@@ -103,9 +140,21 @@ const AdminPayoutManagement = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Add Transaction</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Select value={formData.user_id} onValueChange={(v) => setFormData({ ...formData, user_id: v })}><SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger><SelectContent>{profiles.map(p => <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || p.username}</SelectItem>)}</SelectContent></Select>
+            <Select value={formData.user_id} onValueChange={(v) => setFormData({ ...formData, user_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger>
+              <SelectContent>
+                {profiles.map(p => <SelectItem key={p.user_id} value={p.user_id}>{p.display_name || p.username || p.user_id.slice(0, 8)}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Input type="number" placeholder="Amount (₹)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
-            <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending_payout">Pending Payout</SelectItem><SelectItem value="deposit">Deposit</SelectItem><SelectItem value="deduction">Deduction</SelectItem></SelectContent></Select>
+            <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending_payout">Pending Payout</SelectItem>
+                <SelectItem value="deposit">Deposit</SelectItem>
+                <SelectItem value="deduction">Deduction</SelectItem>
+              </SelectContent>
+            </Select>
             <Textarea placeholder="Notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button><Button onClick={handleSubmit}>Create</Button></DialogFooter>

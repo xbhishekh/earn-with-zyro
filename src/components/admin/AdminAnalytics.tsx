@@ -9,8 +9,10 @@ import {
   Eye,
   CheckCircle,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   LineChart,
   Line,
@@ -40,6 +42,7 @@ interface Stats {
 const COLORS = ["#ea580c", "#10b981", "#ef4444", "#f59e0b"];
 
 const AdminAnalytics = () => {
+  const { hasFullAccess, myCampaignIds, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalCampaigns: 0,
@@ -53,17 +56,38 @@ const AdminAnalytics = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (!accessLoading) fetchStats();
+  }, [accessLoading, hasFullAccess, myCampaignIds, myCampaignMemberUserIds]);
 
   const fetchStats = async () => {
     try {
-      // Fetch all stats in parallel
+      if (!hasFullAccess && myCampaignIds.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      let profilesQuery = supabase.from("profiles").select("id", { count: "exact", head: true });
+      let campaignsQuery = supabase.from("campaigns").select("id", { count: "exact", head: true });
+      let submissionsQuery = supabase.from("submissions").select("status, views_count, estimated_earnings");
+      let transactionsQuery = supabase.from("balance_transactions").select("amount, type").eq("status", "available");
+
+      // Filter for normal admin
+      if (!hasFullAccess) {
+        if (myCampaignMemberUserIds.length > 0) {
+          profilesQuery = supabase.from("profiles").select("id", { count: "exact", head: true }).in("user_id", myCampaignMemberUserIds);
+        }
+        campaignsQuery = supabase.from("campaigns").select("id", { count: "exact", head: true }).in("id", myCampaignIds);
+        submissionsQuery = submissionsQuery.in("campaign_id", myCampaignIds);
+        if (myCampaignMemberUserIds.length > 0) {
+          transactionsQuery = transactionsQuery.in("user_id", myCampaignMemberUserIds);
+        }
+      }
+
       const [profilesRes, campaignsRes, submissionsRes, transactionsRes] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("campaigns").select("id", { count: "exact", head: true }),
-        supabase.from("submissions").select("status, views_count, estimated_earnings"),
-        supabase.from("balance_transactions").select("amount, type").eq("status", "available"),
+        profilesQuery,
+        campaignsQuery,
+        submissionsQuery,
+        transactionsQuery,
       ]);
 
       const submissions = submissionsRes.data || [];
@@ -78,7 +102,7 @@ const AdminAnalytics = () => {
         .reduce((acc, t) => acc + Number(t.amount || 0), 0);
 
       setStats({
-        totalUsers: profilesRes.count || 0,
+        totalUsers: hasFullAccess ? (profilesRes.count || 0) : myCampaignMemberUserIds.length,
         totalCampaigns: campaignsRes.count || 0,
         totalSubmissions: submissions.length,
         totalEarnings,
@@ -95,8 +119,8 @@ const AdminAnalytics = () => {
   };
 
   const statCards = [
-    { title: "Total Users", value: stats.totalUsers, icon: Users, color: "text-primary", bgColor: "bg-primary/10" },
-    { title: "Campaigns", value: stats.totalCampaigns, icon: Video, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { title: hasFullAccess ? "Total Users" : "Campaign Members", value: stats.totalUsers, icon: Users, color: "text-primary", bgColor: "bg-primary/10" },
+    { title: hasFullAccess ? "All Campaigns" : "My Campaigns", value: stats.totalCampaigns, icon: Video, color: "text-secondary", bgColor: "bg-secondary/10" },
     { title: "Submissions", value: stats.totalSubmissions, icon: BarChart3, color: "text-success", bgColor: "bg-success/10" },
     { title: "Total Earnings", value: `₹${stats.totalEarnings.toLocaleString()}`, icon: DollarSign, color: "text-warning", bgColor: "bg-warning/10" },
     { title: "Total Views", value: stats.totalViews.toLocaleString(), icon: Eye, color: "text-primary", bgColor: "bg-primary/10" },
@@ -111,7 +135,6 @@ const AdminAnalytics = () => {
     { name: "Rejected", value: stats.rejectedSubmissions },
   ];
 
-  // Mock data for charts (in real app, fetch from DB with date aggregation)
   const lineChartData = [
     { name: "Mon", submissions: 12, earnings: 5000 },
     { name: "Tue", submissions: 19, earnings: 7500 },
@@ -122,10 +145,20 @@ const AdminAnalytics = () => {
     { name: "Sun", submissions: 20, earnings: 8000 },
   ];
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasFullAccess && myCampaignIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaigns</h3>
+        <p className="text-muted-foreground">Create a campaign to see analytics for your campaigns.</p>
       </div>
     );
   }
@@ -134,10 +167,11 @@ const AdminAnalytics = () => {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold mb-1">Analytics Dashboard</h1>
-        <p className="text-muted-foreground">Overview of platform performance</p>
+        <p className="text-muted-foreground">
+          {hasFullAccess ? "Overview of platform performance" : "Overview of your campaigns performance"}
+        </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {statCards.map((stat, index) => (
           <motion.div
@@ -158,9 +192,7 @@ const AdminAnalytics = () => {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Line Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -183,7 +215,6 @@ const AdminAnalytics = () => {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Pie Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,7 +247,6 @@ const AdminAnalytics = () => {
         </motion.div>
       </div>
 
-      {/* Bar Chart */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

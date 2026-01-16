@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle, XCircle, DollarSign, Clock, RefreshCw, Building2, Coins, ExternalLink } from "lucide-react";
+import { Search, CheckCircle, XCircle, DollarSign, Clock, RefreshCw, Building2, Coins, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface WithdrawalRequest {
   id: string;
@@ -34,6 +35,7 @@ interface Profile {
 
 const AdminWithdrawals = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +44,26 @@ const AdminWithdrawals = () => {
   const [notes, setNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    if (!accessLoading) fetchData(); 
+  }, [accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   const fetchData = async () => {
     try {
+      let withdrawalsQuery = supabase.from("withdrawal_requests").select("*").order("created_at", { ascending: false });
+      
+      // Filter for normal admin
+      if (!hasFullAccess && myCampaignMemberUserIds.length > 0) {
+        withdrawalsQuery = withdrawalsQuery.in("user_id", myCampaignMemberUserIds);
+      } else if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+        setWithdrawals([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+      
       const [withdrawalsRes, profilesRes] = await Promise.all([
-        supabase.from("withdrawal_requests").select("*").order("created_at", { ascending: false }),
+        withdrawalsQuery,
         supabase.from("profiles").select("user_id, username, display_name, avatar_url"),
       ]);
       
@@ -75,7 +91,6 @@ const AdminWithdrawals = () => {
     
     setActionLoading(true);
     try {
-      // Update withdrawal request
       const { error } = await supabase
         .from("withdrawal_requests")
         .update({ 
@@ -88,7 +103,6 @@ const AdminWithdrawals = () => {
 
       if (error) throw error;
 
-      // Create balance transaction for withdrawal (negative amount)
       await supabase.from("balance_transactions").insert({
         user_id: selectedWithdrawal.user_id,
         amount: -selectedWithdrawal.amount,
@@ -99,7 +113,6 @@ const AdminWithdrawals = () => {
         processed_at: new Date().toISOString(),
       });
 
-      // Create notification
       await supabase.from("notifications").insert({
         user_id: selectedWithdrawal.user_id,
         type: "withdrawal_completed",
@@ -140,7 +153,6 @@ const AdminWithdrawals = () => {
 
       if (error) throw error;
 
-      // Create notification
       await supabase.from("notifications").insert({
         user_id: selectedWithdrawal.user_id,
         type: "withdrawal_rejected",
@@ -168,10 +180,20 @@ const AdminWithdrawals = () => {
     getUsername(w.user_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaign Members</h3>
+        <p className="text-muted-foreground">Create a campaign and get members to see withdrawal requests here.</p>
       </div>
     );
   }
@@ -181,7 +203,9 @@ const AdminWithdrawals = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Withdrawals</h1>
-          <p className="text-muted-foreground">Process withdrawal requests</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Process all withdrawal requests" : "Process withdrawals from your campaign members"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -189,7 +213,6 @@ const AdminWithdrawals = () => {
         </Button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
           <div className="flex items-center gap-3">
@@ -237,7 +260,6 @@ const AdminWithdrawals = () => {
         </motion.div>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input 
@@ -248,7 +270,6 @@ const AdminWithdrawals = () => {
         />
       </div>
 
-      {/* Table */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
@@ -331,7 +352,6 @@ const AdminWithdrawals = () => {
         </Table>
       </motion.div>
 
-      {/* Review Modal */}
       <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -341,7 +361,6 @@ const AdminWithdrawals = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* User Info */}
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 {getProfile(selectedWithdrawal?.user_id || "")?.avatar_url ? (
@@ -360,7 +379,6 @@ const AdminWithdrawals = () => {
               </div>
             </div>
 
-            {/* Amount */}
             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
               <p className="text-sm text-muted-foreground">Amount</p>
               <p className="font-display text-3xl font-bold text-green-500">
@@ -368,7 +386,6 @@ const AdminWithdrawals = () => {
               </p>
             </div>
 
-            {/* Payment Details */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 {selectedWithdrawal?.payment_method === "bank" ? (
@@ -410,7 +427,6 @@ const AdminWithdrawals = () => {
               </div>
             </div>
 
-            {/* Notes */}
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Admin Notes (required for rejection)</label>
               <Textarea 
@@ -437,7 +453,7 @@ const AdminWithdrawals = () => {
               disabled={actionLoading}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              Complete Payment
+              Complete
             </Button>
           </DialogFooter>
         </DialogContent>

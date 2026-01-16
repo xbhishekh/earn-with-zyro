@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle, XCircle, Send, ExternalLink, RefreshCw, Clock, User } from "lucide-react";
+import { Search, CheckCircle, XCircle, Send, ExternalLink, RefreshCw, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface SocialAccount {
   id: string;
@@ -49,28 +50,39 @@ interface Profile {
 
 const AdminVerifications = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Send code modal
   const [sendCodeAccount, setSendCodeAccount] = useState<SocialAccount | null>(null);
   const [codeToSend, setCodeToSend] = useState("");
   
-  // Review modal
   const [selectedAccount, setSelectedAccount] = useState<SocialAccount | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!accessLoading) fetchData();
+  }, [accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   const fetchData = async () => {
     try {
+      let accountsQuery = supabase.from("social_accounts").select("*").order("created_at", { ascending: false });
+      
+      // Filter for normal admin
+      if (!hasFullAccess && myCampaignMemberUserIds.length > 0) {
+        accountsQuery = accountsQuery.in("user_id", myCampaignMemberUserIds);
+      } else if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+        setAccounts([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
       const [accountsRes, profilesRes] = await Promise.all([
-        supabase.from("social_accounts").select("*").order("created_at", { ascending: false }),
+        accountsQuery,
         supabase.from("profiles").select("user_id, username, display_name"),
       ]);
 
@@ -129,7 +141,6 @@ const AdminVerifications = () => {
 
       if (error) throw error;
 
-      // Create notification for user
       await supabase.from("notifications").insert({
         user_id: sendCodeAccount.user_id,
         type: "verification_code",
@@ -165,7 +176,6 @@ const AdminVerifications = () => {
 
       if (error) throw error;
 
-      // Create notification
       await supabase.from("notifications").insert({
         user_id: selectedAccount.user_id,
         type: "account_verified",
@@ -203,7 +213,6 @@ const AdminVerifications = () => {
 
       if (error) throw error;
 
-      // Create notification
       await supabase.from("notifications").insert({
         user_id: selectedAccount.user_id,
         type: "account_rejected",
@@ -222,7 +231,6 @@ const AdminVerifications = () => {
     }
   };
 
-  // Filter accounts by status
   const pendingLinkAccounts = accounts.filter(a => a.status === "pending_link");
   const awaitingCodeAccounts = accounts.filter(a => a.status === "awaiting_code");
   const pendingVerificationAccounts = accounts.filter(a => a.status === "pending_verification");
@@ -238,10 +246,20 @@ const AdminVerifications = () => {
     );
   };
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaign Members</h3>
+        <p className="text-muted-foreground">Create a campaign and get members to verify their social accounts here.</p>
       </div>
     );
   }
@@ -251,7 +269,9 @@ const AdminVerifications = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Social Account Verifications</h1>
-          <p className="text-muted-foreground">Verify creator social accounts</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Verify all creator social accounts" : "Verify social accounts for your campaign members"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -259,7 +279,6 @@ const AdminVerifications = () => {
         </Button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-4">
           <p className="text-sm text-yellow-500">Pending Link</p>
@@ -283,7 +302,6 @@ const AdminVerifications = () => {
         </motion.div>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -294,7 +312,6 @@ const AdminVerifications = () => {
         />
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="pending_link" className="space-y-4">
         <TabsList className="grid grid-cols-3 w-full max-w-lg">
           <TabsTrigger value="pending_link" className="relative">
@@ -323,7 +340,6 @@ const AdminVerifications = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Pending Link Tab */}
         <TabsContent value="pending_link">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
             <Table>
@@ -380,7 +396,6 @@ const AdminVerifications = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Awaiting User Tab */}
         <TabsContent value="awaiting_code">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
             <Table>
@@ -423,7 +438,6 @@ const AdminVerifications = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Ready to Verify Tab */}
         <TabsContent value="pending_verification">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
             <Table>
@@ -456,14 +470,13 @@ const AdminVerifications = () => {
                       <TableCell>
                         {account.profile_url ? (
                           <a href={account.profile_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                            Check Bio <ExternalLink className="w-3 h-3" />
+                            View <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
-                          variant="outline"
                           onClick={() => {
                             setSelectedAccount(account);
                             setAdminNotes("");
@@ -487,46 +500,37 @@ const AdminVerifications = () => {
           <DialogHeader>
             <DialogTitle>Send Verification Code</DialogTitle>
             <DialogDescription>
-              This code will be shown to the user to add to their bio
+              Send this code to the user to add to their {sendCodeAccount?.platform} bio
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Platform</p>
-                <p className="font-medium capitalize">{sendCodeAccount?.platform}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Username</p>
-                <p className="font-medium">@{sendCodeAccount?.username}</p>
-              </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">User</p>
+              <p className="font-medium">@{getUsername(sendCodeAccount?.user_id || "")}</p>
             </div>
-            {sendCodeAccount?.profile_url && (
-              <a 
-                href={sendCodeAccount.profile_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline flex items-center gap-1 text-sm"
-              >
-                View Profile <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Platform Username</p>
+              <p className="font-medium">@{sendCodeAccount?.username}</p>
+            </div>
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Verification Code</label>
-              <Input
+              <Input 
                 value={codeToSend}
                 onChange={(e) => setCodeToSend(e.target.value)}
-                placeholder="ZYROZO_XXXXXX"
+                className="font-mono"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                User will add this code to their bio for verification
-              </p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setCodeToSend(generateCode())}
+              >
+                Generate New Code
+              </Button>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSendCodeAccount(null)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setSendCodeAccount(null)}>Cancel</Button>
             <Button onClick={handleSendCode} disabled={actionLoading}>
               <Send className="w-4 h-4 mr-2" />
               Send Code
@@ -539,43 +543,41 @@ const AdminVerifications = () => {
       <Dialog open={!!selectedAccount} onOpenChange={() => setSelectedAccount(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Verify Social Account</DialogTitle>
+            <DialogTitle>Verify Account</DialogTitle>
             <DialogDescription>
-              Check if the code is in the user's bio, then approve or reject
+              Check that the code is in the user's {selectedAccount?.platform} bio
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Platform</p>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Platform</p>
                 <p className="font-medium capitalize">{selectedAccount?.platform}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Username</p>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Username</p>
                 <p className="font-medium">@{selectedAccount?.username}</p>
               </div>
             </div>
-            {selectedAccount?.admin_code && (
-              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Code to look for in bio:</p>
-                <code className="text-lg font-bold">{selectedAccount.admin_code}</code>
-              </div>
-            )}
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Code to find in bio</p>
+              <code className="font-mono text-lg">{selectedAccount?.admin_code}</code>
+            </div>
             {selectedAccount?.profile_url && (
               <a 
                 href={selectedAccount.profile_url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                className="flex items-center gap-2 text-primary hover:underline"
               >
-                <ExternalLink className="w-5 h-5 text-primary" />
-                <span>Open profile to check bio</span>
+                <ExternalLink className="w-4 h-4" />
+                Open Profile to Verify
               </a>
             )}
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Admin Notes (required for rejection)</label>
-              <Textarea
-                placeholder="Enter reason if rejecting..."
+              <Textarea 
+                placeholder="Enter notes..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={3}
@@ -583,8 +585,8 @@ const AdminVerifications = () => {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               className="text-destructive"
               onClick={handleReject}
               disabled={actionLoading}
@@ -592,7 +594,7 @@ const AdminVerifications = () => {
               <XCircle className="w-4 h-4 mr-2" />
               Reject
             </Button>
-            <Button
+            <Button 
               className="bg-green-500 hover:bg-green-600"
               onClick={handleVerify}
               disabled={actionLoading}

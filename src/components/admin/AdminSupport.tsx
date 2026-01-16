@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, Send, RefreshCw } from "lucide-react";
+import { MessageSquare, Send, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface SupportChat {
   id: string;
@@ -38,6 +39,7 @@ interface Profile {
 
 const AdminSupport = () => {
   const { user } = useAuth();
+  const { hasFullAccess, myCampaignMemberUserIds, loading: accessLoading } = useAdminAccess();
   const [chats, setChats] = useState<SupportChat[]>([]);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -47,14 +49,13 @@ const AdminSupport = () => {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    fetchChats();
-  }, []);
+    if (!accessLoading) fetchChats();
+  }, [accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
   useEffect(() => {
     if (selectedChat) {
       fetchMessages(selectedChat);
       
-      // Subscribe to realtime messages
       const channel = supabase
         .channel(`support-${selectedChat}`)
         .on(
@@ -79,8 +80,20 @@ const AdminSupport = () => {
 
   const fetchChats = async () => {
     try {
+      let chatsQuery = supabase.from("support_chats").select("*").order("last_message_at", { ascending: false });
+      
+      // Filter for normal admin - only show chats from campaign members
+      if (!hasFullAccess && myCampaignMemberUserIds.length > 0) {
+        chatsQuery = chatsQuery.in("user_id", myCampaignMemberUserIds);
+      } else if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+        setChats([]);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
       const [chatsRes, profilesRes] = await Promise.all([
-        supabase.from("support_chats").select("*").order("last_message_at", { ascending: false }),
+        chatsQuery,
         supabase.from("profiles").select("user_id, username, display_name"),
       ]);
 
@@ -106,14 +119,12 @@ const AdminSupport = () => {
       if (error) throw error;
       setMessages(data || []);
 
-      // Mark messages as read
       await supabase
         .from("support_messages")
         .update({ is_read: true })
         .eq("chat_id", chatId)
         .eq("sender_type", "user");
 
-      // Reset admin unread count
       await supabase
         .from("support_chats")
         .update({ admin_unread_count: 0 })
@@ -138,11 +149,10 @@ const AdminSupport = () => {
 
       if (error) throw error;
 
-      // Update chat with last message
       await supabase.from("support_chats").update({
         last_message_at: new Date().toISOString(),
         last_message_preview: message.slice(0, 100),
-        unread_count: supabase.rpc ? 1 : 1, // Increment user's unread
+        unread_count: 1,
       }).eq("id", selectedChat);
 
       setMessage("");
@@ -168,10 +178,20 @@ const AdminSupport = () => {
     }
   };
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasFullAccess && myCampaignMemberUserIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="font-display text-lg font-bold mb-2">No Campaign Members</h3>
+        <p className="text-muted-foreground">Create a campaign and get members to see support chats here.</p>
       </div>
     );
   }
@@ -181,7 +201,9 @@ const AdminSupport = () => {
       <div className="flex justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold mb-1">Support Chats</h1>
-          <p className="text-muted-foreground">Real-time support with creators</p>
+          <p className="text-muted-foreground">
+            {hasFullAccess ? "Real-time support with all creators" : "Support for your campaign members"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchChats}>
           <RefreshCw className="w-4 h-4 mr-2" />
