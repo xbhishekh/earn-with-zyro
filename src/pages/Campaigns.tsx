@@ -4,8 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, CheckCircle, Ban, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -326,11 +325,8 @@ const Campaigns = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
               Active <span className="gradient-text">Campaigns</span>
@@ -478,9 +474,6 @@ const Campaigns = () => {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
 
       {/* Waitlist Modal */}
       <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
@@ -540,7 +533,7 @@ const Campaigns = () => {
           </Button>
         </DialogContent>
       </Dialog>
-    </div>
+    </MainLayout>
   );
 };
 

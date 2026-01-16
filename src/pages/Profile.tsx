@@ -5,8 +5,6 @@ import {
   User, 
   Camera, 
   Save, 
-  LogOut, 
-  Zap, 
   MapPin,
   AtSign,
   FileText,
@@ -14,7 +12,6 @@ import {
   EyeOff,
   CreditCard,
   Shield,
-  Bell,
   Loader2,
   Share2
 } from "lucide-react";
@@ -29,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 interface ProfileData {
   id: string;
@@ -217,11 +215,6 @@ const Profile = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
 
   if (authLoading || loading) {
     return (
@@ -232,41 +225,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass-card border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 gradient-bg rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-lg gradient-text">
-                Zyrozo
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-                Dashboard
-              </Link>
-              <Link to="/campaigns" className="text-muted-foreground hover:text-foreground transition-colors">
-                Campaigns
-              </Link>
-              <Link to="/profile" className="text-foreground font-medium">
-                Profile
-              </Link>
-            </nav>
-
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -513,8 +473,8 @@ const Profile = () => {
             </TabsContent>
           </Tabs>
         </motion.div>
-      </main>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

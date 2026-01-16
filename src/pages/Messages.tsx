@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 interface Profile {
   user_id: string;
@@ -650,7 +651,7 @@ const Messages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <MainLayout showMobileNav={false}>
       {/* Hidden file input */}
       <input
         type="file"
@@ -1130,7 +1131,7 @@ const Messages = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </MainLayout>
   );
 };
 
