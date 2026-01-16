@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Zap, Mail, User, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,8 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Validation schemas
 const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
-type AuthMethod = "password" | "otp";
-type AuthStep = "email" | "otp" | "forgot-password" | "reset-password";
+type AuthStep = "email" | "otp";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -27,166 +25,31 @@ const Auth = () => {
     isOwner, 
     sendOtp, 
     verifyOtp,
-    signUpWithPassword,
-    signInWithPassword,
     signInWithGoogle,
-    resetPassword,
-    updatePassword,
   } = useAuth();
 
   const mode = searchParams.get("mode");
   const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<AuthStep>(mode === "reset-password" ? "reset-password" : "email");
+  const [step, setStep] = useState<AuthStep>("email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
-  const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
 
-  // Handle reset password mode from URL
+  // Redirect if already logged in
   useEffect(() => {
-    if (mode === "reset-password") {
-      setStep("reset-password");
-    }
-  }, [mode]);
-
-  // Redirect if already logged in (but not if resetting password)
-  useEffect(() => {
-    if (!authLoading && user && step !== "reset-password") {
+    if (!authLoading && user) {
       if (isOwner || isAdmin) {
         navigate("/admin", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }
     }
-  }, [user, authLoading, isAdmin, isOwner, navigate, step]);
-
-  const handlePasswordAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      emailSchema.parse(email);
-      passwordSchema.parse(password);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      if (isSignup) {
-        const metadata = {
-          username: username || email.split("@")[0],
-          displayName: displayName || username || email.split("@")[0],
-        };
-
-        const { error } = await signUpWithPassword(email, password, metadata);
-
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("Email already registered. Please login instead.");
-            setIsSignup(false);
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          toast.success("Account created successfully!");
-        }
-      } else {
-        const { error } = await signInWithPassword(email, password);
-
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast.error("Invalid email or password");
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          toast.success("Logged in successfully!");
-        }
-      }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      emailSchema.parse(email);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await resetPassword(email);
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Password reset link sent! Check your email.");
-        setStep("email");
-      }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      passwordSchema.parse(password);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await updatePassword(password);
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Password updated successfully!");
-        navigate("/dashboard", { replace: true });
-      }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [user, authLoading, isAdmin, isOwner, navigate]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,137 +126,6 @@ const Auth = () => {
       </div>
     );
   }
-
-  const renderForgotPasswordForm = () => (
-    <>
-      <h1 className="font-display text-3xl font-bold mb-2">
-        Forgot Password?
-      </h1>
-      <p className="text-muted-foreground mb-6">
-        Enter your email and we'll send you a reset link
-      </p>
-
-      <form onSubmit={handleForgotPassword} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email-reset">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              id="email-reset"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12 bg-card border-border"
-              required
-              autoFocus
-            />
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          variant="hero"
-          size="lg"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <>
-              Send Reset Link
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </>
-          )}
-        </Button>
-      </form>
-
-      <button
-        onClick={() => setStep("email")}
-        className="text-muted-foreground hover:text-foreground text-sm mt-6 block"
-      >
-        ← Back to login
-      </button>
-    </>
-  );
-
-  const renderResetPasswordForm = () => (
-    <>
-      <h1 className="font-display text-3xl font-bold mb-2">
-        Set New Password
-      </h1>
-      <p className="text-muted-foreground mb-6">
-        Enter your new password below
-      </p>
-
-      <form onSubmit={handleResetPassword} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="new-password">New Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              id="new-password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 h-12 bg-card border-border"
-              required
-              autoFocus
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirm-password">Confirm Password</Label>
-          <div className="relative">
-            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              id="confirm-password"
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 pr-10 h-12 bg-card border-border"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          variant="hero"
-          size="lg"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <>
-              Update Password
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </>
-          )}
-        </Button>
-      </form>
-    </>
-  );
 
   const renderOtpForm = () => (
     <>
@@ -486,209 +218,76 @@ const Auth = () => {
         }
       </p>
 
-      {/* Auth Method Toggle */}
-      <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg">
-        <button
-          type="button"
-          onClick={() => setAuthMethod("password")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-            authMethod === "password"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Password
-        </button>
-        <button
-          type="button"
-          onClick={() => setAuthMethod("otp")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-            authMethod === "otp"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Email Code
-        </button>
-      </div>
-
-      {/* Password Auth Form */}
-      {authMethod === "password" ? (
-        <form onSubmit={handlePasswordAuth} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12 bg-card border-border"
-                required
-                autoFocus
-              />
-            </div>
+      {/* OTP Auth Form */}
+      <form onSubmit={handleSendOtp} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-12 bg-card border-border"
+              required
+              autoFocus
+            />
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              {!isSignup && (
-                <button
-                  type="button"
-                  onClick={() => setStep("forgot-password")}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </button>
-              )}
+        {isSignup && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="yourname"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  className="pl-10 h-12 bg-card border-border"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 h-12 bg-card border-border"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+            
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name (optional)</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="Your Name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="pl-10 h-12 bg-card border-border"
+                />
+              </div>
             </div>
-          </div>
+          </>
+        )}
 
-          {isSignup && (
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="yourname"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    className="pl-10 h-12 bg-card border-border"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name (optional)</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="displayName"
-                    type="text"
-                    placeholder="Your Name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="pl-10 h-12 bg-card border-border"
-                  />
-                </div>
-              </div>
+              Send Code
+              <ArrowRight className="w-5 h-5 ml-2" />
             </>
           )}
-
-          <Button
-            type="submit"
-            variant="hero"
-            size="lg"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                {isSignup ? "Create Account" : "Log In"}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </Button>
-        </form>
-      ) : (
-        /* OTP Auth Form */
-        <form onSubmit={handleSendOtp} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email-otp">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                id="email-otp"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12 bg-card border-border"
-                required
-                autoFocus
-              />
-            </div>
-          </div>
-
-          {isSignup && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="username-otp">Username</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="username-otp"
-                    type="text"
-                    placeholder="yourname"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    className="pl-10 h-12 bg-card border-border"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="displayName-otp">Display Name (optional)</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="displayName-otp"
-                    type="text"
-                    placeholder="Your Name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="pl-10 h-12 bg-card border-border"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          <Button
-            type="submit"
-            variant="hero"
-            size="lg"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                Send Code
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </Button>
-        </form>
-      )}
+        </Button>
+      </form>
 
       {/* Divider */}
       <div className="relative my-6">
@@ -781,8 +380,6 @@ const Auth = () => {
 
           {step === "email" && renderEmailForm()}
           {step === "otp" && renderOtpForm()}
-          {step === "forgot-password" && renderForgotPasswordForm()}
-          {step === "reset-password" && renderResetPasswordForm()}
         </div>
       </div>
 
@@ -808,7 +405,7 @@ const Auth = () => {
             {/* Stats */}
             <div className="flex justify-center gap-8 mt-12">
               <div className="text-center">
-                <div className="font-display text-3xl font-bold">$500K+</div>
+                <div className="font-display text-3xl font-bold">₹40L+</div>
                 <div className="text-white/70 text-sm">Paid Out</div>
               </div>
               <div className="text-center">
