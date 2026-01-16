@@ -46,11 +46,12 @@ interface Product {
 }
 
 interface DiscountCodesManagerProps {
-  products: Product[];
+  products?: Product[];
 }
 
-const DiscountCodesManager = ({ products }: DiscountCodesManagerProps) => {
+const DiscountCodesManager = ({ products: propProducts }: DiscountCodesManagerProps = {}) => {
   const { user } = useAuth();
+  const [products, setProducts] = useState<Product[]>(propProducts || []);
   const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -72,9 +73,23 @@ const DiscountCodesManager = ({ products }: DiscountCodesManagerProps) => {
 
   useEffect(() => {
     if (user) {
+      fetchProducts();
       fetchDiscountCodes();
     }
   }, [user]);
+
+  const fetchProducts = async () => {
+    if (!user || propProducts) return;
+    
+    const { data } = await supabase
+      .from("marketplace_products")
+      .select("id, title")
+      .eq("seller_id", user.id);
+    
+    if (data) {
+      setProducts(data);
+    }
+  };
 
   const fetchDiscountCodes = async () => {
     if (!user) return;
@@ -89,12 +104,7 @@ const DiscountCodesManager = ({ products }: DiscountCodesManagerProps) => {
     if (error) {
       toast.error("Failed to fetch discount codes");
     } else {
-      // Map product titles
-      const codesWithProducts = data?.map(code => ({
-        ...code,
-        product: products.find(p => p.id === code.product_id) || null
-      })) || [];
-      setDiscountCodes(codesWithProducts);
+      setDiscountCodes(data || []);
     }
     setLoading(false);
   };
