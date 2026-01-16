@@ -37,6 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
 import { MainLayout } from "@/components/layout/MainLayout";
 import SupportChatWidget from "@/components/SupportChatWidget";
@@ -44,7 +45,6 @@ import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
 import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
 import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
-import AffiliateCenter from "@/components/dashboard/AffiliateCenter";
 
 interface ProfileData {
   id: string;
@@ -343,7 +343,10 @@ const Profile = () => {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsList className={cn(
+              "grid w-full lg:w-auto lg:inline-grid",
+              isAdminUser ? "grid-cols-5" : "grid-cols-4"
+            )}>
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Profile</span>
@@ -352,10 +355,12 @@ const Profile = () => {
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Social</span>
               </TabsTrigger>
-              <TabsTrigger value="dashboard" className="gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </TabsTrigger>
+              {isAdminUser && (
+                <TabsTrigger value="dashboard" className="gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="privacy" className="gap-2">
                 <Shield className="w-4 h-4" />
                 <span className="hidden sm:inline">Privacy</span>
@@ -439,10 +444,9 @@ const Profile = () => {
               <LinkedSocialAccounts isOwnProfile={true} />
             </TabsContent>
 
-            {/* Dashboard Tab - Shows Seller Dashboard for admins, Affiliate Center for normal users */}
-            <TabsContent value="dashboard" className="space-y-6">
-              {isAdminUser ? (
-                // Seller Dashboard for Admin Users
+            {/* Dashboard Tab - Only for Admin Users */}
+            {isAdminUser && (
+              <TabsContent value="dashboard" className="space-y-6">
                 <div className="bg-card border border-border rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -601,13 +605,8 @@ const Profile = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-              ) : (
-                // Affiliate Center for Normal Users
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <AffiliateCenter />
-                </div>
-              )}
-            </TabsContent>
+              </TabsContent>
+            )}
 
             {/* Privacy Tab */}
             <TabsContent value="privacy" className="space-y-6">

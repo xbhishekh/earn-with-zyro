@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Search, Zap, Shield, LogOut, Wallet, Home, Compass, 
-  MessageCircle, TrendingUp, Users, Menu, X 
+  MessageCircle, TrendingUp, Users, Crown, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
@@ -32,6 +33,10 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+// Special users with custom badges
+const FOUNDER_EMAIL = 'xbhishekh@gmail.com';
+const CEO_EMAIL = 'just4abhii@gmail.com';
+
 const desktopNavItems: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Campaigns', href: '/campaigns', icon: TrendingUp },
@@ -43,11 +48,33 @@ const desktopNavItems: NavItem[] = [
 export const AppHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isOwner, role, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [balance, setBalance] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Get special badge for founders/CEO
+  const getSpecialBadge = () => {
+    if (!user?.email) return null;
+    if (user.email === FOUNDER_EMAIL) {
+      return { label: 'Founder', icon: Crown, className: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0' };
+    }
+    if (user.email === CEO_EMAIL) {
+      return { label: 'CEO', icon: Sparkles, className: 'bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0' };
+    }
+    if (isOwner) {
+      return { label: 'Owner', icon: Crown, className: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0' };
+    }
+    if (isSuperAdmin) {
+      return { label: 'Admin', icon: Crown, className: 'bg-primary text-primary-foreground border-0' };
+    }
+    if (isAdmin || role === 'normal_admin') {
+      return { label: 'Admin', icon: Shield, className: 'bg-muted text-foreground' };
+    }
+    return null;
+  };
+
+  const specialBadge = getSpecialBadge();
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -149,6 +176,17 @@ export const AppHeader = () => {
               {/* Mobile: Only Notifications (left) and Balance (right) for logged in users */}
               {user ? (
                 <>
+                  {/* Admin Badge - Mobile */}
+                  {specialBadge && (
+                    <Badge 
+                      variant="outline" 
+                      className={cn("md:hidden flex items-center gap-1 text-[10px] px-1.5 py-0.5", specialBadge.className)}
+                    >
+                      <specialBadge.icon className="w-3 h-3" />
+                      {specialBadge.label}
+                    </Badge>
+                  )}
+
                   {/* Mobile: Notification on left */}
                   <div className="md:hidden">
                     <NotificationsBell />
@@ -175,6 +213,17 @@ export const AppHeader = () => {
                       ${balance.toFixed(0)}
                     </span>
                   </Link>
+
+                  {/* Admin Badge - Desktop */}
+                  {specialBadge && (
+                    <Badge 
+                      variant="outline" 
+                      className={cn("hidden md:flex items-center gap-1.5 px-2.5 py-1", specialBadge.className)}
+                    >
+                      <specialBadge.icon className="w-3.5 h-3.5" />
+                      {specialBadge.label}
+                    </Badge>
+                  )}
 
                   {/* Desktop: Notifications */}
                   <div className="hidden md:block">
