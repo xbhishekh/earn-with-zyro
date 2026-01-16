@@ -421,20 +421,72 @@ const AdminSubmissions = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-card rounded-xl p-4">
-          <p className="text-sm text-muted-foreground">Total</p>
+          <p className="text-sm text-muted-foreground">Total Submissions</p>
           <p className="font-display text-2xl font-bold">{submissions.length}</p>
         </div>
         <div className="glass-card rounded-xl p-4">
-          <p className="text-sm text-yellow-500">Pending</p>
+          <p className="text-sm text-yellow-500">Pending Review</p>
           <p className="font-display text-2xl font-bold">{submissions.filter(s => s.status === "pending").length}</p>
         </div>
         <div className="glass-card rounded-xl p-4">
-          <p className="text-sm text-blue-500">Approved</p>
+          <p className="text-sm text-blue-500">Approved (Unpaid)</p>
           <p className="font-display text-2xl font-bold">{submissions.filter(s => s.status === "approved").length}</p>
         </div>
         <div className="glass-card rounded-xl p-4">
-          <p className="text-sm text-green-500">Paid</p>
+          <p className="text-sm text-green-500">Paid Out</p>
           <p className="font-display text-2xl font-bold">{submissions.filter(s => s.status === "paid").length}</p>
+        </div>
+      </div>
+
+      {/* Payout Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="glass-card rounded-xl p-4 border-l-4 border-l-green-500">
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="w-4 h-4 text-green-500" />
+            <p className="text-sm text-muted-foreground">Total Paid Out</p>
+          </div>
+          <p className="font-display text-2xl font-bold text-green-500">
+            ${submissions.filter(s => s.status === "paid").reduce((sum, s) => sum + (s.estimated_earnings || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {submissions.filter(s => s.status === "paid").reduce((sum, s) => sum + (s.views_count || 0), 0).toLocaleString()} views
+          </p>
+        </div>
+        <div className="glass-card rounded-xl p-4 border-l-4 border-l-blue-500">
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="w-4 h-4 text-blue-500" />
+            <p className="text-sm text-muted-foreground">Pending Payout</p>
+          </div>
+          <p className="font-display text-2xl font-bold text-blue-500">
+            ${submissions.filter(s => s.status === "approved").reduce((sum, s) => sum + (s.estimated_earnings || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {submissions.filter(s => s.status === "approved").reduce((sum, s) => sum + (s.views_count || 0), 0).toLocaleString()} views
+          </p>
+        </div>
+        <div className="glass-card rounded-xl p-4 border-l-4 border-l-yellow-500">
+          <div className="flex items-center gap-2 mb-1">
+            <Eye className="w-4 h-4 text-yellow-500" />
+            <p className="text-sm text-muted-foreground">Total Views</p>
+          </div>
+          <p className="font-display text-2xl font-bold">
+            {submissions.reduce((sum, s) => sum + (s.views_count || 0), 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Across all submissions
+          </p>
+        </div>
+        <div className="glass-card rounded-xl p-4 border-l-4 border-l-primary">
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="w-4 h-4 text-primary" />
+            <p className="text-sm text-muted-foreground">Total Earned</p>
+          </div>
+          <p className="font-display text-2xl font-bold">
+            ${submissions.filter(s => s.status === "paid" || s.status === "approved").reduce((sum, s) => sum + (s.estimated_earnings || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Paid + Pending
+          </p>
         </div>
       </div>
 
