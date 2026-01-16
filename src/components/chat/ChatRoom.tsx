@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, SmilePlus, AtSign } from 'lucide-react';
+import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 
 interface Profile {
   user_id?: string;
@@ -32,6 +33,9 @@ interface Message {
   created_at: string;
   profiles?: Profile;
   reactions?: Reaction[];
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  attachment_name?: string | null;
 }
 
 interface Props {
@@ -45,6 +49,8 @@ interface TypingUser {
 }
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🔥', '👏', '🎉'];
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const ChatRoom = ({ roomId, roomName }: Props) => {
   const { user } = useAuth();
@@ -58,8 +64,22 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   const [mentionIndex, setMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [roomMembers, setRoomMembers] = useState<Profile[]>([]);
+  
+  // Search state
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Message[]>([]);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  
+  // File upload state
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -88,6 +108,93 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       )
       .slice(0, 5);
   }, [roomMembers, mentionSearch, user?.id]);
+
+  // Search messages
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    const results = messages.filter(msg =>
+      msg.content.toLowerCase().includes(query.toLowerCase()) ||
+      msg.profiles?.username?.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(results);
+  }, [messages]);
+
+  const scrollToMessage = (messageId: string) => {
+    const element = messageRefs.current.get(messageId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 2000);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast.error('File type not allowed. Please upload images, PDFs, or documents.');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File too large. Maximum size is 10MB.');
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<{ url: string; type: string; name: string } | null> => {
+    if (!user) return null;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('chat-attachments')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      toast.error('Failed to upload file');
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('chat-attachments')
+      .getPublicUrl(fileName);
+
+    return {
+      url: publicUrl,
+      type: file.type.startsWith('image/') ? 'image' : 'file',
+      name: file.name
+    };
+  };
 
   // Setup presence channel for typing indicators
   useEffect(() => {
@@ -299,22 +406,40 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
+    if ((!newMessage.trim() && !selectedFile) || !user) return;
 
     setSending(true);
+    setUploading(!!selectedFile);
     broadcastTyping(false);
+
+    let attachment: { url: string; type: string; name: string } | null = null;
+    
+    if (selectedFile) {
+      attachment = await uploadFile(selectedFile);
+      if (!attachment && !newMessage.trim()) {
+        setSending(false);
+        setUploading(false);
+        return;
+      }
+    }
     
     const { error } = await supabase.from('chat_messages').insert({
       room_id: roomId,
       user_id: user.id,
       content: newMessage.trim(),
+      attachment_url: attachment?.url || null,
+      attachment_type: attachment?.type || null,
+      attachment_name: attachment?.name || null,
     });
+    
     setSending(false);
+    setUploading(false);
 
     if (error) {
       toast.error('Failed to send message');
     } else {
       setNewMessage('');
+      clearSelectedFile();
     }
   };
 
@@ -362,39 +487,105 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
     return counts;
   };
 
-  // Render message content with highlighted @mentions
-  const renderMessageContent = (content: string) => {
+  // Render message content with highlighted @mentions and search highlighting
+  const renderMessageContent = (content: string, isSearchHighlight = false) => {
+    let processedContent = content;
+    
+    // Highlight search query
+    if (searchQuery && isSearchHighlight) {
+      const regex = new RegExp(`(${searchQuery})`, 'gi');
+      processedContent = processedContent.replace(regex, '|||HIGHLIGHT|||$1|||/HIGHLIGHT|||');
+    }
+
     const mentionRegex = /@(\w+)/g;
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     let match;
+    let keyIndex = 0;
 
-    while ((match = mentionRegex.exec(content)) !== null) {
+    while ((match = mentionRegex.exec(processedContent)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(content.substring(lastIndex, match.index));
+        const textPart = processedContent.substring(lastIndex, match.index);
+        parts.push(...renderSearchHighlight(textPart, keyIndex));
+        keyIndex++;
       }
       
-      const username = match[1];
-      const mentionedUser = roomMembers.find(m => m.username?.toLowerCase() === username.toLowerCase());
+      const username = match[1].replace(/\|\|\|HIGHLIGHT\|\|\|/g, '').replace(/\|\|\|\/HIGHLIGHT\|\|\|/g, '');
       
       parts.push(
         <Link
-          key={match.index}
+          key={`mention-${keyIndex}`}
           to={`/profile/${username}`}
           className="text-primary font-medium hover:underline bg-primary/10 px-1 rounded"
         >
           @{username}
         </Link>
       );
+      keyIndex++;
       
       lastIndex = match.index + match[0].length;
     }
 
-    if (lastIndex < content.length) {
-      parts.push(content.substring(lastIndex));
+    if (lastIndex < processedContent.length) {
+      parts.push(...renderSearchHighlight(processedContent.substring(lastIndex), keyIndex));
     }
 
     return parts.length > 0 ? parts : content;
+  };
+
+  const renderSearchHighlight = (text: string, baseKey: number): (string | JSX.Element)[] => {
+    if (!text.includes('|||HIGHLIGHT|||')) return [text];
+    
+    const parts: (string | JSX.Element)[] = [];
+    const segments = text.split(/\|\|\|HIGHLIGHT\|\|\||\|\|\|\/HIGHLIGHT\|\|\|/);
+    
+    segments.forEach((segment, i) => {
+      if (i % 2 === 1) {
+        parts.push(
+          <span key={`highlight-${baseKey}-${i}`} className="bg-yellow-400/50 text-foreground px-0.5 rounded">
+            {segment}
+          </span>
+        );
+      } else if (segment) {
+        parts.push(segment);
+      }
+    });
+    
+    return parts;
+  };
+
+  const renderAttachment = (msg: Message) => {
+    if (!msg.attachment_url) return null;
+
+    if (msg.attachment_type === 'image') {
+      return (
+        <div className="mt-2 max-w-xs">
+          <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+            <img 
+              src={msg.attachment_url} 
+              alt={msg.attachment_name || 'Image'} 
+              className="rounded-lg border border-border max-h-64 object-cover hover:opacity-90 transition-opacity cursor-pointer"
+            />
+          </a>
+        </div>
+      );
+    }
+
+    return (
+      <a 
+        href={msg.attachment_url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="mt-2 flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors max-w-xs"
+      >
+        <FileText className="h-8 w-8 text-primary shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate">{msg.attachment_name}</p>
+          <p className="text-xs text-muted-foreground">Click to download</p>
+        </div>
+        <Download className="h-4 w-4 text-muted-foreground shrink-0" />
+      </a>
+    );
   };
 
   const formatTime = (date: string) => {
@@ -426,6 +617,83 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
 
   return (
     <div className="flex flex-col h-full bg-background">
+      {/* Search Bar */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-b border-border overflow-hidden"
+          >
+            <div className="p-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search messages..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10 pr-10"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                  <p className="text-xs text-muted-foreground px-1">{searchResults.length} result(s)</p>
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => scrollToMessage(result.id)}
+                      className="w-full text-left p-2 rounded-md hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-primary">{result.profiles?.username}</span>
+                        <span className="text-xs text-muted-foreground">{formatTime(result.created_at)}</span>
+                      </div>
+                      <p className="text-sm text-foreground/80 truncate">{result.content}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {searchQuery && searchResults.length === 0 && (
+                <p className="mt-2 text-sm text-muted-foreground text-center py-2">No messages found</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header with Search Toggle */}
+      <div className="flex items-center justify-end p-2 border-b border-border">
+        <Button
+          variant={showSearch ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            setShowSearch(!showSearch);
+            if (showSearch) {
+              setSearchQuery('');
+              setSearchResults([]);
+            }
+          }}
+          className="h-8 w-8"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
@@ -456,13 +724,22 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                   {group.messages.map((msg, i) => {
                     const showHeader = i === 0 || group.messages[i - 1].user_id !== msg.user_id;
                     const reactionCounts = getReactionCounts(msg.reactions);
+                    const isHighlighted = highlightedMessageId === msg.id;
 
                     return (
                       <motion.div
                         key={msg.id}
+                        ref={(el) => el && messageRefs.current.set(msg.id, el)}
                         initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="group hover:bg-muted/30 rounded-lg px-2 py-1 -mx-2 transition-colors"
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          backgroundColor: isHighlighted ? 'hsl(var(--primary) / 0.15)' : 'transparent'
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className={`group hover:bg-muted/30 rounded-lg px-2 py-1 -mx-2 transition-colors ${
+                          isHighlighted ? 'ring-2 ring-primary/50' : ''
+                        }`}
                       >
                         <div className="flex gap-3">
                           {/* Avatar Column */}
@@ -502,9 +779,14 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                             
                             {/* Message Content */}
                             <div className="relative">
-                              <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
-                                {renderMessageContent(msg.content)}
-                              </p>
+                              {msg.content && (
+                                <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
+                                  {renderMessageContent(msg.content, !!searchQuery)}
+                                </p>
+                              )}
+                              
+                              {/* Attachment */}
+                              {renderAttachment(msg)}
 
                               {/* Reaction Button */}
                               <Popover>
@@ -598,8 +880,53 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
         )}
       </AnimatePresence>
 
+      {/* File Preview */}
+      <AnimatePresence>
+        {selectedFile && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-3 py-2 border-t border-border bg-muted/30"
+          >
+            <div className="flex items-center gap-3 p-2 bg-background rounded-lg border border-border">
+              {filePreview ? (
+                <img src={filePreview} alt="Preview" className="w-12 h-12 rounded-md object-cover" />
+              ) : (
+                <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearSelectedFile}
+                className="h-8 w-8 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input Area with Mentions */}
       <div className="border-t border-border p-3 bg-background relative">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ALLOWED_FILE_TYPES.join(',')}
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
         {/* Mentions Autocomplete */}
         <AnimatePresence>
           {showMentions && filteredMembers.length > 0 && (
@@ -638,6 +965,40 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
         </AnimatePresence>
 
         <div className="flex gap-2">
+          {/* Attachment Button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-11 w-11 shrink-0 rounded-xl"
+                disabled={sending}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-1" side="top" align="start">
+              <button
+                onClick={() => {
+                  fileInputRef.current?.click();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm"
+              >
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                Upload Image
+              </button>
+              <button
+                onClick={() => {
+                  fileInputRef.current?.click();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm"
+              >
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Upload File
+              </button>
+            </PopoverContent>
+          </Popover>
+
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -655,7 +1016,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
             type="button"
             onClick={handleSendMessage}
             size="icon" 
-            disabled={sending || !newMessage.trim()}
+            disabled={sending || (!newMessage.trim() && !selectedFile)}
             className="rounded-xl h-11 w-11 shrink-0"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
