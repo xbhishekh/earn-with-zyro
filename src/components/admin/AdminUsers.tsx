@@ -448,11 +448,12 @@ const AdminUsers = () => {
                   {(hasFullAccess || (suspension.campaign_id && myCampaignIds.includes(suspension.campaign_id))) && (
                     <Button 
                       size="sm" 
-                      variant="outline"
+                      variant="destructive"
+                      className="bg-green-600 hover:bg-green-700 text-white"
                       onClick={() => handleLiftBan(suspension.id)}
                     >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Lift
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Unsuspend
                     </Button>
                   )}
                 </div>
