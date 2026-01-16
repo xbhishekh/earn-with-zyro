@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap, Mail, User, ArrowRight, Loader2 } from "lucide-react";
+import { Zap, Mail, User, ArrowRight, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,19 +13,34 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Validation schemas
 const emailSchema = z.string().email("Please enter a valid email address");
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+
+type AuthMethod = "password" | "otp";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin, isOwner, sendOtp, verifyOtp } = useAuth();
+  const { 
+    user, 
+    loading: authLoading, 
+    isAdmin, 
+    isOwner, 
+    sendOtp, 
+    verifyOtp,
+    signUpWithPassword,
+    signInWithPassword,
+  } = useAuth();
 
   const [isSignup, setIsSignup] = useState(searchParams.get("mode") === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"email" | "otp">("email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
@@ -40,6 +55,60 @@ const Auth = () => {
       }
     }
   }, [user, authLoading, isAdmin, isOwner, navigate]);
+
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isSignup) {
+        const metadata = {
+          username: username || email.split("@")[0],
+          displayName: displayName || username || email.split("@")[0],
+        };
+
+        const { error } = await signUpWithPassword(email, password, metadata);
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Email already registered. Please login instead.");
+            setIsSignup(false);
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.success("Account created successfully!");
+        }
+      } else {
+        const { error } = await signInWithPassword(email, password);
+
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Invalid email or password");
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.success("Logged in successfully!");
+        }
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,83 +211,205 @@ const Auth = () => {
               <h1 className="font-display text-3xl font-bold mb-2">
                 {isSignup ? "Create Account" : "Welcome Back"}
               </h1>
-              <p className="text-muted-foreground mb-8">
+              <p className="text-muted-foreground mb-6">
                 {isSignup 
                   ? "Join thousands of creators earning on Zyrozo" 
-                  : "Enter your email to receive a login code"
+                  : "Sign in to your account"
                 }
               </p>
 
-              {/* Email Form */}
-              <form onSubmit={handleSendOtp} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12 bg-card border-border"
-                      required
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                {isSignup && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="username"
-                          type="text"
-                          placeholder="yourname"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                          className="pl-10 h-12 bg-card border-border"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="displayName">Display Name (optional)</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="displayName"
-                          type="text"
-                          placeholder="Your Name"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="pl-10 h-12 bg-card border-border"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="hero"
-                  size="lg"
-                  className="w-full"
-                  disabled={isLoading}
+              {/* Auth Method Toggle */}
+              <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod("password")}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    authMethod === "password"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
+                  Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod("otp")}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    authMethod === "otp"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Email Code
+                </button>
+              </div>
+
+              {/* Password Auth Form */}
+              {authMethod === "password" ? (
+                <form onSubmit={handlePasswordAuth} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 h-12 bg-card border-border"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10 pr-10 h-12 bg-card border-border"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isSignup && (
                     <>
-                      {isSignup ? "Continue" : "Send Code"}
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                      <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Input
+                            id="username"
+                            type="text"
+                            placeholder="yourname"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                            className="pl-10 h-12 bg-card border-border"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="displayName">Display Name (optional)</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Input
+                            id="displayName"
+                            type="text"
+                            placeholder="Your Name"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            className="pl-10 h-12 bg-card border-border"
+                          />
+                        </div>
+                      </div>
                     </>
                   )}
-                </Button>
-              </form>
+
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        {isSignup ? "Create Account" : "Log In"}
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              ) : (
+                /* OTP Auth Form */
+                <form onSubmit={handleSendOtp} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-otp">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="email-otp"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 h-12 bg-card border-border"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {isSignup && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="username-otp">Username</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Input
+                            id="username-otp"
+                            type="text"
+                            placeholder="yourname"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                            className="pl-10 h-12 bg-card border-border"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="displayName-otp">Display Name (optional)</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Input
+                            id="displayName-otp"
+                            type="text"
+                            placeholder="Your Name"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            className="pl-10 h-12 bg-card border-border"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        Send Code
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
 
               {/* Toggle Mode */}
               <p className="text-center text-muted-foreground mt-8">
