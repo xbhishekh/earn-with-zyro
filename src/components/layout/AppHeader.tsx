@@ -255,10 +255,10 @@ export const AppHeader = () => {
                     </Button>
                   )}
 
-                  {/* User Avatar Dropdown - Desktop */}
+                  {/* User Avatar Dropdown - Always visible */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="hidden md:block rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                      <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
                         <Avatar className="w-8 h-8 md:w-9 md:h-9">
                           <AvatarImage src={profile?.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
@@ -283,7 +283,7 @@ export const AppHeader = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/affiliate">Affiliate</Link>
                       </DropdownMenuItem>
-                      {isAdmin && (
+                      {(isAdmin || role === 'normal_admin') && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin">
                             <Shield className="w-4 h-4 mr-2" />
