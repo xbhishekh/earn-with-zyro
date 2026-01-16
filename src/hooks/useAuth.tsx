@@ -90,31 +90,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Send OTP to email (custom email via backend function, NOT magic-link template)
+  // Send OTP to email using Supabase's built-in signInWithOtp (sends 6-digit code)
   const sendOtp = async (
     email: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => {
     const isSignup = !!metadata;
 
-    const { data, error } = await supabase.functions.invoke("auth-send-code", {
-      body: {
-        email,
-        isSignup,
-        metadata: metadata
+    // Use Supabase's built-in OTP which sends a proper 6-digit code
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: isSignup,
+        emailRedirectTo: `${window.location.origin}/`,
+        data: metadata
           ? {
               username: metadata.username,
               displayName: metadata.displayName,
               referredBy: metadata.referredBy,
             }
-          : {},
-        redirectTo: `${window.location.origin}/`,
+          : undefined,
       },
     });
 
     return {
-      error: (error as Error | null) ?? null,
-      // For email OTP verification, Supabase expects `type: "email"` ("magiclink"/"signup" are deprecated).
+      error: error as Error | null,
+      // For email OTP verification, Supabase expects `type: "email"`.
       otpType: "email" as EmailOtpType,
     };
   };
