@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle, Ban, Users, Shield, Eye, XCircle, Globe, Target } from "lucide-react";
+import { Search, CheckCircle, Ban, Users, Shield, Eye, XCircle, Globe, Target, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,7 @@ const AdminUsers = () => {
   const [banReason, setBanReason] = useState("");
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
   const [userSuspensions, setUserSuspensions] = useState<Suspension[]>([]);
+  const [suspensionSummaryByUserId, setSuspensionSummaryByUserId] = useState<Record<string, { globalId?: string; campaignCount: number }>>({});
   const [viewBansUser, setViewBansUser] = useState<any>(null);
   const [page, setPage] = useState(0);
   const pageSize = 20;
@@ -53,15 +54,50 @@ const AdminUsers = () => {
     }
   }, [page, accessLoading, hasFullAccess, myCampaignMemberUserIds]);
 
+  const fetchSuspensionSummary = async (userIds: string[]) => {
+    try {
+      if (userIds.length === 0) {
+        setSuspensionSummaryByUserId({});
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_suspensions")
+        .select("id, user_id, campaign_id")
+        .in("user_id", userIds)
+        .eq("is_active", true);
+
+      if (error) throw error;
+
+      const next: Record<string, { globalId?: string; campaignCount: number }> = {};
+      for (const row of data || []) {
+        const existing = next[row.user_id] || { campaignCount: 0 };
+        if (!row.campaign_id) {
+          existing.globalId = row.id;
+        } else {
+          existing.campaignCount += 1;
+        }
+        next[row.user_id] = existing;
+      }
+
+      setSuspensionSummaryByUserId(next);
+    } catch (error) {
+      console.error("Error fetching suspension summary:", error);
+      setSuspensionSummaryByUserId({});
+    }
+  };
+
   const fetchProfiles = async () => {
     try {
+      let nextProfiles: any[] = [];
+
       if (hasFullAccess) {
         const { data } = await supabase
           .from("profiles")
           .select("*")
           .order("created_at", { ascending: false })
           .range(page * pageSize, (page + 1) * pageSize - 1);
-        setProfiles(data || []);
+        nextProfiles = data || [];
       } else {
         // Normal admin: Only users who joined my campaigns
         if (myCampaignMemberUserIds.length > 0) {
@@ -71,11 +107,14 @@ const AdminUsers = () => {
             .in("user_id", myCampaignMemberUserIds)
             .order("created_at", { ascending: false })
             .range(page * pageSize, (page + 1) * pageSize - 1);
-          setProfiles(data || []);
+          nextProfiles = data || [];
         } else {
-          setProfiles([]);
+          nextProfiles = [];
         }
       }
+
+      setProfiles(nextProfiles);
+      await fetchSuspensionSummary(nextProfiles.map((p) => p.user_id).filter(Boolean));
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -272,29 +311,59 @@ const AdminUsers = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProfiles.map(p => (
-              <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.display_name || "No name"}</TableCell>
-                <TableCell className="text-muted-foreground">@{p.username || "unknown"}</TableCell>
-                <TableCell>{p.is_verified ? <CheckCircle className="w-5 h-5 text-success" /> : "-"}</TableCell>
-                <TableCell>{format(new Date(p.created_at), "dd MMM yyyy")}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    {hasFullAccess && (
-                      <Button size="sm" variant="ghost" onClick={() => handleVerify(p.user_id, p.is_verified)} title={p.is_verified ? "Remove verification" : "Verify user"}>
-                        {p.is_verified ? <Shield className="w-4 h-4 text-success" /> : <CheckCircle className="w-4 h-4" />}
+            {filteredProfiles.map((p) => {
+              const summary = suspensionSummaryByUserId[p.user_id];
+              const isGloballySuspended = !!summary?.globalId;
+              const campaignBanCount = summary?.campaignCount || 0;
+
+              return (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{p.display_name || "No name"}</span>
+                      {isGloballySuspended && <Badge variant="destructive">Suspended</Badge>}
+                      {campaignBanCount > 0 && <Badge variant="secondary">Banned</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">@{p.username || "unknown"}</TableCell>
+                  <TableCell>{p.is_verified ? <CheckCircle className="w-5 h-5 text-success" /> : "-"}</TableCell>
+                  <TableCell>{format(new Date(p.created_at), "dd MMM yyyy")}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {hasFullAccess && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleVerify(p.user_id, p.is_verified)}
+                          title={p.is_verified ? "Remove verification" : "Verify user"}
+                        >
+                          {p.is_verified ? <Shield className="w-4 h-4 text-success" /> : <CheckCircle className="w-4 h-4" />}
+                        </Button>
+                      )}
+
+                      {/* Quick unsuspend (global) */}
+                      {hasFullAccess && isGloballySuspended && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleLiftBan(summary!.globalId!)}
+                          title="Unsuspend user"
+                        >
+                          <Unlock className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      <Button size="sm" variant="ghost" onClick={() => openViewBansModal(p)} title="View bans / Unsuspend">
+                        <Eye className="w-4 h-4" />
                       </Button>
-                    )}
-                    <Button size="sm" variant="ghost" onClick={() => openViewBansModal(p)} title="View bans">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => openBanModal(p)} title="Ban user">
-                      <Ban className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => openBanModal(p)} title="Ban user">
+                        <Ban className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </motion.div>
