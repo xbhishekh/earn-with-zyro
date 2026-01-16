@@ -257,6 +257,59 @@ export type Database = {
           },
         ]
       }
+      campaign_assets: {
+        Row: {
+          asset_type: string
+          campaign_id: string
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          is_required: boolean | null
+          sort_order: number | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          asset_type: string
+          campaign_id: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          is_required?: boolean | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          asset_type?: string
+          campaign_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          is_required?: boolean | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_assets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_members: {
         Row: {
           campaign_id: string
@@ -359,6 +412,7 @@ export type Database = {
           status: string | null
           thumbnail_url: string | null
           updated_at: string
+          video_url: string | null
           waitlist_questions: string[] | null
         }
         Insert: {
@@ -383,6 +437,7 @@ export type Database = {
           status?: string | null
           thumbnail_url?: string | null
           updated_at?: string
+          video_url?: string | null
           waitlist_questions?: string[] | null
         }
         Update: {
@@ -407,6 +462,7 @@ export type Database = {
           status?: string | null
           thumbnail_url?: string | null
           updated_at?: string
+          video_url?: string | null
           waitlist_questions?: string[] | null
         }
         Relationships: []

@@ -16,7 +16,9 @@ import {
   Link,
   Bold,
   List,
+  Package,
 } from "lucide-react";
+import { CampaignAssetsManager } from "./CampaignAssetsManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,9 +56,23 @@ interface Campaign {
   platforms: string[] | null;
   join_type: string | null;
   thumbnail_url: string | null;
+  video_url: string | null;
   rules_guidelines: string | null;
   rules_link: string | null;
   created_at: string;
+}
+
+interface CampaignAsset {
+  id: string;
+  campaign_id: string;
+  asset_type: 'video' | 'image' | 'file' | 'link';
+  title: string;
+  description: string | null;
+  url: string;
+  file_name: string | null;
+  file_size: number | null;
+  is_required: boolean;
+  sort_order: number;
 }
 
 const generateSlug = (name: string): string => {
@@ -83,6 +99,7 @@ const initialFormState = {
   platforms: [] as string[],
   join_type: "direct",
   thumbnail_url: "",
+  video_url: "",
   rules_guidelines: "",
   rules_link: "",
 };
@@ -145,6 +162,7 @@ const AdminCampaigns = () => {
         platforms: formData.platforms,
         join_type: formData.join_type,
         thumbnail_url: formData.thumbnail_url || null,
+        video_url: formData.video_url || null,
         rules_guidelines: formData.rules_guidelines || null,
         rules_link: formData.rules_link || null,
       };
@@ -206,6 +224,7 @@ const AdminCampaigns = () => {
       platforms: campaign.platforms || [],
       join_type: campaign.join_type || "direct",
       thumbnail_url: campaign.thumbnail_url || "",
+      video_url: campaign.video_url || "",
       rules_guidelines: campaign.rules_guidelines || "",
       rules_link: campaign.rules_link || "",
     });
@@ -615,6 +634,36 @@ const AdminCampaigns = () => {
               />
             </div>
             
+            {/* Video Preview URL */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Video Preview URL (optional)
+              </label>
+              <Input
+                placeholder="https://example.com/video.mp4"
+                value={formData.video_url}
+                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Add a video URL for campaign preview (MP4, WebM)</p>
+              {formData.video_url && (
+                <div className="mt-2 rounded-lg overflow-hidden border">
+                  <video 
+                    src={formData.video_url} 
+                    className="w-full h-32 object-cover" 
+                    muted 
+                    loop 
+                    playsInline
+                    onMouseEnter={(e) => e.currentTarget.play()}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.pause();
+                      e.currentTarget.currentTime = 0;
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            
             {/* Rules & Guidelines */}
             <div className="border-t pt-4 mt-4">
               <div className="flex items-center justify-between mb-2">
@@ -758,6 +807,16 @@ Example:
                 />
               </div>
             </div>
+
+            {/* Campaign Assets Manager - Only show when editing */}
+            {editingCampaign && (
+              <div className="border-t pt-4 mt-4">
+                <CampaignAssetsManager 
+                  campaignId={editingCampaign.id} 
+                  campaignName={editingCampaign.name}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
