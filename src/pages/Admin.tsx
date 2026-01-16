@@ -63,6 +63,7 @@ interface Tab {
   component: React.ComponentType;
   requiresSuperAdmin?: boolean;
   requiresOwner?: boolean;
+  requiresFounderOrOwner?: boolean;
 }
 
 const tabs: Tab[] = [
@@ -78,7 +79,7 @@ const tabs: Tab[] = [
   { id: "users", label: "Users", icon: Users, component: AdminUsers },
   { id: "payments", label: "Payments", icon: DollarSign, component: AdminPayments },
   { id: "admin-invites", label: "Admin Invites", icon: UserPlus, component: AdminInvites, requiresSuperAdmin: true },
-  { id: "activity-log", label: "Activity Log", icon: Activity, component: AdminActivityLog, requiresOwner: true },
+  { id: "activity-log", label: "Activity Log", icon: Activity, component: AdminActivityLog, requiresFounderOrOwner: true },
   { id: "affiliates", label: "Affiliates", icon: Link2, component: AdminAffiliates },
   { id: "waitlist", label: "Waitlist", icon: ClipboardList, component: AdminWaitlist },
   { id: "support", label: "Support", icon: MessageSquare, component: AdminSupport },
@@ -93,7 +94,7 @@ const tabs: Tab[] = [
 const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, loading: authLoading, isAdmin, isSuperAdmin, isOwner, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin, isSuperAdmin, isOwner, isFounder, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -123,6 +124,7 @@ const Admin = () => {
   // Filter tabs based on user role
   const visibleTabs = tabs.filter((tab) => {
     if (tab.requiresOwner && !isOwner) return false;
+    if (tab.requiresFounderOrOwner && !isFounder && !isOwner) return false;
     if (tab.requiresSuperAdmin && !isSuperAdmin) return false;
     return true;
   });

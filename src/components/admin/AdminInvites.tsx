@@ -47,7 +47,7 @@ interface Campaign {
 }
 
 const AdminInvites = () => {
-  const { user } = useAuth();
+  const { user, isFounder, isOwner } = useAuth();
   const [admins, setAdmins] = useState<AdminEntry[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +122,7 @@ const AdminInvites = () => {
       const { data: inviteData, error: inviteError } = await supabase.from("admin_invites").insert({
         email: formData.email,
         invite_code: inviteCode,
-        invite_type: formData.invite_type as "normal_admin" | "admin" | "super_admin",
+        invite_type: formData.invite_type as "normal_admin" | "admin" | "super_admin" | "founder" | "owner",
         invited_by: user?.id!,
         status: 'pending',
       }).select().single();
@@ -235,12 +235,16 @@ const AdminInvites = () => {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
+      case "founder":
+        return <Badge className="bg-gradient-to-r from-amber-500 to-yellow-400 text-white">👑 Founder</Badge>;
+      case "owner":
+        return <Badge className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white">🏆 Owner</Badge>;
       case "super_admin":
-        return <Badge className="bg-destructive text-white">Super Admin</Badge>;
+        return <Badge className="bg-destructive text-white">⭐ Super Admin</Badge>;
       case "admin":
         return <Badge className="bg-primary text-white">Admin</Badge>;
       case "normal_admin":
-        return <Badge variant="outline" className="text-primary border-primary">Normal Admin</Badge>;
+        return <Badge variant="outline" className="text-primary border-primary">🛡️ Normal Admin</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -373,9 +377,9 @@ const AdminInvites = () => {
                   <SelectValue placeholder="Select admin type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal_admin">Normal Admin</SelectItem>
+                  <SelectItem value="normal_admin">🛡️ Normal Admin</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="super_admin">⭐ Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
