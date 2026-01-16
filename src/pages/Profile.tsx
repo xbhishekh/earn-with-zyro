@@ -24,7 +24,8 @@ import {
   Plus,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Video
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ import SupportChatWidget from "@/components/SupportChatWidget";
 import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
 import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
+import SellerCampaignsAdmin from "@/components/dashboard/SellerCampaignsAdmin";
 
 interface ProfileData {
   id: string;
@@ -455,10 +457,14 @@ const Profile = () => {
                 </div>
 
                 <Tabs value={sellerDashboardTab} onValueChange={setSellerDashboardTab} className="w-full">
-                  <TabsList className="w-full grid grid-cols-4 mb-6">
+                  <TabsList className="w-full grid grid-cols-5 mb-6">
                     <TabsTrigger value="products" className="flex items-center gap-2">
                       <Package className="w-4 h-4" />
                       <span className="hidden sm:inline">Products</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="campaigns" className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      <span className="hidden sm:inline">Campaigns</span>
                     </TabsTrigger>
                     <TabsTrigger value="buyers" className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
@@ -566,6 +572,11 @@ const Profile = () => {
                         ))}
                       </div>
                     )}
+                  </TabsContent>
+
+                  {/* Campaigns Sub-Tab */}
+                  <TabsContent value="campaigns">
+                    <SellerCampaignsAdmin />
                   </TabsContent>
 
                   {/* Buyers Sub-Tab */}
