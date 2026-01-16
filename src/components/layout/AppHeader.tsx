@@ -130,7 +130,7 @@ export const AppHeader = () => {
         className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border"
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-14 md:h-16 gap-3">
+          <div className="flex items-center h-14 md:h-16 gap-2 md:gap-4">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 md:w-9 md:h-9 gradient-bg rounded-lg flex items-center justify-center">
@@ -142,13 +142,13 @@ export const AppHeader = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1 ml-4">
               {desktopNavItems.map((item) => (
                 <Link
                   key={item.label}
                   to={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                     isActive(item.href)
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -160,14 +160,17 @@ export const AppHeader = () => {
               ))}
             </nav>
 
+            {/* Spacer */}
+            <div className="flex-1" />
+
             {/* Search Button - Desktop */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden md:flex flex-1 max-w-xs mx-4 h-10 px-4 bg-muted hover:bg-muted/80 rounded-full items-center gap-3 transition-colors"
+              className="hidden md:flex w-56 lg:w-64 h-9 px-4 bg-muted hover:bg-muted/80 rounded-full items-center gap-2 transition-colors shrink-0"
             >
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm text-muted-foreground truncate">
-                Search campaigns, products...
+                Search...
               </span>
             </button>
 
