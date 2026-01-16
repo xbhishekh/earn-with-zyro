@@ -32,6 +32,7 @@ interface AffiliateLink {
 interface Campaign {
   id: string;
   name: string;
+  slug: string | null;
   affiliate_commission_percent: number;
   status: string;
 }
@@ -85,7 +86,7 @@ const Affiliate = () => {
     try {
       const [linksRes, campaignsRes, rewardsRes, profileRes, referredRes] = await Promise.all([
         supabase.from("affiliate_links").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("campaigns").select("id, name, affiliate_commission_percent, status").eq("status", "active"),
+        supabase.from("campaigns").select("id, name, slug, affiliate_commission_percent, status").eq("status", "active"),
         supabase.from("referral_rewards").select("*").eq("referrer_id", user.id).order("created_at", { ascending: false }),
         supabase.from("profiles").select("username").eq("user_id", user.id).single(),
         supabase.from("profiles").select("id, user_id, username, display_name, created_at").eq("referred_by", user.id),
@@ -152,13 +153,13 @@ const Affiliate = () => {
   };
 
   const getFullLink = (code: string, campaignId: string | null) => {
-    // Use zyrozo.com domain with campaign slug
+    // Use zyrozo.com domain with campaign slug from database
     const baseUrl = "https://zyrozo.com";
     
     if (campaignId) {
       const campaign = campaigns.find(c => c.id === campaignId);
-      const campaignName = campaign?.name || "campaign";
-      const slug = createSlug(campaignName);
+      // Use the slug from database, fallback to generated slug from name
+      const slug = campaign?.slug || createSlug(campaign?.name || "campaign");
       return `${baseUrl}/${slug}?ref=${code}`;
     }
     return `${baseUrl}?ref=${code}`;

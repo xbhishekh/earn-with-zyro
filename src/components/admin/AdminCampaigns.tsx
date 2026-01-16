@@ -34,6 +34,7 @@ import { toast } from "sonner";
 interface Campaign {
   id: string;
   name: string;
+  slug: string | null;
   description: string | null;
   reward_per_1k_views: number;
   min_payout: number | null;
@@ -49,8 +50,18 @@ interface Campaign {
   created_at: string;
 }
 
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+};
+
 const initialFormState = {
   name: "",
+  slug: "",
   description: "",
   reward_per_1k_views: 0,
   min_payout: 0,
@@ -107,8 +118,10 @@ const AdminCampaigns = () => {
 
     setSubmitting(true);
     try {
+      const slug = formData.slug.trim() || generateSlug(formData.name);
       const campaignData = {
         name: formData.name,
+        slug: slug,
         description: formData.description || null,
         reward_per_1k_views: formData.reward_per_1k_views,
         min_payout: formData.min_payout || null,
@@ -168,6 +181,7 @@ const AdminCampaigns = () => {
     setEditingCampaign(campaign);
     setFormData({
       name: campaign.name,
+      slug: campaign.slug || "",
       description: campaign.description || "",
       reward_per_1k_views: campaign.reward_per_1k_views,
       min_payout: campaign.min_payout || 0,
@@ -319,6 +333,19 @@ const AdminCampaigns = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">URL Slug</label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">zyrozo.com/</span>
+                <Input
+                  placeholder={formData.name ? generateSlug(formData.name) : "campaign-slug"}
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Leave empty to auto-generate from name</p>
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Description</label>
