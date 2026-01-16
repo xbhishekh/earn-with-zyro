@@ -11,15 +11,15 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   center?: boolean;
-  badgeKey?: 'messages' | 'notifications';
+  badgeKey?: 'messages' | 'clipping' | 'profile';
 }
 
 const navItems: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Marketplace', href: '/marketplace', icon: Compass },
   { label: 'Messages', href: '/messages', icon: MessageCircle, center: true, badgeKey: 'messages' },
-  { label: 'Clipping', href: '/campaigns', icon: TrendingUp },
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'Clipping', href: '/campaigns', icon: TrendingUp, badgeKey: 'clipping' },
+  { label: 'Profile', href: '/profile', icon: User, badgeKey: 'profile' },
 ];
 
 const guestNavItems: NavItem[] = [
@@ -33,6 +33,8 @@ export const MobileBottomNav = () => {
   const location = useLocation();
   const { user } = useAuth();
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingVerifications, setPendingVerifications] = useState(0);
+  const [campaignUpdates, setCampaignUpdates] = useState(0);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -100,10 +102,81 @@ export const MobileBottomNav = () => {
     };
   }, [user]);
 
+  // Fetch pending social account verifications for Profile badge
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPendingVerifications = async () => {
+      const { count } = await supabase
+        .from('social_accounts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .in('status', ['pending_link', 'awaiting_code', 'pending_verification']);
+      
+      setPendingVerifications(count || 0);
+    };
+
+    fetchPendingVerifications();
+
+    // Subscribe to social account changes
+    const channel = supabase
+      .channel('profile-verifications')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'social_accounts',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchPendingVerifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Fetch campaign updates (unread notifications related to campaigns)
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchCampaignUpdates = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+        .in('type', ['submission_approved', 'submission_rejected', 'campaign_update', 'payout', 'announcement']);
+      
+      setCampaignUpdates(count || 0);
+    };
+
+    fetchCampaignUpdates();
+
+    // Subscribe to notification changes
+    const channel = supabase
+      .channel('campaign-updates')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchCampaignUpdates();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const items = user ? navItems : guestNavItems;
 
   const getBadgeCount = (badgeKey?: string) => {
     if (badgeKey === 'messages') return unreadMessages;
+    if (badgeKey === 'profile') return pendingVerifications;
+    if (badgeKey === 'clipping') return campaignUpdates;
     return 0;
   };
 
