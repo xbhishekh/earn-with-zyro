@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   Search, Zap, Shield, LogOut, Wallet, Home, Compass, 
   MessageCircle, TrendingUp, Users, Crown, Sparkles
@@ -124,9 +123,7 @@ export const AppHeader = () => {
 
   return (
     <>
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
+      <header
         className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border"
       >
         <div className="container mx-auto px-4">
@@ -326,7 +323,7 @@ export const AppHeader = () => {
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       {/* Global Search Modal */}
       <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
