@@ -6,6 +6,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApprovedSubmission {
@@ -168,18 +169,18 @@ const Gallery = () => {
                     className="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 transition-all"
                   >
                     {/* Video Thumbnail */}
-                    <div className="relative aspect-video overflow-hidden bg-muted">
-                      {thumbnailUrl ? (
-                        <img
-                          src={thumbnailUrl}
-                          alt="Video thumbnail"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
-                          <Play className="w-10 h-10 text-muted-foreground" />
-                        </div>
-                      )}
+                    <div className="relative">
+                      <OptimizedImage
+                        src={thumbnailUrl}
+                        alt="Video thumbnail"
+                        aspectRatio="video"
+                        className="group-hover:scale-105"
+                        fallback={
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+                            <Play className="w-10 h-10 text-muted-foreground" />
+                          </div>
+                        }
+                      />
                       
                       {/* Play Overlay */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

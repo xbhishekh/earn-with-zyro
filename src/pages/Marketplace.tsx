@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -293,18 +294,18 @@ const Marketplace = () => {
                       className="block bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all group"
                     >
                       {/* Featured Badge */}
-                      <div className="relative aspect-video overflow-hidden bg-muted">
-                        {product.thumbnail_url ? (
-                          <img
-                            src={product.thumbnail_url}
-                            alt={product.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-12 h-12 text-muted-foreground" />
-                          </div>
-                        )}
+                      <div className="relative">
+                        <OptimizedImage
+                          src={product.thumbnail_url}
+                          alt={product.title}
+                          aspectRatio="video"
+                          className="group-hover:scale-105"
+                          fallback={
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-12 h-12 text-muted-foreground" />
+                            </div>
+                          }
+                        />
                         
                         <Badge className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 border-0">
                           <Crown className="w-3 h-3 mr-1" />
