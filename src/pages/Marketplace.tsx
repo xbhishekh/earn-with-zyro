@@ -49,7 +49,7 @@ const CATEGORIES = [
 ];
 
 const Marketplace = () => {
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -255,7 +255,7 @@ const Marketplace = () => {
                 </div>
               </form>
               
-              {user && (
+              {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
                 <Link to="/marketplace/create">
                   <Button className="h-12 px-6 rounded-full">
                     <Plus className="w-5 h-5 mr-2" />
@@ -411,7 +411,7 @@ const Marketplace = () => {
               <p className="text-muted-foreground mb-6">
                 Be the first to list a product in this category!
               </p>
-              {user && (
+              {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
                 <Link to="/marketplace/create">
                   <Button>Create your first product</Button>
                 </Link>
