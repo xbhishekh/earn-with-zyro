@@ -909,37 +909,6 @@ const Profile = () => {
 
             {/* Account Tab */}
             <TabsContent value="account" className="space-y-6">
-              {/* Account Switcher Section */}
-              <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
-                <div>
-                  <h3 className="font-display text-lg font-semibold mb-1">Account Management</h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Switch accounts or log out
-                  </p>
-                </div>
-
-                <AccountSwitcher
-                  currentEmail={user?.email || ""}
-                  currentAvatar={profile?.avatar_url || null}
-                  currentDisplayName={profile?.display_name || null}
-                  onLogout={signOut}
-                />
-
-                <Button
-                  variant="destructive"
-                  className="w-full gap-2"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to log out?")) {
-                      signOut();
-                    }
-                  }}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log Out
-                </Button>
-              </div>
-
-              {/* Login Credentials Section */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                 <div>
                   <h3 className="font-display text-lg font-semibold mb-1">Login Credentials</h3>
