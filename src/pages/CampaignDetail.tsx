@@ -30,6 +30,7 @@ import { toast } from "sonner";
 interface Campaign {
   id: string;
   name: string;
+  slug: string | null;
   description: string | null;
   thumbnail_url: string | null;
   platforms: string[];
@@ -134,13 +135,15 @@ const CampaignDetail = () => {
         if (error) throw error;
         campaignData = data;
       } else if (slug) {
-        // Fetch all campaigns and match by slug
-        const { data: allCampaigns, error } = await supabase
+        // Fetch by slug column from database
+        const { data, error } = await supabase
           .from("campaigns")
-          .select("*");
-        if (error) throw error;
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
         
-        campaignData = allCampaigns?.find(c => createSlug(c.name) === slug);
+        if (error) throw error;
+        campaignData = data;
         if (!campaignData) throw new Error("Campaign not found");
       }
       setCampaign(campaignData as Campaign);

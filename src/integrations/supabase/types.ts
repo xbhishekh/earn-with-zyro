@@ -323,6 +323,7 @@ export type Database = {
           reward_per_1k_views: number
           rules_guidelines: string | null
           rules_link: string | null
+          slug: string | null
           status: string | null
           thumbnail_url: string | null
           updated_at: string
@@ -346,6 +347,7 @@ export type Database = {
           reward_per_1k_views?: number
           rules_guidelines?: string | null
           rules_link?: string | null
+          slug?: string | null
           status?: string | null
           thumbnail_url?: string | null
           updated_at?: string
@@ -369,6 +371,7 @@ export type Database = {
           reward_per_1k_views?: number
           rules_guidelines?: string | null
           rules_link?: string | null
+          slug?: string | null
           status?: string | null
           thumbnail_url?: string | null
           updated_at?: string
