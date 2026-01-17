@@ -1602,8 +1602,23 @@ export type Database = {
       is_founder: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      send_admin_broadcast_dm: {
+        Args: { p_content: string; p_title: string }
+        Returns: number
+      }
       send_payment_release_dm: {
         Args: { p_amount: number; p_user_id: string; p_username: string }
+        Returns: undefined
+      }
+      send_views_update_dm: {
+        Args: {
+          p_amount: number
+          p_campaign_name: string
+          p_release_date: string
+          p_user_id: string
+          p_username: string
+          p_views: number
+        }
         Returns: undefined
       }
     }

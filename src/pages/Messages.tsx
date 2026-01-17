@@ -985,14 +985,36 @@ const Messages = () => {
                               "max-w-[70%] px-4 py-2 rounded-2xl relative",
                               isOwn 
                                 ? "bg-primary text-primary-foreground rounded-br-sm" 
-                                : isTeamZyrozo
-                                  ? "bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-bl-sm"
-                                  : "bg-muted rounded-bl-sm"
+                                : isTeamZyrozo && message.content?.includes("paid @")
+                                  ? "bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 dark:from-pink-950/50 dark:via-purple-950/50 dark:to-blue-950/50 border border-pink-200 dark:border-pink-800/30 rounded-xl"
+                                  : isTeamZyrozo
+                                    ? "bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-bl-sm"
+                                    : "bg-muted rounded-bl-sm"
                             )}>
                               {message.content && (
-                                <p className="text-sm whitespace-pre-wrap break-words">
-                                  {message.content}
-                                </p>
+                                isTeamZyrozo && message.content.includes("paid @") ? (
+                                  <p className="text-sm font-medium">
+                                    {message.content.split(/(@\w+)/g).map((part, idx) => {
+                                      if (part.startsWith("@Zyrozo")) {
+                                        return <span key={idx} className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-1.5 py-0.5 rounded font-semibold">{part}</span>;
+                                      } else if (part.startsWith("@")) {
+                                        return <span key={idx} className="bg-gradient-to-r from-purple-400 to-purple-500 text-white px-1.5 py-0.5 rounded font-semibold">{part}</span>;
+                                      } else if (part.includes("$")) {
+                                        const dollarMatch = part.match(/(\$[\d.]+)/);
+                                        if (dollarMatch) {
+                                          const beforeDollar = part.substring(0, part.indexOf(dollarMatch[0]));
+                                          const afterDollar = part.substring(part.indexOf(dollarMatch[0]) + dollarMatch[0].length);
+                                          return <span key={idx}>{beforeDollar}<span className="text-green-600 dark:text-green-400 font-bold">{dollarMatch[0]}</span>{afterDollar}</span>;
+                                        }
+                                      }
+                                      return <span key={idx}>{part}</span>;
+                                    })}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm whitespace-pre-wrap break-words">
+                                    {message.content}
+                                  </p>
+                                )
                               )}
                               {renderAttachment(message)}
                               {isOwn && (
@@ -1029,6 +1051,21 @@ const Messages = () => {
                 </div>
               )}
             </ScrollArea>
+
+            {/* Team Zyrozo Official Notice */}
+            {selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID && (
+              <div className="px-4 py-3 border-t border-border bg-muted/30">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-primary flex items-center justify-center">
+                    <BadgeCheck className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">This is the official Zyrozo notification channel</p>
+                    <p className="text-xs text-muted-foreground">Zyrozo will always use verified accounts to communicate with you</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* File Preview */}
             {selectedFile && (
