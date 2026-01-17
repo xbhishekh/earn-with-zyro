@@ -135,34 +135,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Send OTP to email using Supabase's built-in signInWithOtp (sends 6-digit code)
+  // Send OTP to email using our custom edge function (Gmail SMTP)
   const sendOtp = useCallback(async (
     email: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => {
     const isSignup = !!metadata;
 
-    // Use Supabase's built-in OTP which sends a proper 6-digit code
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: isSignup,
-        emailRedirectTo: `${window.location.origin}/`,
-        data: metadata
-          ? {
-              username: metadata.username,
-              displayName: metadata.displayName,
-              referredBy: metadata.referredBy,
-            }
-          : undefined,
-      },
-    });
+    try {
+      // Call our custom auth-send-code edge function that uses Gmail SMTP
+      const { data, error } = await supabase.functions.invoke("auth-send-code", {
+        body: {
+          email,
+          isSignup,
+          metadata: metadata
+            ? {
+                username: metadata.username,
+                displayName: metadata.displayName,
+                referredBy: metadata.referredBy,
+              }
+            : undefined,
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
 
-    return {
-      error: error as Error | null,
-      // For email OTP verification, Supabase expects `type: "email"`.
-      otpType: "email" as EmailOtpType,
-    };
+      if (error) {
+        console.error("auth-send-code error:", error);
+        return {
+          error: new Error(error.message || "Failed to send verification code"),
+          otpType: "email" as EmailOtpType,
+        };
+      }
+
+      // Check if the edge function returned an error in the response body
+      if (data?.error) {
+        return {
+          error: new Error(data.error.message || "Failed to send verification code"),
+          otpType: "email" as EmailOtpType,
+        };
+      }
+
+      return {
+        error: null,
+        otpType: (data?.otpType || "email") as EmailOtpType,
+      };
+    } catch (err) {
+      console.error("sendOtp exception:", err);
+      return {
+        error: err instanceof Error ? err : new Error("Failed to send verification code"),
+        otpType: "email" as EmailOtpType,
+      };
+    }
   }, []);
 
   // Verify OTP code
