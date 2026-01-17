@@ -324,11 +324,9 @@ export const CampaignSidebar = ({
             
             <div className="px-3 pb-3 space-y-2">
               {submissions.slice(0, 5).map((sub) => (
-                <a
+                <Link
                   key={sub.id}
-                  href={sub.social_link || sub.video_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  to="/my-submissions"
                   className="block bg-muted/30 hover:bg-muted/50 rounded-lg p-3 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -368,7 +366,7 @@ export const CampaignSidebar = ({
                       )}
                     </div>
                   </div>
-                </a>
+                </Link>
               ))}
               {submissions.length > 5 && (
                 <button
