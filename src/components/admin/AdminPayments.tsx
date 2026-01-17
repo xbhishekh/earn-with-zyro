@@ -46,10 +46,23 @@ const AdminPayments = () => {
 
   const handleMarkAsPaid = async (id: string) => {
     try {
-      await supabase.from("balance_transactions").update({ status: "paid", processed_by: user?.id, processed_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase
+        .from("balance_transactions")
+        .update({
+          status: "paid",
+          processed_by: user?.id,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
       toast.success("Marked as paid!");
       fetchTransactions();
-    } catch { toast.error("Failed"); }
+    } catch (err) {
+      console.error("Failed to mark as paid:", err);
+      toast.error("Failed");
+    }
   };
 
   const pendingAmount = transactions.filter(t => t.status === "pending").reduce((a, t) => a + t.amount, 0);
