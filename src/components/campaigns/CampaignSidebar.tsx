@@ -58,6 +58,8 @@ interface CampaignSidebarProps {
   onOpenSubmissions?: () => void;
   onOpenAnnouncements?: () => void;
   onSwitchToSubmissionsTab?: () => void;
+  onBackToDetails?: () => void;
+  activeView?: 'details' | 'chat' | 'submissions' | 'announcements';
 }
 
 interface Submission {
@@ -89,7 +91,9 @@ export const CampaignSidebar = ({
   onOpenChat,
   onOpenSubmissions,
   onOpenAnnouncements,
-  onSwitchToSubmissionsTab
+  onSwitchToSubmissionsTab,
+  onBackToDetails,
+  activeView = 'details'
 }: CampaignSidebarProps) => {
   const { user } = useAuth();
   const [onlineCount, setOnlineCount] = useState(0);
@@ -974,5 +978,283 @@ export const FullscreenAnnouncementsView = ({
         )}
       </div>
     </div>
+  );
+};
+
+// Inline Submissions View (for embedding in main content area - no fullscreen wrapper)
+export const InlineSubmissionsView = ({
+  campaign,
+}: {
+  campaign: Campaign;
+}) => {
+  const { user } = useAuth();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, display_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+      }
+
+      const { data } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('campaign_id', campaign.id)
+        .order('created_at', { ascending: false });
+
+      setSubmissions(data as Submission[] || []);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [campaign.id, user]);
+
+  const statusCounts = {
+    all: submissions.length,
+    pending: submissions.filter(s => !s.status || s.status === 'pending').length,
+    approved: submissions.filter(s => s.status === 'approved' || s.status === 'paid').length,
+    rejected: submissions.filter(s => s.status === 'rejected').length,
+    flagged: submissions.filter(s => s.status === 'flagged').length,
+  };
+
+  const filteredSubmissions = submissions
+    .filter(sub => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'pending') return !sub.status || sub.status === 'pending';
+      if (statusFilter === 'approved') return sub.status === 'approved' || sub.status === 'paid';
+      return sub.status === statusFilter;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === 'views') return (b.views_count || 0) - (a.views_count || 0);
+      if (sortBy === 'earnings') return (b.estimated_earnings || 0) - (a.estimated_earnings || 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-success/10 text-success border-0 text-xs">Approved</Badge>;
+      case 'paid':
+        return <Badge className="bg-teal-500/10 text-teal-500 border-0 text-xs">Paid</Badge>;
+      case 'rejected':
+        return <Badge className="bg-destructive/10 text-destructive border-0 text-xs">Rejected</Badge>;
+      case 'flagged':
+        return <Badge className="bg-warning/10 text-warning border-0 text-xs">Flagged</Badge>;
+      default:
+        return <Badge className="bg-muted text-muted-foreground border-0 text-xs">Submitted</Badge>;
+    }
+  };
+
+  const formatViewCount = (count: number): string => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return count.toString();
+  };
+
+  const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'other' => {
+    if (!url) return 'other';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    return 'other';
+  };
+
+  const PlatformIcon = ({ platform }: { platform: string }) => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="w-4 h-4" />;
+      case 'tiktok':
+        return (
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+          </svg>
+        );
+      default:
+        return <Video className="w-4 h-4" />;
+    }
+  };
+
+  const statusFilters = [
+    { value: 'all', label: 'All Clips' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'flagged', label: 'Flagged' },
+  ];
+
+  return (
+    <>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">My Submissions</h1>
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => setStatusFilter(filter.value)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                statusFilter === filter.value
+                  ? 'bg-foreground text-background font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              {filter.label}
+              <Badge 
+                variant="secondary" 
+                className={`text-xs px-1.5 py-0.5 ${
+                  statusFilter === filter.value ? 'bg-background/20 text-background' : ''
+                }`}
+              >
+                {statusCounts[filter.value as keyof typeof statusCounts]}
+              </Badge>
+            </button>
+          ))}
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="flex gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[140px] bg-muted border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Most Recent</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="views">Most Views</SelectItem>
+              <SelectItem value="earnings">Highest Earnings</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Submissions Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : filteredSubmissions.length === 0 ? (
+          <div className="text-center py-12">
+            <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">No submissions found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSubmissions.map((sub) => {
+              const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
+              const username = profile?.username || 'Unknown';
+              const displayName = profile?.display_name || username;
+              const platform = detectPlatform(sub.social_link);
+              const isApprovedOrPaid = sub.status === 'approved' || sub.status === 'paid';
+              const title = sub.description || campaign.name;
+              
+              return (
+                <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 transition-all">
+                  <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
+                    <div className="text-muted-foreground">
+                      <PlatformIcon platform={platform} />
+                    </div>
+                  </div>
+
+                  <a 
+                    href={sub.social_link || sub.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative aspect-[9/16] bg-zinc-900 overflow-hidden group cursor-pointer"
+                  >
+                    {thumbnailUrl ? (
+                      <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                        <Video className="w-16 h-16 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                        <Play className="w-6 h-6 text-black ml-1" fill="currentColor" />
+                      </div>
+                    </div>
+                  </a>
+
+                  <div className="p-3.5 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium line-clamp-2 leading-snug flex-1">{title}</p>
+                      {getStatusBadge(sub.status)}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage src={profile?.avatar_url || ''} />
+                        <AvatarFallback className="text-[10px] bg-muted">
+                          {displayName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs text-muted-foreground truncate">@{username}</span>
+                    </div>
+
+                    <div className={`grid gap-2 text-xs ${isApprovedOrPaid ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                      <div>
+                        <p className="text-muted-foreground mb-0.5">Submitted on</p>
+                        <p className="font-medium">{format(new Date(sub.created_at), 'MMM d, yyyy')}</p>
+                      </div>
+                      {isApprovedOrPaid && (
+                        <div>
+                          <p className="text-muted-foreground mb-0.5">Approved on</p>
+                          <p className="font-medium">{format(new Date(sub.approved_at || sub.created_at), 'MMM d, yyyy')}</p>
+                        </div>
+                      )}
+                      <div className="text-right">
+                        <p className="text-muted-foreground mb-0.5">Est. Payout</p>
+                        <p className="font-medium text-success">${(sub.estimated_earnings || 0).toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                        <span className="text-sm font-medium">{formatViewCount(sub.views_count || 0)}</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs h-8 px-4 border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 rounded-lg font-medium"
+                        onClick={() => {
+                          setSelectedSubmission(sub);
+                          setDetailsModalOpen(true);
+                        }}
+                      >
+                        View Payouts
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <ClipDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        submission={selectedSubmission}
+        campaign={selectedSubmission ? campaign : null}
+      />
+    </>
   );
 };
