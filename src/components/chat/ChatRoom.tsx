@@ -791,13 +791,19 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                           {/* Content Column */}
                           <div className="flex-1 min-w-0">
                             {showHeader && (
-                              <div className="flex items-baseline gap-2 mb-0.5">
+                              <div className="flex items-center gap-2 mb-0.5">
                                 <Link 
                                   to={`/u/${msg.profiles?.username || msg.user_id}`}
                                   className="font-semibold text-sm text-foreground hover:underline"
                                 >
                                   {msg.profiles?.username || 'Unknown'}
                                 </Link>
+                                {/* System Message Badge for Team Zyrozo */}
+                                {msg.user_id === '00000000-0000-0000-0000-000000000001' && (
+                                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white rounded-full uppercase tracking-wide">
+                                    System
+                                  </span>
+                                )}
                                 <span className="text-xs text-muted-foreground">
                                   {formatTime(msg.created_at)}
                                 </span>
