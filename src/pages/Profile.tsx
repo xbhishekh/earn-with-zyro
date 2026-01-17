@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   User, 
   Camera, 
@@ -11,7 +10,6 @@ import {
   CreditCard,
   Shield,
   Loader2,
-  Share2,
   HelpCircle,
   MessageCircle,
   ChevronRight,
@@ -26,7 +24,6 @@ import {
   Edit,
   Trash2,
   Video,
-  UserCog,
   LogOut,
   Mail,
   Key,
@@ -410,24 +407,16 @@ const Profile = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        {/* Page Title */}
+        <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Profile Settings</h1>
           <p className="text-muted-foreground">
             Manage your account settings and preferences
           </p>
-        </motion.div>
+        </div>
 
         {/* Avatar Section with Account Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card border border-border rounded-2xl p-6 mb-6"
-        >
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Profile Info */}
             <div className="flex items-center gap-4 sm:gap-6">
@@ -488,51 +477,99 @@ const Profile = () => {
               </Button>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div>
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className={cn(
               "grid w-full lg:w-auto lg:inline-grid",
               isAdminUser ? "grid-cols-6" : "grid-cols-5"
             )}>
               <TabsTrigger value="profile" className="gap-2">
-                <User className="w-4 h-4" />
+                {/* Profile Icon - Blue gradient user */}
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="4" fill="url(#profile-grad)" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="url(#profile-grad)" />
+                  <defs>
+                    <linearGradient id="profile-grad" x1="4" y1="4" x2="20" y2="20">
+                      <stop stopColor="#3B82F6" />
+                      <stop offset="1" stopColor="#8B5CF6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
                 <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
               <TabsTrigger value="social" className="gap-2">
+                {/* Social Icon - Instagram-style gradient */}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" className="stroke-pink-500" strokeWidth="2"/>
-                  <circle cx="12" cy="10" r="3" className="fill-pink-500"/>
-                  <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6" className="stroke-violet-500" strokeWidth="2" strokeLinecap="round"/>
+                  <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#social-grad)" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="4" stroke="url(#social-grad)" strokeWidth="2" />
+                  <circle cx="18" cy="6" r="1.5" fill="#E1306C" />
+                  <defs>
+                    <linearGradient id="social-grad" x1="2" y1="22" x2="22" y2="2">
+                      <stop stopColor="#FCAF45" />
+                      <stop offset="0.5" stopColor="#E1306C" />
+                      <stop offset="1" stopColor="#833AB4" />
+                    </linearGradient>
+                  </defs>
                 </svg>
                 <span className="hidden sm:inline">Social</span>
               </TabsTrigger>
               <TabsTrigger value="affiliate" className="gap-2">
+                {/* Affiliate Icon - Dollar/gift style */}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <path d="M8 12h8M12 8v8" className="stroke-emerald-500" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="12" cy="12" r="10" className="stroke-emerald-500" strokeWidth="2"/>
-                  <path d="M7 7l10 10M17 7L7 17" className="stroke-amber-500" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="10" stroke="url(#aff-grad)" strokeWidth="2" />
+                  <path d="M12 6v12M9 9c0-1.5 1.5-2 3-2s3 .5 3 2-1.5 2-3 2-3 .5-3 2 1.5 2 3 2 3-.5 3-2" stroke="url(#aff-grad)" strokeWidth="2" strokeLinecap="round" />
+                  <defs>
+                    <linearGradient id="aff-grad" x1="2" y1="2" x2="22" y2="22">
+                      <stop stopColor="#10B981" />
+                      <stop offset="1" stopColor="#F59E0B" />
+                    </linearGradient>
+                  </defs>
                 </svg>
                 <span className="hidden sm:inline">Affiliate</span>
               </TabsTrigger>
               {isAdminUser && (
                 <TabsTrigger value="dashboard" className="gap-2">
-                  <LayoutDashboard className="w-4 h-4" />
+                  {/* Dashboard Icon - Grid style */}
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#F97316" />
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#EF4444" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#8B5CF6" />
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#06B6D4" />
+                  </svg>
                   <span className="hidden sm:inline">Dashboard</span>
                 </TabsTrigger>
               )}
               <TabsTrigger value="support" className="gap-2">
-                <HelpCircle className="w-4 h-4" />
+                {/* Support Icon - Chat bubble */}
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" fill="url(#support-grad)" />
+                  <circle cx="8" cy="12" r="1" fill="white" />
+                  <circle cx="12" cy="12" r="1" fill="white" />
+                  <circle cx="16" cy="12" r="1" fill="white" />
+                  <defs>
+                    <linearGradient id="support-grad" x1="3" y1="4" x2="21" y2="20">
+                      <stop stopColor="#06B6D4" />
+                      <stop offset="1" stopColor="#3B82F6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
                 <span className="hidden sm:inline">Help</span>
               </TabsTrigger>
               <TabsTrigger value="account" className="gap-2">
-                <UserCog className="w-4 h-4" />
+                {/* Account Icon - Gear with user */}
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="3" fill="url(#account-grad)" />
+                  <path d="M12 2l1.5 2.5h3l.5 3 2.5 1.5-1 2.5 1 2.5-2.5 1.5-.5 3h-3L12 22l-1.5-2.5h-3l-.5-3L4.5 15l1-2.5-1-2.5L7 8.5l.5-3h3L12 2z" stroke="url(#account-grad)" strokeWidth="1.5" fill="none" />
+                  <defs>
+                    <linearGradient id="account-grad" x1="4" y1="2" x2="20" y2="22">
+                      <stop stopColor="#6366F1" />
+                      <stop offset="1" stopColor="#EC4899" />
+                    </linearGradient>
+                  </defs>
+                </svg>
                 <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
             </TabsList>
@@ -1108,7 +1145,7 @@ const Profile = () => {
               </div>
             </TabsContent>
           </Tabs>
-        </motion.div>
+        </div>
       </div>
 
       {/* Support Chat Widget - Only shown when triggered from this page */}
