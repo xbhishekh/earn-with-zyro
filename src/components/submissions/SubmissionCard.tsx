@@ -141,6 +141,19 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
     }
   };
 
+  const handleFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current && isVideoFile) {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      } else if ((videoRef.current as any).webkitRequestFullscreen) {
+        (videoRef.current as any).webkitRequestFullscreen();
+      } else if ((videoRef.current as any).msRequestFullscreen) {
+        (videoRef.current as any).msRequestFullscreen();
+      }
+    }
+  };
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 transition-all">
       {/* Header - Platform icon left, Volume icon right */}
@@ -197,7 +210,12 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
                 <Play className="w-4 h-4 text-white/80" />
               )}
             </div>
-            <Maximize2 className="w-4 h-4 text-white/80" />
+            <button 
+              onClick={handleFullscreen}
+              className="p-1 hover:bg-white/20 rounded transition-colors"
+            >
+              <Maximize2 className="w-4 h-4 text-white/80" />
+            </button>
           </div>
         </div>
       </div>
