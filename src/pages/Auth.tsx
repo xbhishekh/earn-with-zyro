@@ -10,6 +10,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import { consumeRedirectIntent, getRedirectIntent, sanitizeRedirectPath, setRedirectIntent } from "@/lib/redirect-intent";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Validation schemas
@@ -38,6 +39,9 @@ const Auth = () => {
   } = useAuth();
 
   const mode = searchParams.get("mode");
+  const redirectToParam = searchParams.get("redirectTo");
+  const redirectTo = sanitizeRedirectPath(redirectToParam) ?? getRedirectIntent();
+
   const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
@@ -53,9 +57,22 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
 
+  // Persist redirect intent (supports refresh / oauth roundtrip)
+  useEffect(() => {
+    if (redirectTo) {
+      setRedirectIntent(redirectTo);
+    }
+  }, [redirectTo]);
+
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
+      const intent = consumeRedirectIntent();
+      if (intent) {
+        navigate(intent, { replace: true });
+        return;
+      }
+
       if (isOwner || isAdmin) {
         navigate("/admin", { replace: true });
       } else {
@@ -540,7 +557,10 @@ const Auth = () => {
         className="w-full"
         onClick={async () => {
           setIsLoading(true);
-          const { error } = await signInWithGoogle();
+          // If user came from a campaign deep link, preserve it for OAuth roundtrip.
+          if (redirectTo) setRedirectIntent(redirectTo);
+
+          const { error } = await signInWithGoogle(redirectTo ?? undefined);
           if (error) {
             toast.error(error.message);
           }
