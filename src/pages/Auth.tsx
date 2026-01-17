@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Mail, User, ArrowRight, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
@@ -19,6 +19,7 @@ const emailSchema = z.string().email("Please enter a valid email address");
 type AuthStep = "email" | "otp";
 
 const REMEMBER_ME_KEY = "zyrozo_remember_me";
+const RESEND_COOLDOWN = 30; // seconds
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -39,9 +40,12 @@ const Auth = () => {
 
   const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
   const [rememberMe, setRememberMe] = useState(true);
+  const [resendTimer, setResendTimer] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -55,6 +59,30 @@ const Auth = () => {
       setRedirectIntent(redirectTo);
     }
   }, [redirectTo]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Start resend countdown
+  const startResendTimer = () => {
+    setResendTimer(RESEND_COOLDOWN);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -95,6 +123,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
+    setIsSendingOtp(true);
 
     try {
       const metadata = isSignup
@@ -118,12 +147,14 @@ const Auth = () => {
           setOtpType(returnedOtpType);
         }
         setStep("otp");
+        startResendTimer();
         toast.success("Verification code sent to your email!");
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
+      setIsSendingOtp(false);
     }
   };
 
@@ -164,39 +195,52 @@ const Auth = () => {
       <h1 className="font-display text-3xl font-bold mb-2">
         Check your email
       </h1>
-      <p className="text-muted-foreground mb-8">
+      <p className="text-muted-foreground mb-4">
         We sent an 8-digit code to <span className="text-foreground font-medium">{email}</span>
       </p>
+      
+      {/* Spam hint */}
+      <div className="bg-muted/50 border border-border rounded-lg p-3 mb-6 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">💡 Tip:</span> Check your spam/junk folder if you don't see the email within a minute.
+      </div>
 
       <div className="space-y-6">
-        <div className="flex justify-center">
-          <InputOTP
-            maxLength={8}
-            value={otp}
-            onChange={(value) => {
-              setOtp(value);
-              if (value.length === 8) {
-                handleVerifyOtp(value);
-              }
-            }}
-            disabled={isLoading}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-              <InputOTPSlot index={6} />
-              <InputOTPSlot index={7} />
-            </InputOTPGroup>
-          </InputOTP>
-        </div>
-
-        {isLoading && (
+        {isSendingOtp ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Sending code...</p>
+          </div>
+        ) : (
           <div className="flex justify-center">
+            <InputOTP
+              maxLength={8}
+              value={otp}
+              onChange={(value) => {
+                setOtp(value);
+                if (value.length === 8) {
+                  handleVerifyOtp(value);
+                }
+              }}
+              disabled={isLoading}
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+                <InputOTPSlot index={6} />
+                <InputOTPSlot index={7} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+        )}
+
+        {isLoading && !isSendingOtp && (
+          <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Verifying...</p>
           </div>
         )}
 
@@ -205,6 +249,8 @@ const Auth = () => {
             onClick={() => {
               setStep("email");
               setOtp("");
+              setResendTimer(0);
+              if (timerRef.current) clearInterval(timerRef.current);
             }}
             className="text-muted-foreground hover:text-foreground text-sm"
           >
@@ -212,28 +258,35 @@ const Auth = () => {
           </button>
           
           <div>
-            <button
-              onClick={async () => {
-                setIsLoading(true);
-                const metadata = isSignup
-                  ? {
-                      username: username || email.split("@")[0],
-                      displayName: displayName || username || email.split("@")[0],
-                    }
-                  : undefined;
-                const { error } = await sendOtp(email, metadata);
-                if (error) {
-                  toast.error("Failed to resend code. Please try again.");
-                } else {
-                  toast.success("New code sent!");
-                }
-                setIsLoading(false);
-              }}
-              disabled={isLoading}
-              className="text-primary hover:underline text-sm font-medium"
-            >
-              Resend code
-            </button>
+            {resendTimer > 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Resend code in <span className="font-medium text-foreground">{resendTimer}s</span>
+              </p>
+            ) : (
+              <button
+                onClick={async () => {
+                  setIsSendingOtp(true);
+                  const metadata = isSignup
+                    ? {
+                        username: username || email.split("@")[0],
+                        displayName: displayName || username || email.split("@")[0],
+                      }
+                    : undefined;
+                  const { error } = await sendOtp(email, metadata);
+                  if (error) {
+                    toast.error("Failed to resend code. Please try again.");
+                  } else {
+                    startResendTimer();
+                    toast.success("New code sent!");
+                  }
+                  setIsSendingOtp(false);
+                }}
+                disabled={isSendingOtp}
+                className="text-primary hover:underline text-sm font-medium"
+              >
+                Resend code
+              </button>
+            )}
           </div>
         </div>
       </div>
