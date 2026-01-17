@@ -181,12 +181,15 @@ export const CampaignSidebar = ({
         {/* Campaign Header - Whop Style Full-Width Banner (24% of sidebar) */}
         <div className="relative">
           {/* Full-Bleed Hero Banner - Edge to Edge */}
-          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center">
+          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center relative">
+            {/* Fallback gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-zinc-900 to-secondary/30" />
+            
             {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain relative z-10"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
