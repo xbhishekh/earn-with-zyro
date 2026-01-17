@@ -865,44 +865,44 @@ const CampaignDetail = () => {
                 </div>
               )}
 
-              {/* Stats Grid - Colorful Whop Style */}
-              <div className="flex flex-wrap items-start gap-x-8 gap-y-4 py-5 border-y border-border mb-6">
-                <div>
+              {/* Stats Grid - Colorful Whop Style - Responsive Full Width */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6 py-5 border-y border-border mb-6">
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">REWARD</p>
                   <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-4 py-1.5 text-sm shadow-lg shadow-blue-500/25">
                     ${campaign.reward_per_1k_views} / 1K
                   </Badge>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">TYPE</p>
                   <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
                     {campaign.campaign_type || "UGC"}
                   </Badge>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">MINIMUM PAYOUT</p>
                   <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
                     ${(campaign.min_payout || 0).toFixed(2)}
                   </Badge>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">MAXIMUM PAYOUT</p>
                   <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
                     ${campaign.max_payout ? campaign.max_payout.toLocaleString() + '.00' : "∞"}
                   </Badge>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">CATEGORY</p>
                   <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
                     {campaign.category || "General"}
                   </Badge>
                 </div>
                 {campaign.platforms && campaign.platforms.length > 0 && (
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">PLATFORMS</p>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       {campaign.platforms.map((p) => (
-                        <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
+                        <span key={p} className="text-xl sm:text-2xl" title={p}>{getPlatformIcon(p)}</span>
                       ))}
                     </div>
                   </div>
