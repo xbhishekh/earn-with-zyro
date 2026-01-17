@@ -28,9 +28,11 @@ import {
   Video,
   Share2,
   Copy,
-  Menu
+  Menu,
+  MessageCircle,
+  ClipboardList
 } from "lucide-react";
-import { CampaignSidebar } from "@/components/campaigns/CampaignSidebar";
+import { CampaignSidebar, FullscreenChatView, FullscreenSubmissionsView } from "@/components/campaigns/CampaignSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +109,10 @@ const CampaignDetail = () => {
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rewards");
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
+  
+  // Fullscreen views
+  const [showFullscreenChat, setShowFullscreenChat] = useState(false);
+  const [showFullscreenSubmissions, setShowFullscreenSubmissions] = useState(false);
   
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -320,7 +326,6 @@ const CampaignDetail = () => {
   // Parse rules_guidelines into requirement pills
   const parseRequirements = (guidelines: string | null): string[] => {
     if (!guidelines) return [];
-    // Split by newlines, filter empty lines, trim whitespace
     return guidelines
       .split('\n')
       .map(line => line.trim())
@@ -353,7 +358,6 @@ const CampaignDetail = () => {
         icon = "📦";
         title = "Dropbox Asset";
       } else {
-        // Try to extract domain name
         try {
           const domain = new URL(url).hostname.replace('www.', '');
           title = domain;
@@ -382,11 +386,10 @@ const CampaignDetail = () => {
     );
   }
 
-  // If not a member, redirect back to campaigns page (join/waitlist happens there)
+  // If not a member, redirect back to campaigns page
   if (!isMember) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
         <header className="glass-card border-b border-border sticky top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-14">
@@ -430,6 +433,41 @@ const CampaignDetail = () => {
           </motion.div>
         </div>
       </div>
+    );
+  }
+
+  // Fullscreen Chat View
+  if (showFullscreenChat) {
+    return (
+      <FullscreenChatView
+        campaign={{
+          id: campaign.id,
+          name: campaign.name,
+          slug: campaign.slug,
+          thumbnail_url: campaign.thumbnail_url,
+          rules_guidelines: campaign.rules_guidelines,
+          reward_per_1k_views: campaign.reward_per_1k_views
+        }}
+        chatRoomId={chatRoomId}
+        onClose={() => setShowFullscreenChat(false)}
+      />
+    );
+  }
+
+  // Fullscreen Submissions View
+  if (showFullscreenSubmissions) {
+    return (
+      <FullscreenSubmissionsView
+        campaign={{
+          id: campaign.id,
+          name: campaign.name,
+          slug: campaign.slug,
+          thumbnail_url: campaign.thumbnail_url,
+          rules_guidelines: campaign.rules_guidelines,
+          reward_per_1k_views: campaign.reward_per_1k_views
+        }}
+        onClose={() => setShowFullscreenSubmissions(false)}
+      />
     );
   }
 
@@ -485,10 +523,19 @@ const CampaignDetail = () => {
                         name: campaign.name,
                         slug: campaign.slug,
                         thumbnail_url: campaign.thumbnail_url,
-                        rules_guidelines: campaign.rules_guidelines
+                        rules_guidelines: campaign.rules_guidelines,
+                        reward_per_1k_views: campaign.reward_per_1k_views
                       }}
                       chatRoomId={chatRoomId}
                       isMember={isMember}
+                      onOpenChat={() => {
+                        setMobileSidebarOpen(false);
+                        setShowFullscreenChat(true);
+                      }}
+                      onOpenSubmissions={() => {
+                        setMobileSidebarOpen(false);
+                        setShowFullscreenSubmissions(true);
+                      }}
                     />
                   </div>
                 </SheetContent>
@@ -507,22 +554,25 @@ const CampaignDetail = () => {
       {/* Two Column Layout - Whop Style */}
       <div className="flex">
         {/* Left Sidebar */}
-        <aside className="hidden lg:block w-72 shrink-0 p-4 border-r border-border">
+        <aside className="hidden lg:block w-72 shrink-0 p-4 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
           <CampaignSidebar
             campaign={{
               id: campaign.id,
               name: campaign.name,
               slug: campaign.slug,
               thumbnail_url: campaign.thumbnail_url,
-              rules_guidelines: campaign.rules_guidelines
+              rules_guidelines: campaign.rules_guidelines,
+              reward_per_1k_views: campaign.reward_per_1k_views
             }}
             chatRoomId={chatRoomId}
             isMember={isMember}
+            onOpenChat={() => setShowFullscreenChat(true)}
+            onOpenSubmissions={() => setShowFullscreenSubmissions(true)}
           />
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 px-4 py-6 max-w-4xl mx-auto pb-28">
+        <main className="flex-1 px-4 py-6 max-w-4xl mx-auto">
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -644,7 +694,6 @@ const CampaignDetail = () => {
           <div className="mb-6">
             <h3 className="text-xs text-muted-foreground uppercase mb-3">ASSETS</h3>
             <div className="space-y-2">
-              {/* Database assets first */}
               {campaignAssets.map((asset) => {
                 const getAssetIcon = () => {
                   switch (asset.asset_type) {
@@ -695,7 +744,6 @@ const CampaignDetail = () => {
                 );
               })}
               
-              {/* Fallback: Legacy assets from rules_guidelines */}
               {campaignAssets.length === 0 && assets.map((asset, i) => (
                 <a
                   key={i}
@@ -743,15 +791,19 @@ const CampaignDetail = () => {
           </p>
         </div>
 
-        {/* Tabs - My Submissions */}
+        {/* Tabs - About & My Submissions with Submit Button */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full max-w-xs">
-            <TabsTrigger value="rewards" className="flex-1">About</TabsTrigger>
-            <TabsTrigger value="submissions" className="flex-1">My submissions</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="w-auto">
+              <TabsTrigger value="rewards">About</TabsTrigger>
+              <TabsTrigger value="submissions">My submissions</TabsTrigger>
+            </TabsList>
+            <Button onClick={() => setShowSubmitModal(true)} size="sm">
+              Submit
+            </Button>
+          </div>
 
-          <TabsContent value="rewards" className="mt-4 space-y-4">
-            {/* Description */}
+          <TabsContent value="rewards" className="mt-0 space-y-4">
             {campaign.description && (
               <div className="glass-card rounded-xl p-4">
                 <h3 className="font-medium mb-2">About this campaign</h3>
@@ -759,17 +811,29 @@ const CampaignDetail = () => {
               </div>
             )}
 
-            {/* Mobile-only Chat/Announcements Card */}
             <div className="lg:hidden">
-              <div className="glass-card rounded-xl p-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  View sidebar for Chat & Announcements (visible on desktop)
-                </p>
+              <div className="glass-card rounded-xl p-4 space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setShowFullscreenChat(true)}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Open Chat
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setShowFullscreenSubmissions(true)}
+                >
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  View My Submissions
+                </Button>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="submissions" className="mt-4">
+          <TabsContent value="submissions" className="mt-0">
             {submissions.length === 0 ? (
               <div className="glass-card rounded-xl p-8 text-center">
                 <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
@@ -817,22 +881,6 @@ const CampaignDetail = () => {
         </main>
       </div>
 
-      {/* Sticky Bottom Bar - Whop Style */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border">
-        <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-display font-bold">{campaign.name}</h3>
-              <p className="text-sm text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
-            </div>
-            
-            <Button onClick={() => setShowSubmitModal(true)} size="lg" className="bg-primary hover:bg-primary/90 px-8 rounded-xl">
-              Submit
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Submit Modal - Whop Style with Video Upload */}
       <Dialog open={showSubmitModal} onOpenChange={(open) => {
         setShowSubmitModal(open);
@@ -843,7 +891,6 @@ const CampaignDetail = () => {
             <DialogTitle className="text-center text-xl">Create submission</DialogTitle>
           </DialogHeader>
           
-          {/* Hidden file input for video */}
           <input
             type="file"
             ref={videoInputRef}
@@ -852,7 +899,6 @@ const CampaignDetail = () => {
             className="hidden"
           />
           
-          {/* Info Banner */}
           <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3">
             <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <p className="text-sm text-warning">
