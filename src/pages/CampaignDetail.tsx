@@ -1038,7 +1038,7 @@ const CampaignDetail = () => {
               </div>
 
               {/* My Submissions Button */}
-              {isMember && (
+              {user && (
                 <div className="mb-6">
                   <Link to="/my-submissions">
                     <Button 
