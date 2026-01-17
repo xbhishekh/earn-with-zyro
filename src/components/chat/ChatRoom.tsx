@@ -792,7 +792,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                           {/* Avatar Column */}
                           {showHeader ? (
                             <Link to={`/u/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-sm font-semibold overflow-hidden ring-2 ring-background">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-sm font-semibold overflow-hidden ring-2 ring-background hover:ring-primary/50 transition-all">
                                 {msg.profiles?.avatar_url ? (
                                   <img src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
