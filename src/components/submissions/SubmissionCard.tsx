@@ -113,7 +113,6 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
   const isApprovedOrPaid = submission.status === 'approved' || submission.status === 'paid';
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isHovering, setIsHovering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   
   // Check if video_url is a direct video file (for video preview)
@@ -127,24 +126,18 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
   // Get description/title from submission or use campaign name
   const title = (submission as any).description || campaign.name;
 
-  const handleMouseEnter = () => {
-    setIsHovering(true);
+  const handleVideoClick = () => {
     if (videoRef.current && isVideoFile) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => {
-        // Autoplay might be blocked
+      if (isPlaying) {
+        videoRef.current.pause();
         setIsPlaying(false);
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    if (videoRef.current && isVideoFile) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-      setIsPlaying(false);
+      } else {
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {
+          setIsPlaying(false);
+        });
+      }
     }
   };
 
@@ -160,11 +153,10 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
         </div>
       </div>
 
-      {/* Video Thumbnail - Shows user's submitted video with hover playback */}
+      {/* Video Thumbnail - Click to play/pause inline */}
       <div 
         className="relative aspect-[9/16] bg-zinc-900 overflow-hidden cursor-pointer group"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onClick={handleVideoClick}
       >
         {isVideoFile ? (
           <video 
