@@ -805,15 +805,6 @@ const CampaignDetail = () => {
           {/* Conditional Main Content based on mainView */}
           {mainView === 'details' && (
             <>
-              {/* Platforms Icons Row */}
-              {campaign.platforms && campaign.platforms.length > 0 && (
-                <div className="flex gap-2 mb-6">
-                  {campaign.platforms.map((p) => (
-                    <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
-                  ))}
-                </div>
-              )}
-
               {/* Video/Thumbnail Preview - Whop Style */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }} 
@@ -851,42 +842,71 @@ const CampaignDetail = () => {
                 </p>
               </div>
 
-              {/* Budget Progress - Whop Style */}
+              {/* Budget Progress - Whop Style with Gradient */}
               {budgetTotal > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-muted-foreground uppercase text-xs">PAID OUT</span>
-                    <span className="font-medium">{budgetPercent}%</span>
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-muted-foreground uppercase text-xs font-medium tracking-wide">PAID OUT</span>
+                    <span className="text-sm font-semibold text-foreground">{budgetPercent}%</span>
                   </div>
-                  <p className="text-sm mb-2">
-                    ${budgetSpent.toLocaleString()} of ${budgetTotal.toLocaleString()} paid out
+                  <p className="text-sm text-foreground mb-3">
+                    <span className="font-semibold text-primary">${budgetSpent.toLocaleString()}</span>
+                    <span className="text-muted-foreground"> of </span>
+                    <span className="font-semibold">${budgetTotal.toLocaleString()}</span>
+                    <span className="text-muted-foreground"> paid out</span>
                   </p>
-                  <Progress value={budgetPercent} className="h-2" />
+                  {/* Gradient Progress Bar */}
+                  <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-orange-500 via-orange-400 to-amber-300 transition-all duration-500"
+                      style={{ width: `${budgetPercent}%` }}
+                    />
+                  </div>
                 </div>
               )}
 
-              {/* Stats Grid - Whop Style */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border mb-6">
+              {/* Stats Grid - Colorful Whop Style */}
+              <div className="flex flex-wrap items-start gap-x-8 gap-y-4 py-5 border-y border-border mb-6">
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
-                  <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views} / 1K</Badge>
+                  <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">REWARD</p>
+                  <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-4 py-1.5 text-sm shadow-lg shadow-blue-500/25">
+                    ${campaign.reward_per_1k_views} / 1K
+                  </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
-                  <Badge variant="outline">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
+                  <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">TYPE</p>
+                  <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
+                    {campaign.campaign_type || "UGC"}
+                  </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
-                  <Badge variant="outline">${campaign.min_payout || 0}</Badge>
+                  <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">MINIMUM PAYOUT</p>
+                  <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
+                    ${(campaign.min_payout || 0).toFixed(2)}
+                  </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
-                  <Badge variant="outline">${campaign.max_payout || "∞"}</Badge>
+                  <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">MAXIMUM PAYOUT</p>
+                  <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
+                    ${campaign.max_payout ? campaign.max_payout.toLocaleString() + '.00' : "∞"}
+                  </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
-                  <Badge variant="outline">{campaign.category || "General"}</Badge>
+                  <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">CATEGORY</p>
+                  <Badge variant="secondary" className="bg-muted text-foreground font-medium px-4 py-1.5 text-sm">
+                    {campaign.category || "General"}
+                  </Badge>
                 </div>
+                {campaign.platforms && campaign.platforms.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">PLATFORMS</p>
+                    <div className="flex items-center gap-1.5">
+                      {campaign.platforms.map((p) => (
+                        <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Requirements Section - Whop Style Pills */}
