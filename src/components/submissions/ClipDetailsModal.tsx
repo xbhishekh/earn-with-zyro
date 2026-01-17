@@ -211,7 +211,7 @@ export const ClipDetailsModal = ({
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Days until</p>
-                <p className="text-lg font-semibold">7</p>
+                <p className="text-lg font-semibold">3</p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Next payout</p>
