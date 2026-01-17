@@ -477,7 +477,7 @@ export const FullscreenChatView = ({
   );
 };
 
-// Fullscreen Submissions View Component
+// Fullscreen Submissions View Component - Whop V2 Style
 export const FullscreenSubmissionsView = ({
   campaign,
   onClose
@@ -489,9 +489,10 @@ export const FullscreenSubmissionsView = ({
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'rewards' | 'submissions'>('submissions');
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -501,7 +502,7 @@ export const FullscreenSubmissionsView = ({
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username, display_name, avatar_url')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (profileData) {
@@ -522,6 +523,30 @@ export const FullscreenSubmissionsView = ({
 
     fetchData();
   }, [campaign.id, user]);
+
+  // Status counts
+  const statusCounts = {
+    all: submissions.length,
+    pending: submissions.filter(s => !s.status || s.status === 'pending').length,
+    approved: submissions.filter(s => s.status === 'approved' || s.status === 'paid').length,
+    rejected: submissions.filter(s => s.status === 'rejected').length,
+    flagged: submissions.filter(s => s.status === 'flagged').length,
+  };
+
+  // Filter and sort submissions
+  const filteredSubmissions = submissions
+    .filter(sub => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'pending') return !sub.status || sub.status === 'pending';
+      if (statusFilter === 'approved') return sub.status === 'approved' || sub.status === 'paid';
+      return sub.status === statusFilter;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === 'views') return (b.views_count || 0) - (a.views_count || 0);
+      if (sortBy === 'earnings') return (b.estimated_earnings || 0) - (a.estimated_earnings || 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const getStatusBadge = (status: string | null) => {
     switch (status) {
@@ -549,16 +574,36 @@ export const FullscreenSubmissionsView = ({
     setDetailsModalOpen(true);
   };
 
-  // Parse requirements from guidelines
-  const parseRequirements = (guidelines: string | null): string[] => {
-    if (!guidelines) return [];
-    return guidelines
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0 && !line.startsWith('#'));
+  const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'other' => {
+    if (!url) return 'other';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    return 'other';
   };
 
-  const requirements = parseRequirements(campaign.rules_guidelines);
+  const PlatformIcon = ({ platform }: { platform: string }) => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="w-4 h-4" />;
+      case 'tiktok':
+        return (
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+          </svg>
+        );
+      default:
+        return <Video className="w-4 h-4" />;
+    }
+  };
+
+  const statusFilters = [
+    { value: 'all', label: 'All Clips' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'flagged', label: 'Flagged' },
+  ];
 
   return (
     <>
@@ -582,174 +627,174 @@ export const FullscreenSubmissionsView = ({
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-border bg-card">
-        <div className="flex">
-          <button 
-            onClick={() => setActiveTab('rewards')}
-            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'rewards' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            Rewards
-          </button>
-          <button 
-            onClick={() => setActiveTab('submissions')}
-            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'submissions' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            My submissions
-          </button>
-        </div>
-      </div>
+      {/* Content - No Tabs, Just My Submissions */}
+      <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Title */}
+          <h1 className="text-2xl font-bold mb-6">My Submissions</h1>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
-        {activeTab === 'rewards' ? (
-          <div className="max-w-2xl mx-auto space-y-6">
-            {/* Campaign Thumbnail */}
-            {campaign.thumbnail_url && (
-              <div className="rounded-xl overflow-hidden aspect-video bg-muted">
-                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
-              </div>
-            )}
-
-            {/* Reward Info */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="bg-card border border-border rounded-lg p-3">
-                <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
-                <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views || 1} / 1K</Badge>
-              </div>
-            </div>
-
-            {/* Requirements */}
-            {requirements.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-3 uppercase text-muted-foreground">Requirements</h3>
-                <div className="flex flex-wrap gap-2">
-                  {requirements.slice(0, 5).map((req, i) => (
-                    <Badge key={i} variant="outline" className="text-sm">{req}</Badge>
-                  ))}
-                </div>
-                {requirements.length > 5 && (
-                  <p className="text-sm text-muted-foreground mt-3 bg-muted/50 rounded-lg p-3">
-                    {requirements.slice(5).join('\n')}
-                  </p>
-                )}
-              </div>
-            )}
+          {/* Status Filter Tabs - Whop V2 Style */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {statusFilters.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setStatusFilter(filter.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  statusFilter === filter.value
+                    ? 'bg-foreground text-background font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                {filter.label}
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs px-1.5 py-0.5 ${
+                    statusFilter === filter.value ? 'bg-background/20 text-background' : ''
+                  }`}
+                >
+                  {statusCounts[filter.value as keyof typeof statusCounts]}
+                </Badge>
+              </button>
+            ))}
           </div>
-        ) : (
-          <>
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : submissions.length === 0 ? (
-              <div className="text-center py-12">
-                <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No submissions yet</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {submissions.map((sub) => {
-                  const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
-                  const username = profile?.username || 'Unknown';
-                  const displayName = profile?.display_name || username;
-                  
-                  return (
-                    <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-colors">
-                      {/* Video Thumbnail */}
-                      <div className="relative aspect-[9/16] bg-muted overflow-hidden">
-                        {thumbnailUrl ? (
-                          <img 
-                            src={thumbnailUrl} 
-                            alt="Video thumbnail" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                            <Video className="w-12 h-12 text-muted-foreground/50" />
-                          </div>
-                        )}
-                        
-                        {/* Play button overlay */}
-                        <a 
-                          href={sub.social_link || sub.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors group"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Play className="w-5 h-5 text-black ml-1" fill="currentColor" />
-                          </div>
-                        </a>
+
+          {/* Sort Dropdown */}
+          <div className="flex gap-2 mb-6">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px] bg-muted border-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most Recent</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="views">Most Views</SelectItem>
+                <SelectItem value="earnings">Highest Earnings</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Submissions Grid - 3 columns like Whop */}
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : filteredSubmissions.length === 0 ? (
+            <div className="text-center py-12">
+              <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">No submissions found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSubmissions.map((sub) => {
+                const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
+                const username = profile?.username || 'Unknown';
+                const displayName = profile?.display_name || username;
+                const platform = detectPlatform(sub.social_link);
+                const isApprovedOrPaid = sub.status === 'approved' || sub.status === 'paid';
+                
+                return (
+                  <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-colors">
+                    {/* Platform Header */}
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                      <div className="text-muted-foreground">
+                        <PlatformIcon platform={platform} />
                       </div>
-
-                      {/* Content */}
-                      <div className="p-3 space-y-3">
-                        {/* Title and Status */}
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium truncate flex-1">{campaign.name}</p>
-                          {getStatusBadge(sub.status)}
-                        </div>
-
-                        {/* User Info */}
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-5 h-5">
-                            <AvatarImage src={profile?.avatar_url || ''} />
-                            <AvatarFallback className="text-[10px]">
-                              {displayName.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground truncate">@{username}</span>
-                        </div>
-
-                        {/* Dates and Earnings */}
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <div>
-                            <p className="text-muted-foreground">Submitted</p>
-                            <p className="font-medium">{format(new Date(sub.created_at), 'MMM d')}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Status</p>
-                            <p className="font-medium capitalize">{sub.status || 'Pending'}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-muted-foreground">Est. Payout</p>
-                            <p className="font-medium text-success">${(sub.estimated_earnings || 0).toFixed(2)}</p>
-                          </div>
-                        </div>
-
-                        {/* Views and View Payouts Button */}
-                        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Eye className="w-4 h-4" />
-                            <span className="text-sm font-medium">
-                              {formatViewCount(sub.views_count || 0)}
-                            </span>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-xs h-8"
-                            onClick={() => handleViewPayouts(sub)}
-                          >
-                            View Payouts
-                          </Button>
-                        </div>
+                      <div className="text-muted-foreground">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        </svg>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
 
-      {/* How do Content Rewards work? Link */}
-      <div className="text-right px-4 py-2 border-t border-border bg-card">
-        <button className="text-xs text-muted-foreground hover:text-foreground">
-          How do Content Rewards work?
-        </button>
+                    {/* Video Thumbnail - Clickable to redirect */}
+                    <a 
+                      href={sub.social_link || sub.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block relative aspect-[9/16] bg-muted overflow-hidden group cursor-pointer"
+                    >
+                      {thumbnailUrl ? (
+                        <img 
+                          src={thumbnailUrl} 
+                          alt="Video thumbnail" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                          <Video className="w-12 h-12 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Play className="w-5 h-5 text-black ml-1" fill="currentColor" />
+                        </div>
+                      </div>
+                    </a>
+
+                    {/* Content */}
+                    <div className="p-3 space-y-3">
+                      {/* Title and Status */}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium truncate flex-1">{campaign.name}</p>
+                        {getStatusBadge(sub.status)}
+                      </div>
+
+                      {/* User Info */}
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarImage src={profile?.avatar_url || ''} />
+                          <AvatarFallback className="text-[10px]">
+                            {displayName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-muted-foreground truncate">@{username}</span>
+                      </div>
+
+                      {/* Dates and Earnings - Show Approved on for approved/paid */}
+                      <div className={`grid gap-2 text-xs ${isApprovedOrPaid ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                        <div>
+                          <p className="text-muted-foreground">Submitted on</p>
+                          <p className="font-medium">{format(new Date(sub.created_at), 'MMM d, yyyy')}</p>
+                        </div>
+                        {isApprovedOrPaid && (
+                          <div>
+                            <p className="text-muted-foreground">Approved on</p>
+                            <p className="font-medium">{format(new Date(sub.approved_at || sub.created_at), 'MMM d, yyyy')}</p>
+                          </div>
+                        )}
+                        <div className={isApprovedOrPaid ? 'text-right' : 'text-right'}>
+                          <p className="text-muted-foreground">Est. Payout</p>
+                          <p className="font-medium text-success">${(sub.estimated_earnings || 0).toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      {/* Views and View Payouts Button */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-1.5 text-orange-500">
+                          <Eye className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            {formatViewCount(sub.views_count || 0)}
+                          </span>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs h-8 border-primary/50 text-primary hover:bg-primary/10"
+                          onClick={() => handleViewPayouts(sub)}
+                        >
+                          View Payouts
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
 
