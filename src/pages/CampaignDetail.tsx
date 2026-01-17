@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Clock,
   Loader2,
   Zap,
@@ -30,9 +30,14 @@ import {
   Copy,
   Menu,
   MessageCircle,
-  ClipboardList
+  ClipboardList,
 } from "lucide-react";
-import { CampaignSidebar, FullscreenChatView, FullscreenSubmissionsView, FullscreenAnnouncementsView } from "@/components/campaigns/CampaignSidebar";
+import {
+  CampaignSidebar,
+  FullscreenChatView,
+  FullscreenSubmissionsView,
+  FullscreenAnnouncementsView,
+} from "@/components/campaigns/CampaignSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,8 +46,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { setRedirectIntent } from "@/lib/redirect-intent";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -99,17 +106,27 @@ interface Submission {
 const CampaignDetail = () => {
   const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading, signOut } = useAuth();
-  
+
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [campaignAssets, setCampaignAssets] = useState<CampaignAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
+  const [banReason, setBanReason] = useState<string | null>(null);
+  const [waitlistStatus, setWaitlistStatus] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("rewards");
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
-  
+
+  // Join / waitlist state
+  const [joiningCampaign, setJoiningCampaign] = useState(false);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [waitlistAnswers, setWaitlistAnswers] = useState<string[]>([]);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+
   // Fullscreen views
   const [showFullscreenChat, setShowFullscreenChat] = useState(false);
   const [showFullscreenSubmissions, setShowFullscreenSubmissions] = useState(false);
@@ -157,13 +174,15 @@ const CampaignDetail = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth", { replace: true });
+      const target = `${location.pathname}${location.search}${location.hash}`;
+      setRedirectIntent(target);
+      navigate(`/auth?redirectTo=${encodeURIComponent(target)}`, { replace: true });
       return;
     }
     if ((id || slug) && user) {
       fetchCampaignData();
     }
-  }, [id, slug, user, authLoading, navigate]);
+  }, [id, slug, user, authLoading, navigate, location.pathname, location.search, location.hash]);
 
   const fetchCampaignData = async () => {
     try {
@@ -211,6 +230,72 @@ const CampaignDetail = () => {
       toast.error("Failed to load campaign");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openWaitlist = () => {
+    const count = campaign?.waitlist_questions?.length || 0;
+    setWaitlistAnswers(new Array(count).fill(""));
+    setShowWaitlistModal(true);
+  };
+
+  const handleJoinCampaign = async () => {
+    if (!user || !campaign) return;
+    if (isBanned) return;
+
+    if (campaign.join_type === "waitlist") {
+      openWaitlist();
+      return;
+    }
+
+    setJoiningCampaign(true);
+    try {
+      const { error } = await supabase.from("campaign_members").insert({
+        user_id: user.id,
+        campaign_id: campaign.id,
+      });
+
+      if (error) throw error;
+
+      toast.success("Successfully joined!");
+      setIsMember(true);
+      // refresh data for chat room / assets
+      fetchCampaignData();
+    } catch {
+      toast.error("Failed to join campaign");
+    } finally {
+      setJoiningCampaign(false);
+    }
+  };
+
+  const handleWaitlistSubmit = async () => {
+    if (!user || !campaign) return;
+
+    setWaitlistSubmitting(true);
+    try {
+      const requiredCount = campaign.waitlist_questions?.length || 0;
+      const answers = waitlistAnswers.slice(0, requiredCount).map((a) => a.trim());
+
+      if (requiredCount > 0 && answers.some((a) => !a)) {
+        toast.error("Please answer all required questions");
+        return;
+      }
+
+      const { error } = await supabase.from("campaign_waitlist_requests").insert({
+        user_id: user.id,
+        campaign_id: campaign.id,
+        answers,
+      });
+
+      if (error) throw error;
+
+      toast.success("Application submitted!");
+      setShowWaitlistModal(false);
+      setWaitlistStatus("pending");
+    } catch {
+      toast.error("Failed to submit application");
+    } finally {
+      setWaitlistSubmitting(false);
     }
   };
 
@@ -387,8 +472,10 @@ const CampaignDetail = () => {
     );
   }
 
-  // If not a member, redirect back to campaigns page
+  // If not a member, show join / waitlist status here (so shared links work)
   if (!isMember) {
+    const isWaitlist = campaign.join_type === "waitlist";
+
     return (
       <div className="min-h-screen bg-background">
         <header className="glass-card border-b border-border sticky top-0 z-50">
@@ -410,29 +497,107 @@ const CampaignDetail = () => {
             Back to Campaigns
           </Button>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card rounded-2xl p-8 text-center"
           >
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               {campaign.thumbnail_url ? (
-                <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-white font-bold text-2xl">{campaign.name.charAt(0)}</span>
               )}
             </div>
-            
+
             <h1 className="font-display text-2xl font-bold mb-2">{campaign.name}</h1>
             <p className="text-muted-foreground mb-6">
-              You need to join this campaign first to view its content and submit.
+              {isBanned
+                ? banReason
+                  ? `You are banned from this campaign: ${banReason}`
+                  : "You are banned from this campaign."
+                : waitlistStatus === "pending"
+                  ? "Your application is pending review."
+                  : waitlistStatus === "rejected"
+                    ? "Your application was rejected."
+                    : "Join to unlock the campaign content and submit your work."}
             </p>
 
-            <Button onClick={() => navigate("/campaigns")} className="w-full" size="lg">
-              Go to Campaigns to Join
-            </Button>
+            {isBanned ? (
+              <Button variant="destructive" className="w-full" size="lg" disabled>
+                <XCircle className="w-5 h-5 mr-2" />
+                Banned
+              </Button>
+            ) : waitlistStatus === "pending" ? (
+              <Button variant="outline" className="w-full" size="lg" disabled>
+                <Clock className="w-5 h-5 mr-2" />
+                Waitlisted - Pending
+              </Button>
+            ) : waitlistStatus === "rejected" ? (
+              <Button variant="destructive" className="w-full" size="lg" disabled>
+                <XCircle className="w-5 h-5 mr-2" />
+                Rejected
+              </Button>
+            ) : (
+              <Button onClick={handleJoinCampaign} className="w-full" size="lg" disabled={joiningCampaign}>
+                {joiningCampaign ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isWaitlist ? (
+                  "Join Waitlist"
+                ) : (
+                  "Join for free"
+                )}
+              </Button>
+            )}
           </motion.div>
         </div>
+
+        {/* Waitlist modal */}
+        <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">Apply to Join</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Answer the questions below to apply.
+              </p>
+
+              {campaign.waitlist_questions?.map((q, i) => (
+                <div key={i}>
+                  <Label className="text-sm">
+                    {q} <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    value={waitlistAnswers[i] || ""}
+                    onChange={(e) => {
+                      const next = [...waitlistAnswers];
+                      next[i] = e.target.value;
+                      setWaitlistAnswers(next);
+                    }}
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+              ))}
+
+              {(!campaign.waitlist_questions || campaign.waitlist_questions.length === 0) && (
+                <p className="text-center text-muted-foreground py-4">No questions required. Click submit.</p>
+              )}
+
+              <Button onClick={handleWaitlistSubmit} disabled={waitlistSubmitting} className="w-full" size="lg">
+                {waitlistSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...
+                  </>
+                ) : (
+                  "Submit Application"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { AvatarImageOptimized } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { setRedirectIntent } from "@/lib/redirect-intent";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -152,7 +153,9 @@ const Campaigns = () => {
     e.stopPropagation();
     
     if (!user) {
-      navigate("/auth");
+      const target = `/c/${campaign.slug || campaign.id}`;
+      setRedirectIntent(target);
+      navigate(`/auth?redirectTo=${encodeURIComponent(target)}`);
       return;
     }
     

@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { User, Session, type EmailOtpType } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { setRedirectIntent } from "@/lib/redirect-intent";
 
 type AppRole = "creator" | "normal_admin" | "admin" | "super_admin" | "owner" | "founder";
 
@@ -25,7 +26,7 @@ interface AuthContextType {
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: (redirectPath?: string) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -210,11 +211,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Sign in with Google OAuth
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (redirectPath?: string) => {
+    if (redirectPath) {
+      setRedirectIntent(redirectPath);
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        // Always come back to /auth; we then route instantly using redirect intent.
+        redirectTo: `${window.location.origin}/auth`,
       },
     });
 
