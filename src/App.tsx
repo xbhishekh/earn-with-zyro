@@ -8,8 +8,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
 
-// Import SuspensionGuard directly (must be inside AuthProvider context)
+// Import critical components directly
 import SuspensionGuard from "@/components/SuspensionGuard";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import NetworkStatusToast from "@/components/NetworkStatusToast";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -59,50 +61,53 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Suspense fallback={null}>
-            <Toaster />
-            <Sonner />
-          </Suspense>
-          <Suspense fallback={<PageLoader />}>
-            <SuspensionGuard>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/campaigns" element={<Campaigns />} />
-                <Route path="/campaigns/:id" element={<CampaignDetail />} />
-                <Route path="/c/:slug" element={<CampaignDetail />} />
-                <Route path="/balance" element={<Balance />} />
-                <Route path="/suspended" element={<Suspended />} />
-                <Route path="/affiliate" element={<Affiliate />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/marketplace/create" element={<MarketplaceCreate />} />
-                <Route path="/marketplace/edit/:id" element={<MarketplaceCreate />} />
-                <Route path="/marketplace/:id" element={<MarketplaceProductDetail />} />
-                <Route path="/gallery" element={<Gallery />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/u/:username" element={<UserProfile />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/support" element={<Support />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </SuspensionGuard>
-          </Suspense>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={null}>
+              <Toaster />
+              <Sonner />
+            </Suspense>
+            <NetworkStatusToast />
+            <Suspense fallback={<PageLoader />}>
+              <SuspensionGuard>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/campaigns" element={<Campaigns />} />
+                  <Route path="/campaigns/:id" element={<CampaignDetail />} />
+                  <Route path="/c/:slug" element={<CampaignDetail />} />
+                  <Route path="/balance" element={<Balance />} />
+                  <Route path="/suspended" element={<Suspended />} />
+                  <Route path="/affiliate" element={<Affiliate />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/marketplace/create" element={<MarketplaceCreate />} />
+                  <Route path="/marketplace/edit/:id" element={<MarketplaceCreate />} />
+                  <Route path="/marketplace/:id" element={<MarketplaceProductDetail />} />
+                  <Route path="/gallery" element={<Gallery />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/u/:username" element={<UserProfile />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </SuspensionGuard>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
