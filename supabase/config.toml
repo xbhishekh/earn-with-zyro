@@ -17,9 +17,3 @@ verify_jwt = false
 
 [functions.process-pending-payments]
 verify_jwt = false
-
-[functions.whop-oauth-start]
-verify_jwt = false
-
-[functions.whop-oauth-callback]
-verify_jwt = false
