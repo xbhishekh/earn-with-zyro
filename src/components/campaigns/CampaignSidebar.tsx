@@ -214,28 +214,29 @@ export const CampaignSidebar = ({
   return (
     <>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {/* Campaign Header - Whop Style Full-Width Banner (24% of sidebar) */}
+        {/* Campaign Header - Whop Style Full-Width Banner */}
         <div className="relative">
-          {/* Full-Bleed Hero Banner - Edge to Edge */}
-          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center relative">
-            {/* Fallback gradient background - Category based */}
+          {/* Full-Bleed Hero Banner - Responsive Height */}
+          <div className="aspect-[16/9] max-h-[200px] bg-zinc-900 overflow-hidden relative">
+            {/* Category-based gradient background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(campaign.category, campaign.campaign_type)}`} />
             
             {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name}
-                className="w-full h-full object-contain relative z-10"
+                className="w-full h-full object-cover relative z-10"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
             )}
-            {/* Gradient Overlay - Subtle at top for name visibility */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+            
+            {/* Gradient Overlay - For text visibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/30 z-20" />
             
             {/* Campaign Name at Top - Like Whop */}
-            <div className="absolute top-3 left-3 right-3 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg overflow-hidden bg-black/30 backdrop-blur-sm shrink-0">
+            <div className="absolute top-3 left-3 right-3 flex items-center gap-2 z-30">
+              <div className="w-7 h-7 rounded-lg overflow-hidden bg-black/40 backdrop-blur-sm shrink-0 border border-white/10">
                 {campaign.thumbnail_url ? (
                   <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -244,11 +245,11 @@ export const CampaignSidebar = ({
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h2 className="font-display font-bold text-sm text-white truncate drop-shadow-lg">{campaign.name}</h2>
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
-                  <span className="text-xs text-white/80">{onlineCount} online</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></span>
+                  <span className="text-xs text-white/90 font-medium">{onlineCount} online</span>
                 </div>
               </div>
             </div>
