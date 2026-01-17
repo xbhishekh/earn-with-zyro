@@ -178,29 +178,42 @@ export const CampaignSidebar = ({
   return (
     <>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {/* Campaign Header - Whop Style */}
+        {/* Campaign Header - Whop Style Large Banner */}
         <div className="relative">
-          <div className="h-16 bg-gradient-to-br from-zinc-900 to-zinc-800 overflow-hidden">
+          {/* Large Hero Banner */}
+          <div className="h-40 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
             {campaign.thumbnail_url && (
               <img 
                 src={campaign.thumbnail_url} 
                 alt="" 
-                className="w-full h-full object-cover opacity-40"
+                className="w-full h-full object-cover"
               />
             )}
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            
+            {/* Motivational Text Overlay */}
+            <div className="absolute bottom-12 left-4 right-4">
+              <p className="text-white font-display font-bold text-xl leading-tight drop-shadow-lg">
+                Make $$$<br />
+                <span className="text-white/90">doing what you love.</span>
+              </p>
+            </div>
           </div>
-          <div className="absolute -bottom-4 left-4 w-10 h-10 rounded-xl border-2 border-background overflow-hidden bg-card shadow-lg">
+          
+          {/* Campaign Logo Icon */}
+          <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl border-2 border-background overflow-hidden bg-card shadow-lg">
             {campaign.thumbnail_url ? (
               <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">{campaign.name.charAt(0)}</span>
+                <span className="text-white font-bold text-lg">{campaign.name.charAt(0)}</span>
               </div>
             )}
           </div>
         </div>
         
-        <div className="pt-6 px-4 pb-3">
+        <div className="pt-8 px-4 pb-3">
           <div className="flex items-center gap-2">
             <h2 className="font-display font-bold text-sm truncate">{campaign.name}</h2>
             <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
