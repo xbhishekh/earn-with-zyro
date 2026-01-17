@@ -321,10 +321,15 @@ const Messages = () => {
       }
 
       const conversationsData: Conversation[] = [];
+      const seenUserIds = new Set<string>(); // Track unique users to prevent duplicates
 
       for (const room of dmRooms) {
         const otherParticipant = allParticipants?.find(p => p.room_id === room.room_id);
         if (!otherParticipant) continue;
+        
+        // Skip if we already have a conversation with this user (prevent duplicates)
+        if (seenUserIds.has(otherParticipant.user_id)) continue;
+        
         const profile = profileMap.get(otherParticipant.user_id);
         if (!profile) continue;
 
@@ -351,6 +356,8 @@ const Messages = () => {
           lastMessagePreview = lastMessagePreview.substring(0, 40) + "...";
         }
 
+        seenUserIds.add(otherParticipant.user_id); // Mark user as seen
+        
         conversationsData.push({
           room_id: room.room_id,
           other_user: profile,
@@ -985,9 +992,10 @@ const Messages = () => {
               </Button>
             </div>
 
-            {/* Messages Area */}
-            <ScrollArea className="flex-1">
-              <div className="p-4 min-h-full">
+            {/* Messages Area - flex-1 with overflow to push input to bottom */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ScrollArea className="flex-1">
+                <div className="p-4">
                 {messagesLoading ? (
                   <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -1189,11 +1197,12 @@ const Messages = () => {
                     <div ref={messagesEndRef} />
                   </div>
                 )}
-              </div>
-            </ScrollArea>
+                </div>
+              </ScrollArea>
+            </div>
 
-            {/* Bottom Section - Always at the very bottom */}
-            <div className="mt-auto">
+            {/* Bottom Section - Fixed at bottom */}
+            <div className="shrink-0">
             {isTeamZyrozo ? (
               <div className="px-4 py-3 border-t border-border bg-background shrink-0">
                 <div className="flex items-center gap-3">
