@@ -11,6 +11,7 @@ const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default:
 // Import critical components directly
 import SuspensionGuard from "@/components/SuspensionGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import NetworkStatusToast from "@/components/NetworkStatusToast";
 
 // Eager load critical pages
@@ -76,29 +77,29 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/campaigns" element={<Campaigns />} />
-                  <Route path="/campaigns/:id" element={<CampaignDetail />} />
-                  <Route path="/c/:slug" element={<CampaignDetail />} />
-                  <Route path="/balance" element={<Balance />} />
+                  <Route path="/dashboard" element={<RouteErrorBoundary routeName="Dashboard"><Dashboard /></RouteErrorBoundary>} />
+                  <Route path="/campaigns" element={<RouteErrorBoundary routeName="Campaigns"><Campaigns /></RouteErrorBoundary>} />
+                  <Route path="/campaigns/:id" element={<RouteErrorBoundary routeName="Campaign"><CampaignDetail /></RouteErrorBoundary>} />
+                  <Route path="/c/:slug" element={<RouteErrorBoundary routeName="Campaign"><CampaignDetail /></RouteErrorBoundary>} />
+                  <Route path="/balance" element={<RouteErrorBoundary routeName="Balance"><Balance /></RouteErrorBoundary>} />
                   <Route path="/suspended" element={<Suspended />} />
-                  <Route path="/affiliate" element={<Affiliate />} />
+                  <Route path="/affiliate" element={<RouteErrorBoundary routeName="Affiliate"><Affiliate /></RouteErrorBoundary>} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/marketplace/create" element={<MarketplaceCreate />} />
-                  <Route path="/marketplace/edit/:id" element={<MarketplaceCreate />} />
-                  <Route path="/marketplace/:id" element={<MarketplaceProductDetail />} />
-                  <Route path="/gallery" element={<Gallery />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/u/:username" element={<UserProfile />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/support" element={<Support />} />
+                  <Route path="/marketplace" element={<RouteErrorBoundary routeName="Marketplace"><Marketplace /></RouteErrorBoundary>} />
+                  <Route path="/marketplace/create" element={<RouteErrorBoundary routeName="Create Product"><MarketplaceCreate /></RouteErrorBoundary>} />
+                  <Route path="/marketplace/edit/:id" element={<RouteErrorBoundary routeName="Edit Product"><MarketplaceCreate /></RouteErrorBoundary>} />
+                  <Route path="/marketplace/:id" element={<RouteErrorBoundary routeName="Product"><MarketplaceProductDetail /></RouteErrorBoundary>} />
+                  <Route path="/gallery" element={<RouteErrorBoundary routeName="Gallery"><Gallery /></RouteErrorBoundary>} />
+                  <Route path="/admin" element={<RouteErrorBoundary routeName="Admin"><Admin /></RouteErrorBoundary>} />
+                  <Route path="/profile" element={<RouteErrorBoundary routeName="Profile"><Profile /></RouteErrorBoundary>} />
+                  <Route path="/u/:username" element={<RouteErrorBoundary routeName="User Profile"><UserProfile /></RouteErrorBoundary>} />
+                  <Route path="/messages" element={<RouteErrorBoundary routeName="Messages"><Messages /></RouteErrorBoundary>} />
+                  <Route path="/support" element={<RouteErrorBoundary routeName="Support"><Support /></RouteErrorBoundary>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </SuspensionGuard>
