@@ -23,7 +23,9 @@ import {
   X,
   Download,
   FileText,
+  BadgeCheck,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +74,9 @@ const ALLOWED_FILE_TYPES = [
   "text/plain",
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Team Zyrozo system account
+const TEAM_ZYROZO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 const Messages = () => {
   const { user, loading: authLoading } = useAuth();
@@ -806,12 +811,22 @@ const Messages = () => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <h4 className={cn(
-                        "truncate",
-                        convo.unread_count > 0 ? "font-bold" : "font-semibold"
-                      )}>
-                        {convo.other_user.display_name || convo.other_user.username || "Unknown User"}
-                      </h4>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h4 className={cn(
+                          "truncate",
+                          convo.unread_count > 0 ? "font-bold" : "font-semibold"
+                        )}>
+                          {convo.other_user.display_name || convo.other_user.username || "Unknown User"}
+                        </h4>
+                        {convo.other_user.user_id === TEAM_ZYROZO_USER_ID && (
+                          <>
+                            <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
+                            <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0 shrink-0">
+                              System
+                            </Badge>
+                          </>
+                        )}
+                      </div>
                       {convo.last_message_at && (
                         <span className="text-xs text-muted-foreground shrink-0 ml-2">
                           {formatTime(convo.last_message_at)}
@@ -859,12 +874,22 @@ const Messages = () => {
                   </Avatar>
                 </Link>
                 <div>
-                  <Link 
-                    to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
-                    className="font-semibold hover:text-primary transition-colors"
-                  >
-                    {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    <Link 
+                      to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
+                      className="font-semibold hover:text-primary transition-colors"
+                    >
+                      {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                    </Link>
+                    {selectedConversation.other_user.user_id === TEAM_ZYROZO_USER_ID && (
+                      <>
+                        <BadgeCheck className="w-4 h-4 text-primary" />
+                        <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0">
+                          System
+                        </Badge>
+                      </>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     @{selectedConversation.other_user.username || "user"}
                   </p>
@@ -912,6 +937,7 @@ const Messages = () => {
                 <div className="space-y-4">
                   {messages.map((message, index) => {
                     const isOwn = message.user_id === user.id;
+                    const isTeamZyrozo = message.user_id === TEAM_ZYROZO_USER_ID;
                     const showTime = index === 0 || 
                       new Date(message.created_at).getTime() - new Date(messages[index - 1].created_at).getTime() > 300000;
                     const isLastOwn = isOwn && (
@@ -937,19 +963,31 @@ const Messages = () => {
                           )}
                         >
                           {!isOwn && (
-                            <Avatar className="w-8 h-8">
+                            <Avatar className={cn("w-8 h-8", isTeamZyrozo && "ring-2 ring-primary")}>
                               <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
                               <AvatarFallback className="text-xs bg-muted">
                                 {(selectedConversation.other_user.display_name || "?").charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          <div className="flex flex-col items-end">
+                          <div className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
+                            {/* Show Team Zyrozo label above message */}
+                            {isTeamZyrozo && (
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-xs font-semibold text-foreground">Team Zyrozo</span>
+                                <BadgeCheck className="w-3.5 h-3.5 text-primary" />
+                                <Badge className="text-[9px] px-1 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0">
+                                  System
+                                </Badge>
+                              </div>
+                            )}
                             <div className={cn(
                               "max-w-[70%] px-4 py-2 rounded-2xl relative",
                               isOwn 
                                 ? "bg-primary text-primary-foreground rounded-br-sm" 
-                                : "bg-muted rounded-bl-sm"
+                                : isTeamZyrozo
+                                  ? "bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-bl-sm"
+                                  : "bg-muted rounded-bl-sm"
                             )}>
                               {message.content && (
                                 <p className="text-sm whitespace-pre-wrap break-words">
