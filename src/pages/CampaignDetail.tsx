@@ -32,7 +32,7 @@ import {
   MessageCircle,
   ClipboardList
 } from "lucide-react";
-import { CampaignSidebar, FullscreenChatView, FullscreenSubmissionsView } from "@/components/campaigns/CampaignSidebar";
+import { CampaignSidebar, FullscreenChatView, FullscreenSubmissionsView, FullscreenAnnouncementsView } from "@/components/campaigns/CampaignSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,6 +113,7 @@ const CampaignDetail = () => {
   // Fullscreen views
   const [showFullscreenChat, setShowFullscreenChat] = useState(false);
   const [showFullscreenSubmissions, setShowFullscreenSubmissions] = useState(false);
+  const [showFullscreenAnnouncements, setShowFullscreenAnnouncements] = useState(false);
   
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -471,6 +472,23 @@ const CampaignDetail = () => {
     );
   }
 
+  // Fullscreen Announcements View
+  if (showFullscreenAnnouncements) {
+    return (
+      <FullscreenAnnouncementsView
+        campaign={{
+          id: campaign.id,
+          name: campaign.name,
+          slug: campaign.slug,
+          thumbnail_url: campaign.thumbnail_url,
+          rules_guidelines: campaign.rules_guidelines,
+          reward_per_1k_views: campaign.reward_per_1k_views
+        }}
+        onClose={() => setShowFullscreenAnnouncements(false)}
+      />
+    );
+  }
+
   const budgetTotal = campaign.budget_total || 0;
   const budgetSpent = campaign.budget_spent || 0;
   const budgetPercent = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
@@ -536,6 +554,10 @@ const CampaignDetail = () => {
                         setMobileSidebarOpen(false);
                         setShowFullscreenSubmissions(true);
                       }}
+                      onOpenAnnouncements={() => {
+                        setMobileSidebarOpen(false);
+                        setShowFullscreenAnnouncements(true);
+                      }}
                     />
                   </div>
                 </SheetContent>
@@ -568,6 +590,7 @@ const CampaignDetail = () => {
             isMember={isMember}
             onOpenChat={() => setShowFullscreenChat(true)}
             onOpenSubmissions={() => setShowFullscreenSubmissions(true)}
+            onOpenAnnouncements={() => setShowFullscreenAnnouncements(true)}
           />
         </aside>
 
