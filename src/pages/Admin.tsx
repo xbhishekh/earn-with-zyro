@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense, memo } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
   Video,
@@ -33,30 +32,38 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
-// Import all admin tab components
-import AdminAnalytics from "@/components/admin/AdminAnalytics";
-import AdminSubmissions from "@/components/admin/AdminSubmissions";
-import AdminCampaigns from "@/components/admin/AdminCampaigns";
-import AdminVerifications from "@/components/admin/AdminVerifications";
-import AdminAnnouncements from "@/components/admin/AdminAnnouncements";
-import AdminWithdrawals from "@/components/admin/AdminWithdrawals";
-import AdminPayoutManagement from "@/components/admin/AdminPayoutManagement";
-import AdminUsers from "@/components/admin/AdminUsers";
-import AdminPayments from "@/components/admin/AdminPayments";
-import AdminInvites from "@/components/admin/AdminInvites";
-import AdminActivityLog from "@/components/admin/AdminActivityLog";
-import AdminAffiliates from "@/components/admin/AdminAffiliates";
-import AdminWaitlist from "@/components/admin/AdminWaitlist";
-import AdminSupport from "@/components/admin/AdminSupport";
-import AdminSupportSettings from "@/components/admin/AdminSupportSettings";
-import AdminFooter from "@/components/admin/AdminFooter";
-import AdminLegalPages from "@/components/admin/AdminLegalPages";
-import AdminCompanyPages from "@/components/admin/AdminCompanyPages";
-import AdminFAQs from "@/components/admin/AdminFAQs";
-import AdminEmailBroadcast from "@/components/admin/AdminEmailBroadcast";
-import AdminMarketplace from "@/components/admin/AdminMarketplace";
-import AdminPerformance from "@/components/admin/AdminPerformance";
-import { AdminReports } from "@/components/admin/AdminReports";
+// Lazy load ALL admin tab components for better performance
+const AdminAnalytics = lazy(() => import("@/components/admin/AdminAnalytics"));
+const AdminSubmissions = lazy(() => import("@/components/admin/AdminSubmissions"));
+const AdminCampaigns = lazy(() => import("@/components/admin/AdminCampaigns"));
+const AdminVerifications = lazy(() => import("@/components/admin/AdminVerifications"));
+const AdminAnnouncements = lazy(() => import("@/components/admin/AdminAnnouncements"));
+const AdminWithdrawals = lazy(() => import("@/components/admin/AdminWithdrawals"));
+const AdminPayoutManagement = lazy(() => import("@/components/admin/AdminPayoutManagement"));
+const AdminUsers = lazy(() => import("@/components/admin/AdminUsers"));
+const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
+const AdminInvites = lazy(() => import("@/components/admin/AdminInvites"));
+const AdminActivityLog = lazy(() => import("@/components/admin/AdminActivityLog"));
+const AdminAffiliates = lazy(() => import("@/components/admin/AdminAffiliates"));
+const AdminWaitlist = lazy(() => import("@/components/admin/AdminWaitlist"));
+const AdminSupport = lazy(() => import("@/components/admin/AdminSupport"));
+const AdminSupportSettings = lazy(() => import("@/components/admin/AdminSupportSettings"));
+const AdminFooter = lazy(() => import("@/components/admin/AdminFooter"));
+const AdminLegalPages = lazy(() => import("@/components/admin/AdminLegalPages"));
+const AdminCompanyPages = lazy(() => import("@/components/admin/AdminCompanyPages"));
+const AdminFAQs = lazy(() => import("@/components/admin/AdminFAQs"));
+const AdminEmailBroadcast = lazy(() => import("@/components/admin/AdminEmailBroadcast"));
+const AdminMarketplace = lazy(() => import("@/components/admin/AdminMarketplace"));
+const AdminPerformance = lazy(() => import("@/components/admin/AdminPerformance"));
+const AdminReports = lazy(() => import("@/components/admin/AdminReports").then(m => ({ default: m.AdminReports })));
+
+// Tab loading fallback
+const TabLoader = memo(() => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+));
+TabLoader.displayName = "TabLoader";
 
 interface Tab {
   id: string;
@@ -231,53 +238,48 @@ const Admin = () => {
       </div>
 
       {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-14"
-          >
-            <ScrollArea className="h-full">
-              <nav className="p-4 space-y-1">
-                {visibleTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
-                      activeTab === tab.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <tab.icon className="w-5 h-5" />
-                    <span>{tab.label}</span>
-                    {tab.requiresOwner && <Shield className="w-3 h-3 text-destructive ml-auto" />}
-                  </button>
-                ))}
-                <div className="pt-4 border-t border-border mt-4">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                </div>
-              </nav>
-            </ScrollArea>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-14">
+          <ScrollArea className="h-full">
+            <nav className="p-4 space-y-1">
+              {visibleTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                    activeTab === tab.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <tab.icon className="w-5 h-5" />
+                  <span>{tab.label}</span>
+                  {tab.requiresOwner && <Shield className="w-3 h-3 text-destructive ml-auto" />}
+                </button>
+              ))}
+              <div className="pt-4 border-t border-border mt-4">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </nav>
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 lg:pt-0 pt-14 overflow-hidden">
         <ScrollArea className="h-screen">
           <div className="p-6">
-            <ActiveComponent />
+            <Suspense fallback={<TabLoader />}>
+              <ActiveComponent />
+            </Suspense>
           </div>
         </ScrollArea>
       </main>
