@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { SubmissionCard } from '@/components/submissions/SubmissionCard';
 import { ClipDetailsModal } from '@/components/submissions/ClipDetailsModal';
@@ -59,6 +59,7 @@ const statusFilters: { value: StatusFilter; label: string }[] = [
 const MySubmissions = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [campaigns, setCampaigns] = useState<Map<string, Campaign>>(new Map());
@@ -66,7 +67,7 @@ const MySubmissions = () => {
   const [loading, setLoading] = useState(true);
   
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [campaignFilter, setCampaignFilter] = useState<string>('all');
+  const [campaignFilter, setCampaignFilter] = useState<string>(searchParams.get('campaign') || 'all');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
