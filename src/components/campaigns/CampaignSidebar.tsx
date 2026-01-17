@@ -258,40 +258,6 @@ export const CampaignSidebar = ({
           </AnimatePresence>
         </div>
 
-        {/* My Submissions Section */}
-        <div className="border-b border-border">
-          <button
-            onClick={() => toggleSection('submissions')}
-            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors"
-          >
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">My Submissions</span>
-            <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expandedSections.submissions ? '' : '-rotate-90'}`} />
-          </button>
-          
-          <AnimatePresence>
-            {expandedSections.submissions && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="overflow-hidden"
-              >
-                <div className="px-2 pb-2">
-                  {/* My Submissions - Opens fullscreen */}
-                  <button
-                    onClick={onOpenSubmissions}
-                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <ClipboardList className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">My submissions</span>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Chat Section - Whop Style */}
         <div>
           <div className="px-4 py-2.5">
