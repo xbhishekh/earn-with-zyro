@@ -4,16 +4,22 @@ import {
   MessageCircle, 
   Megaphone, 
   ChevronDown, 
-  ChevronUp, 
+  ChevronRight,
   Lock,
   FileText,
-  Gift,
-  Trophy,
-  Users,
   Star,
   Flag,
   X,
-  Loader2
+  Loader2,
+  ClipboardList,
+  ArrowLeft,
+  ExternalLink,
+  Eye,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Instagram
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRoom } from '@/components/chat/ChatRoom';
@@ -27,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface Campaign {
   id: string;
@@ -34,6 +41,7 @@ interface Campaign {
   slug: string | null;
   thumbnail_url: string | null;
   rules_guidelines: string | null;
+  reward_per_1k_views?: number;
 }
 
 interface CampaignSidebarProps {
@@ -41,23 +49,29 @@ interface CampaignSidebarProps {
   chatRoomId: string | null;
   isMember: boolean;
   memberCount?: number;
+  onOpenChat?: () => void;
+  onOpenSubmissions?: () => void;
 }
 
-interface SidebarSection {
+interface Submission {
   id: string;
-  label: string;
-  icon: React.ReactNode;
-  hasContent?: boolean;
+  video_url: string;
+  social_link: string | null;
+  status: string | null;
+  views_count: number | null;
+  estimated_earnings: number | null;
+  created_at: string;
 }
 
 export const CampaignSidebar = ({ 
   campaign, 
   chatRoomId,
   isMember,
-  memberCount = 0
+  memberCount = 0,
+  onOpenChat,
+  onOpenSubmissions
 }: CampaignSidebarProps) => {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<string | null>('announcements');
   const [onlineCount, setOnlineCount] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -65,37 +79,12 @@ export const CampaignSidebar = ({
   const [reportedUserId, setReportedUserId] = useState('');
   const [reportedUsername, setReportedUsername] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
-  const [members, setMembers] = useState<{ user_id: string; username: string; avatar_url: string | null }[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
-
-  // Fetch campaign members for reporting
-  useEffect(() => {
-    const fetchMembers = async () => {
-      setLoadingMembers(true);
-      const { data: memberData } = await supabase
-        .from('campaign_members')
-        .select('user_id')
-        .eq('campaign_id', campaign.id)
-        .limit(50);
-
-      if (memberData && memberData.length > 0) {
-        const userIds = memberData.map(m => m.user_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, username, avatar_url')
-          .in('user_id', userIds);
-
-        if (profiles) {
-          setMembers(profiles.filter(p => p.user_id !== user?.id));
-        }
-      }
-      setLoadingMembers(false);
-    };
-
-    if (isMember && user) {
-      fetchMembers();
-    }
-  }, [campaign.id, isMember, user]);
+  
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    important: true,
+    submissions: false
+  });
 
   // Presence tracking for online count
   useEffect(() => {
@@ -120,12 +109,6 @@ export const CampaignSidebar = ({
       supabase.removeChannel(channel);
     };
   }, [campaign.id, user, isMember]);
-
-  const handleReportUser = (userId: string, username: string) => {
-    setReportedUserId(userId);
-    setReportedUsername(username);
-    setShowReportModal(true);
-  };
 
   const submitReport = async () => {
     if (!user || !reportedUserId || !reportReason) {
@@ -159,194 +142,155 @@ export const CampaignSidebar = ({
     }
   };
 
-  const sections: SidebarSection[] = [
-    { id: 'announcements', label: 'Announcements', icon: <Megaphone className="h-4 w-4" /> },
-    { id: 'chat', label: 'Chat', icon: <MessageCircle className="h-4 w-4" /> },
-    { id: 'rules', label: 'Community Rules', icon: <FileText className="h-4 w-4" />, hasContent: !!campaign.rules_guidelines },
-    { id: 'members', label: 'Members', icon: <Users className="h-4 w-4" /> },
-  ];
-
   const toggleSection = (sectionId: string) => {
-    setActiveSection(activeSection === sectionId ? null : sectionId);
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
   };
 
   if (!user) return null;
 
   return (
     <>
-      <div className="bg-card border border-border rounded-xl overflow-hidden sticky top-20">
-        {/* Campaign Header */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        {/* Campaign Header - Whop Style */}
         <div className="relative">
-          <div className="h-20 bg-gradient-to-br from-primary/30 to-secondary/30 overflow-hidden">
+          <div className="h-16 bg-gradient-to-br from-zinc-900 to-zinc-800 overflow-hidden">
             {campaign.thumbnail_url && (
               <img 
                 src={campaign.thumbnail_url} 
                 alt="" 
-                className="w-full h-full object-cover opacity-50"
+                className="w-full h-full object-cover opacity-40"
               />
             )}
           </div>
-          <div className="absolute -bottom-4 left-4 w-12 h-12 rounded-xl border-2 border-background overflow-hidden bg-card">
+          <div className="absolute -bottom-4 left-4 w-10 h-10 rounded-xl border-2 border-background overflow-hidden bg-card shadow-lg">
             {campaign.thumbnail_url ? (
               <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <span className="text-white font-bold">{campaign.name.charAt(0)}</span>
+                <span className="text-white font-bold text-sm">{campaign.name.charAt(0)}</span>
               </div>
             )}
           </div>
         </div>
         
-        <div className="pt-6 px-4 pb-4">
-          <h2 className="font-display font-bold text-sm truncate">{campaign.name}</h2>
+        <div className="pt-6 px-4 pb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display font-bold text-sm truncate">{campaign.name}</h2>
+            <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
+          </div>
           <div className="flex items-center gap-1 mt-1">
             <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
             <span className="text-xs text-muted-foreground">{onlineCount} online</span>
           </div>
         </div>
 
-        {/* Star Rating Placeholder */}
-        <div className="px-4 pb-4 border-b border-border">
-          <p className="text-xs text-muted-foreground mb-2">Rate this campaign</p>
-          <div className="flex items-center gap-1">
+        {/* Star Rating */}
+        <div className="px-4 pb-3 border-b border-border">
+          <p className="text-xs text-muted-foreground mb-1.5">Rate this whop</p>
+          <div className="flex items-center gap-0.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star 
                 key={star} 
-                className="h-5 w-5 text-muted-foreground/30 cursor-pointer hover:text-warning transition-colors" 
+                className="h-4 w-4 text-muted-foreground/30 cursor-pointer hover:text-warning transition-colors" 
               />
             ))}
           </div>
         </div>
 
-        {/* Sections */}
-        <div className="divide-y divide-border">
-          {sections.map((section) => (
-            <div key={section.id}>
-              <button
-                onClick={() => toggleSection(section.id)}
-                className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+        {/* Important Section */}
+        <div className="border-b border-border">
+          <button
+            onClick={() => toggleSection('important')}
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors"
+          >
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Important</span>
+            <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expandedSections.important ? '' : '-rotate-90'}`} />
+          </button>
+          
+          <AnimatePresence>
+            {expandedSections.important && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-primary">{section.icon}</span>
-                  <span className="text-sm font-medium">{section.label}</span>
-                </div>
-                {activeSection === section.id ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-              
-              <AnimatePresence>
-                {activeSection === section.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
+                <div className="px-2 pb-2 space-y-0.5">
+                  {/* Community Rules */}
+                  <button
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                   >
-                    {section.id === 'announcements' && (
-                      <div className="p-3 pt-0 max-h-[300px] overflow-y-auto">
-                        <AnnouncementsList campaignId={campaign.id} limit={5} />
-                      </div>
-                    )}
-                    
-                    {section.id === 'chat' && (
-                      <div className="h-[350px]">
-                        {!isMember ? (
-                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
-                            <Lock className="h-8 w-8 mb-2 opacity-50" />
-                            <p className="text-sm text-center">Join the campaign to chat with other members</p>
-                          </div>
-                        ) : chatRoomId ? (
-                          <ChatRoom roomId={chatRoomId} roomName={campaign.name} />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <p className="text-sm">Loading chat...</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {section.id === 'rules' && (
-                      <div className="p-3 pt-0 max-h-[300px] overflow-y-auto">
-                        {campaign.rules_guidelines ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <pre className="whitespace-pre-wrap text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                              {campaign.rules_guidelines}
-                            </pre>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground text-center py-4">
-                            No community rules posted yet
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    
-                    {section.id === 'members' && (
-                      <div className="p-3 pt-0 max-h-[300px] overflow-y-auto">
-                        {!isMember ? (
-                          <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
-                            <Lock className="h-6 w-6 mb-2 opacity-50" />
-                            <p className="text-sm text-center">Join to see members</p>
-                          </div>
-                        ) : loadingMembers ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : members.length === 0 ? (
-                          <p className="text-sm text-muted-foreground text-center py-4">
-                            No other members yet
-                          </p>
-                        ) : (
-                          <div className="space-y-2">
-                            {members.map((member) => (
-                              <div 
-                                key={member.user_id}
-                                className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                              >
-                                <Link 
-                                  to={`/user/${member.username || member.user_id}`}
-                                  className="flex items-center gap-2 flex-1 min-w-0"
-                                >
-                                  <div className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0">
-                                    {member.avatar_url ? (
-                                      <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                      <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                                        <span className="text-white text-xs font-bold">
-                                          {member.username?.charAt(0)?.toUpperCase() || '?'}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <span className="text-sm truncate">@{member.username || 'user'}</span>
-                                </Link>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleReportUser(member.user_id, member.username || 'user');
-                                  }}
-                                >
-                                  <Flag className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">Community Rules</span>
+                  </button>
+                  
+                  {/* Announcements */}
+                  <button
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <Megaphone className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">Announcements</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* My Submissions Section */}
+        <div className="border-b border-border">
+          <button
+            onClick={() => toggleSection('submissions')}
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors"
+          >
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">My Submissions</span>
+            <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expandedSections.submissions ? '' : '-rotate-90'}`} />
+          </button>
+          
+          <AnimatePresence>
+            {expandedSections.submissions && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 pb-2">
+                  {/* My Submissions - Opens fullscreen */}
+                  <button
+                    onClick={onOpenSubmissions}
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">My submissions</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Chat Section - Whop Style */}
+        <div>
+          <div className="px-4 py-2.5">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Chat</span>
+          </div>
+          
+          <div className="px-2 pb-2">
+            {/* Chat - Opens fullscreen */}
+            <button
+              onClick={onOpenChat}
+              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+            >
+              <MessageCircle className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Chat</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -415,5 +359,206 @@ export const CampaignSidebar = ({
         </DialogContent>
       </Dialog>
     </>
+  );
+};
+
+// Fullscreen Chat View Component
+export const FullscreenChatView = ({
+  campaign,
+  chatRoomId,
+  onClose
+}: {
+  campaign: Campaign;
+  chatRoomId: string | null;
+  onClose: () => void;
+}) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+        <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <MessageCircle className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <span className="font-medium">Chat</span>
+        </div>
+      </header>
+
+      {/* Pinned Message */}
+      <div className="bg-primary/5 border-b border-border px-4 py-2">
+        <div className="flex items-start gap-2">
+          <span className="text-xs text-primary font-medium shrink-0">Pinned Message (1/1)</span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+          Don't ask for approvals. Don't ask for reviews. Don't tell me you submitted...
+        </p>
+      </div>
+
+      {/* Chat Content */}
+      <div className="flex-1 overflow-hidden">
+        {chatRoomId ? (
+          <ChatRoom roomId={chatRoomId} roomName={campaign.name} />
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <p>Loading chat...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Fullscreen Submissions View Component
+export const FullscreenSubmissionsView = ({
+  campaign,
+  onClose
+}: {
+  campaign: Campaign;
+  onClose: () => void;
+}) => {
+  const { user } = useAuth();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('campaign_id', campaign.id)
+        .order('created_at', { ascending: false });
+
+      setSubmissions(data as Submission[] || []);
+      setLoading(false);
+    };
+
+    fetchSubmissions();
+  }, [campaign.id, user]);
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-success/10 text-success border-0 text-xs">Accepted</Badge>;
+      case 'paid':
+        return <Badge className="bg-orange-500 text-white border-0 text-xs">paid</Badge>;
+      case 'rejected':
+        return <Badge className="bg-destructive/10 text-destructive border-0 text-xs">Rejected</Badge>;
+      case 'flagged':
+        return <Badge className="bg-warning/10 text-warning border-0 text-xs">Flagged</Badge>;
+      default:
+        return <Badge className="bg-warning/10 text-warning border-0 text-xs">Decision any moment</Badge>;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+        <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg overflow-hidden">
+            {campaign.thumbnail_url ? (
+              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
+              </div>
+            )}
+          </div>
+          <span className="font-medium">{campaign.name}</span>
+        </div>
+      </header>
+
+      {/* Tabs */}
+      <div className="border-b border-border bg-card">
+        <div className="flex">
+          <button className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Rewards
+          </button>
+          <button className="px-4 py-3 text-sm font-medium border-b-2 border-primary">
+            My submissions
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-4">
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : submissions.length === 0 ? (
+          <div className="text-center py-12">
+            <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">No submissions yet</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Title</th>
+                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Total views</th>
+                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Submission</th>
+                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Reward rate</th>
+                  <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Paid out to you</th>
+                </tr>
+              </thead>
+              <tbody>
+                {submissions.map((sub) => (
+                  <tr key={sub.id} className="border-b border-border hover:bg-muted/30">
+                    <td className="py-3 px-2">
+                      <span className="text-sm">{campaign.name}</span>
+                    </td>
+                    <td className="py-3 px-2">
+                      {getStatusBadge(sub.status)}
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="text-sm">{(sub.views_count || 0).toLocaleString()}</span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <a 
+                        href={sub.social_link || sub.video_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-primary hover:underline text-sm"
+                      >
+                        <Instagram className="w-4 h-4" />
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="text-sm">${campaign.reward_per_1k_views || 1} / 1K</span>
+                    </td>
+                    <td className="py-3 px-2 text-right">
+                      <span className="text-sm font-medium">
+                        ${(sub.estimated_earnings || 0).toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* How do Content Rewards work? Link */}
+      <div className="text-right px-4 py-2 border-t border-border bg-card">
+        <button className="text-xs text-muted-foreground hover:text-foreground">
+          How do Content Rewards work?
+        </button>
+      </div>
+    </div>
   );
 };
