@@ -57,6 +57,7 @@ interface CampaignSidebarProps {
   onOpenChat?: () => void;
   onOpenSubmissions?: () => void;
   onOpenAnnouncements?: () => void;
+  onSwitchToSubmissionsTab?: () => void;
 }
 
 interface Submission {
@@ -87,7 +88,8 @@ export const CampaignSidebar = ({
   submissions = [],
   onOpenChat,
   onOpenSubmissions,
-  onOpenAnnouncements
+  onOpenAnnouncements,
+  onSwitchToSubmissionsTab
 }: CampaignSidebarProps) => {
   const { user } = useAuth();
   const [onlineCount, setOnlineCount] = useState(0);
@@ -263,9 +265,13 @@ export const CampaignSidebar = ({
         {/* My Submissions Section - Whop Style List */}
         {submissions.length > 0 && (
           <div className="border-b border-border">
-            <div className="px-4 py-2.5">
+            <button
+              onClick={onSwitchToSubmissionsTab}
+              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors"
+            >
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">My Submissions</span>
-            </div>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
             
             <div className="px-3 pb-3 space-y-2">
               {submissions.slice(0, 5).map((sub) => (
@@ -308,7 +314,7 @@ export const CampaignSidebar = ({
                       )}
                       {(sub.estimated_earnings ?? 0) > 0 && (
                         <div className="flex items-center gap-1 text-xs text-success font-medium justify-end">
-                          $ ${Number(sub.estimated_earnings).toFixed(2)}
+                          ${Number(sub.estimated_earnings).toFixed(2)}
                         </div>
                       )}
                     </div>
@@ -317,7 +323,7 @@ export const CampaignSidebar = ({
               ))}
               {submissions.length > 5 && (
                 <button
-                  onClick={onOpenSubmissions}
+                  onClick={onSwitchToSubmissionsTab}
                   className="w-full text-center text-xs text-primary hover:underline py-1"
                 >
                   View all {submissions.length} submissions
