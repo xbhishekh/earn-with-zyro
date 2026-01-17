@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useMemo, useCallback } from "react";
 import { User, Session, type EmailOtpType } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -62,11 +62,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const refreshRole = async () => {
+  const refreshRole = useCallback(async () => {
     if (user) {
       await fetchUserRole(user.id);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     const REMEMBER_ME_KEY = "zyrozo_remember_me";
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Send OTP to email using Supabase's built-in signInWithOtp (sends 6-digit code)
-  const sendOtp = async (
+  const sendOtp = useCallback(async (
     email: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => {
@@ -163,10 +163,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // For email OTP verification, Supabase expects `type: "email"`.
       otpType: "email" as EmailOtpType,
     };
-  };
+  }, []);
 
   // Verify OTP code
-  const verifyOtp = async (email: string, token: string, type?: EmailOtpType) => {
+  const verifyOtp = useCallback(async (email: string, token: string, type?: EmailOtpType) => {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -174,10 +174,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
   // Sign up with email + password
-  const signUpWithPassword = async (
+  const signUpWithPassword = useCallback(async (
     email: string,
     password: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
@@ -198,20 +198,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
   // Sign in with email + password
-  const signInWithPassword = async (email: string, password: string) => {
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
   // Sign in with Google OAuth
-  const signInWithGoogle = async (redirectPath?: string) => {
+  const signInWithGoogle = useCallback(async (redirectPath?: string) => {
     if (redirectPath) {
       setRedirectIntent(redirectPath);
     }
@@ -225,59 +225,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
   // Send password reset email
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth?mode=reset-password`,
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
   // Update password (used after reset link clicked)
-  const updatePassword = async (newPassword: string) => {
+  const updatePassword = useCallback(async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
 
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setRole(null);
-  };
+  }, []);
 
-  // Derived admin states
-  const isFounder = role === "founder";
-  const isOwner = role === "owner";
-  const isSuperAdmin = role === "super_admin" || isOwner || isFounder;
-  const isAdmin = role === "normal_admin" || role === "admin" || isSuperAdmin;
+  // Memoized derived admin states to prevent unnecessary re-renders
+  const derivedStates = useMemo(() => {
+    const isFounder = role === "founder";
+    const isOwner = role === "owner";
+    const isSuperAdmin = role === "super_admin" || isOwner || isFounder;
+    const isAdmin = role === "normal_admin" || role === "admin" || isSuperAdmin;
+    return { isFounder, isOwner, isSuperAdmin, isAdmin };
+  }, [role]);
+
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(() => ({
+    user,
+    session,
+    loading,
+    role,
+    ...derivedStates,
+    sendOtp,
+    verifyOtp,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
+    resetPassword,
+    updatePassword,
+    signOut,
+    refreshRole,
+  }), [user, session, loading, role, derivedStates, sendOtp, verifyOtp, signUpWithPassword, signInWithPassword, signInWithGoogle, resetPassword, updatePassword, signOut, refreshRole]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        role,
-        isAdmin,
-        isSuperAdmin,
-        isOwner,
-        isFounder,
-        sendOtp,
-        verifyOtp,
-        signUpWithPassword,
-        signInWithPassword,
-        signInWithGoogle,
-        resetPassword,
-        updatePassword,
-        signOut,
-        refreshRole,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
