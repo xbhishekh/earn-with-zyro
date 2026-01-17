@@ -993,9 +993,9 @@ const Messages = () => {
             </div>
 
             {/* Messages Area - flex-1 with overflow to push input to bottom */}
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <ScrollArea className="flex-1">
-                <div className="p-4">
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-4 min-h-full flex flex-col">
                 {messagesLoading ? (
                   <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -1009,7 +1009,7 @@ const Messages = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1">
                     {groupedMessages.map((group) => (
                       <div key={group.date}>
                         {/* Date Separator - Whop style */}
