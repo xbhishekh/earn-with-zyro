@@ -1017,8 +1017,8 @@ const CampaignDetail = () => {
         </div>
 
         {/* Fixed Bottom Bar - Whop Style */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card/95 backdrop-blur-sm border-t border-border px-8 py-4 z-40">
-          <div className="flex items-center justify-between">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card/95 backdrop-blur-sm border-t border-border px-6 py-4 z-40">
+          <div className="flex items-center justify-between max-w-3xl mx-auto">
             <div>
               <h3 className="font-bold text-base text-foreground">{campaign.name}</h3>
               <p className="text-sm text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
