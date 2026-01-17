@@ -218,7 +218,9 @@ const AdminSubmissions = () => {
         });
 
         // Send Team Zyrozo DM with payout notification (Whop-style)
+        // Format: @campaign_admin paid @user $X.XX for getting views on your content. 💸
         const username = getUsername(selectedSubmission.user_id);
+        const adminUsername = getUsername(user?.id || "");
         await supabase.rpc("send_views_update_dm", {
           p_user_id: selectedSubmission.user_id,
           p_username: username,
@@ -226,6 +228,7 @@ const AdminSubmissions = () => {
           p_views: views,
           p_amount: earnings,
           p_release_date: releaseDate.toISOString(),
+          p_admin_username: adminUsername,
         });
 
         // If mark paid after update is checked, also move to available immediately

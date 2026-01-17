@@ -91,6 +91,7 @@ const SellerCampaignsAdmin = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [myProfile, setMyProfile] = useState<{ username: string | null; display_name: string | null } | null>(null);
 
   // Members state
   const [members, setMembers] = useState<CampaignMember[]>([]);
@@ -120,8 +121,19 @@ const SellerCampaignsAdmin = () => {
   useEffect(() => {
     if (user) {
       fetchMyCampaigns();
+      fetchMyProfile();
     }
   }, [user]);
+
+  const fetchMyProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("username, display_name")
+      .eq("user_id", user.id)
+      .single();
+    setMyProfile(data);
+  };
 
   useEffect(() => {
     if (selectedCampaign) {
@@ -359,6 +371,20 @@ const SellerCampaignsAdmin = () => {
             ? `$${earnings.toLocaleString()} is now available in your balance.`
             : `$${earnings.toLocaleString()} has been added to your pending balance.`,
           metadata: { amount: earnings, views, campaign_id: selectedCampaign.id },
+        });
+
+        // Send Team Zyrozo DM with payout notification (Whop-style)
+        // Format: @campaign_admin paid @user $X.XX for getting views on your content. 💸
+        const releaseDate = new Date();
+        releaseDate.setDate(releaseDate.getDate() + 7);
+        await supabase.rpc("send_views_update_dm", {
+          p_user_id: approveSubmission.user_id,
+          p_username: approveSubmission.username || approveSubmission.user_id.slice(0, 8),
+          p_campaign_name: selectedCampaign.name,
+          p_views: views,
+          p_amount: earnings,
+          p_release_date: releaseDate.toISOString(),
+          p_admin_username: myProfile?.username || myProfile?.display_name || "Campaign Owner",
         });
 
         toast.success(markPaidAfterUpdate 
