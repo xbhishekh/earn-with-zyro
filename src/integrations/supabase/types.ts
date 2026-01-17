@@ -1621,6 +1621,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      user_is_dm_participant: {
+        Args: { room_id_param: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
