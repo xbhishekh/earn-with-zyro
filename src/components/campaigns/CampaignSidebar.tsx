@@ -181,18 +181,18 @@ export const CampaignSidebar = ({
         {/* Campaign Header - Whop Style Full-Width Banner (24% of sidebar) */}
         <div className="relative">
           {/* Full-Bleed Hero Banner - Edge to Edge */}
-          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
+          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center">
             {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
             )}
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
+            {/* Gradient Overlay - Subtle at top for name visibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
             
             {/* Campaign Name at Top - Like Whop */}
             <div className="absolute top-3 left-3 right-3 flex items-center gap-2">
@@ -212,14 +212,6 @@ export const CampaignSidebar = ({
                   <span className="text-xs text-white/80">{onlineCount} online</span>
                 </div>
               </div>
-            </div>
-            
-            {/* Motivational Text Overlay at Bottom */}
-            <div className="absolute bottom-4 left-4 right-4">
-              <p className="text-white font-display font-bold text-xl leading-tight drop-shadow-lg">
-                Make $$$<br />
-                <span className="text-white/90">doing what you love.</span>
-              </p>
             </div>
           </div>
         </div>
