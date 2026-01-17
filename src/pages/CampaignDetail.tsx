@@ -1015,6 +1015,15 @@ const CampaignDetail = () => {
             </Button>
           </div>
         </div>
+
+        {/* Floating Submit Button - Always visible */}
+        <Button 
+          onClick={() => setShowSubmitModal(true)} 
+          size="lg"
+          className="fixed bottom-6 right-6 lg:right-10 h-12 px-8 rounded-full font-semibold bg-primary hover:bg-primary/90 shadow-lg z-40"
+        >
+          Submit
+        </Button>
         </main>
       </div>
 
