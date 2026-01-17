@@ -257,6 +257,39 @@ export type Database = {
           },
         ]
       }
+      broadcast_history: {
+        Row: {
+          admin_id: string
+          content: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          recipients_count: number
+          title: string
+        }
+        Insert: {
+          admin_id: string
+          content: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          recipients_count?: number
+          title: string
+        }
+        Update: {
+          admin_id?: string
+          content?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          recipients_count?: number
+          title?: string
+        }
+        Relationships: []
+      }
       campaign_assets: {
         Row: {
           asset_type: string
@@ -1586,6 +1619,10 @@ export type Database = {
       can_manage_role: {
         Args: { _manager_id: string; _target_role: string }
         Returns: boolean
+      }
+      delete_broadcast_messages: {
+        Args: { p_broadcast_id: string; p_content: string; p_title: string }
+        Returns: number
       }
       has_role: {
         Args: {
