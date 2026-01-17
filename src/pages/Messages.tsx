@@ -796,7 +796,7 @@ const Messages = () => {
   const isTeamZyrozo = selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID;
 
   return (
-    <MainLayout showMobileNav={false} className="h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden">
+    <MainLayout showMobileNav={false} className="h-[calc(100dvh-56px)] md:h-[calc(100dvh-64px)] overflow-hidden">
       <div className="flex h-full">
         <input
           type="file"
@@ -1202,9 +1202,9 @@ const Messages = () => {
             </div>
 
             {/* Bottom Section - Fixed at bottom */}
-            <div className="shrink-0">
+            <div className="shrink-0 mt-auto">
             {isTeamZyrozo ? (
-              <div className="px-4 py-3 border-t border-border bg-background shrink-0">
+              <div className="px-4 py-3 border-t border-border bg-background">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
                     <BadgeCheck className="w-4 h-4 text-white" />
