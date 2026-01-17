@@ -1029,86 +1029,118 @@ const CampaignDetail = () => {
                 </p>
               </div>
 
-              {/* My Submissions - Clickable Link Section */}
+              {/* Announcements Section - Mobile First */}
+              <div className="lg:hidden mb-6">
+                <div className="mb-4">
+                  <h3 className="text-xs text-muted-foreground uppercase mb-3 font-medium tracking-wide">ANNOUNCEMENTS</h3>
+                  <AnnouncementsList campaignId={campaign.id} limit={3} />
+                </div>
+              </div>
+
+              {/* My Submissions - Whop Style Video Grid (No Redirect) */}
               {isMember && submissions.length > 0 && (
-                <div className="mb-6 border border-border rounded-xl overflow-hidden">
-                  <Link
-                    to="/my-submissions"
-                    className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors group"
-                  >
-                    <span className="text-xs text-muted-foreground uppercase font-medium tracking-wide group-hover:text-foreground">MY SUBMISSIONS</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </Link>
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs text-muted-foreground uppercase font-medium tracking-wide">MY SUBMISSIONS</h3>
+                    <Link 
+                      to="/my-submissions" 
+                      className="text-xs text-primary hover:underline"
+                    >
+                      View all →
+                    </Link>
+                  </div>
                   
-                  {/* Preview of latest submission */}
-                  <Link
-                    to="/my-submissions"
-                    className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors group border-t border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground group-hover:text-primary">View post</span>
-                          <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(submissions[0].created_at), 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <Badge 
-                        className={
-                          submissions[0].status === 'approved' || submissions[0].status === 'paid'
-                            ? 'bg-success text-white'
-                            : submissions[0].status === 'pending'
-                            ? 'bg-warning text-white'
-                            : submissions[0].status === 'rejected'
-                            ? 'bg-destructive text-white'
-                            : 'bg-muted text-foreground'
-                        }
-                      >
-                        {submissions[0].status || 'pending'}
-                      </Badge>
+                  {/* Video Grid - Responsive */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {submissions.slice(0, 6).map((sub) => {
+                      // Get video thumbnail or show placeholder
+                      const isVideoUrl = sub.video_url && (
+                        sub.video_url.includes('.mp4') || 
+                        sub.video_url.includes('.webm') || 
+                        sub.video_url.includes('.mov') ||
+                        sub.video_url.includes('supabase')
+                      );
                       
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{(submissions[0].views_count || 0).toLocaleString()}</span>
+                      return (
+                        <div
+                          key={sub.id}
+                          className="relative rounded-xl overflow-hidden border border-border bg-card cursor-default group"
+                        >
+                          {/* Video Thumbnail */}
+                          <div className="relative aspect-[9/16] bg-muted">
+                            {isVideoUrl ? (
+                              <video 
+                                src={sub.video_url} 
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                                <Play className="w-8 h-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            
+                            {/* Play Button Overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+                                <Play className="w-5 h-5 text-white ml-0.5" />
+                              </div>
+                            </div>
+                            
+                            {/* Status Badge - Top Right */}
+                            <div className="absolute top-2 right-2">
+                              <Badge 
+                                className={`text-xs ${
+                                  sub.status === 'approved' || sub.status === 'paid'
+                                    ? 'bg-success text-white'
+                                    : sub.status === 'pending'
+                                    ? 'bg-warning text-white'
+                                    : sub.status === 'rejected'
+                                    ? 'bg-destructive text-white'
+                                    : 'bg-muted text-foreground'
+                                }`}
+                              >
+                                {sub.status === 'approved' ? 'Submitted' : sub.status === 'paid' ? 'Paid' : sub.status || 'pending'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {/* Info Section */}
+                          <div className="p-3 space-y-2">
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(sub.created_at), 'MMM d, yyyy')}
+                            </p>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Eye className="w-3 h-3" />
+                                <span>{(sub.views_count || 0).toLocaleString()}</span>
+                              </div>
+                              <p className="text-xs font-semibold text-success">
+                                ${(sub.estimated_earnings || 0).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm font-semibold text-success">
-                          ${(submissions[0].estimated_earnings || 0).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* Mobile Quick Actions */}
+              {/* Chat Section - Mobile */}
               <div className="lg:hidden mb-6">
-                <div className="glass-card rounded-xl p-4 space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => setShowFullscreenChat(true)}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Open Chat
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => setShowFullscreenSubmissions(true)}
-                  >
-                    <ClipboardList className="w-4 h-4 mr-2" />
-                    View My Submissions
-                  </Button>
-                </div>
+                <h3 className="text-xs text-muted-foreground uppercase mb-3 font-medium tracking-wide">CHAT</h3>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setShowFullscreenChat(true)}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Open Campaign Chat
+                </Button>
               </div>
             </>
           )}
