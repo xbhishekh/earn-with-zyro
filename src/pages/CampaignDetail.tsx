@@ -986,7 +986,11 @@ const CampaignDetail = () => {
               <TabsTrigger value="rewards">About</TabsTrigger>
               <TabsTrigger value="submissions">My submissions</TabsTrigger>
             </TabsList>
-            <Button onClick={() => setShowSubmitModal(true)} size="sm">
+            <Button 
+              onClick={() => setShowSubmitModal(true)} 
+              size="lg"
+              className="h-10 px-6 font-semibold text-sm bg-primary hover:bg-primary/90"
+            >
               Submit
             </Button>
           </div>
