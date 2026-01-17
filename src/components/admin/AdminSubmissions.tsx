@@ -165,11 +165,11 @@ const AdminSubmissions = () => {
 
       if (error) throw error;
       
-      // If updating views for approved/paid submission, create pending balance transaction with 7 days release
+      // If updating views for approved/paid submission, create pending balance transaction with 72 hours release
       if (isUpdate && (selectedSubmission.status === "approved" || selectedSubmission.status === "paid")) {
-        // Calculate release date (7 days from now)
+        // Calculate release date (72 hours / 3 days from now)
         const releaseDate = new Date();
-        releaseDate.setDate(releaseDate.getDate() + 7);
+        releaseDate.setDate(releaseDate.getDate() + 3);
 
         // Add earnings to pending balance with release_date
         const { error: txError } = await supabase
@@ -255,7 +255,7 @@ const AdminSubmissions = () => {
 
           toast.success(`Updated & Paid! $${earnings.toLocaleString()} added to available balance`);
         } else {
-          toast.success(`Updated! $${earnings.toLocaleString()} added to pending (available in 7 days)`);
+          toast.success(`Updated! $${earnings.toLocaleString()} added to pending (available in 72 hours)`);
         }
       } else {
         toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);

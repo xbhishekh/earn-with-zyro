@@ -376,7 +376,7 @@ const SellerCampaignsAdmin = () => {
         // Send Team Zyrozo DM with payout notification (Whop-style)
         // Format: @campaign_admin paid @user $X.XX for getting views on your content. 💸
         const releaseDate = new Date();
-        releaseDate.setDate(releaseDate.getDate() + 7);
+        releaseDate.setDate(releaseDate.getDate() + 3); // 72 hours / 3 days
         await supabase.rpc("send_views_update_dm", {
           p_user_id: approveSubmission.user_id,
           p_username: approveSubmission.username || approveSubmission.user_id.slice(0, 8),
