@@ -1,4 +1,5 @@
-import { Instagram, Youtube, Play, Eye, Video, Volume2, Maximize2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Instagram, Youtube, Play, Eye, Video, Volume2, Maximize2, Pause } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -111,6 +112,10 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
   const avatarUrl = profile?.avatar_url;
   const isApprovedOrPaid = submission.status === 'approved' || submission.status === 'paid';
   
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
   // Check if video_url is a direct video file (for video preview)
   const isVideoFile = submission.video_url && (
     submission.video_url.includes('.mp4') || 
@@ -122,10 +127,25 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
   // Get description/title from submission or use campaign name
   const title = (submission as any).description || campaign.name;
 
-  const handleVideoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const url = submission.social_link || submission.video_url;
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (videoRef.current && isVideoFile) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        // Autoplay might be blocked
+        setIsPlaying(false);
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (videoRef.current && isVideoFile) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
   };
 
   return (
@@ -140,16 +160,19 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
         </div>
       </div>
 
-      {/* Video Thumbnail - Shows user's submitted video */}
+      {/* Video Thumbnail - Shows user's submitted video with hover playback */}
       <div 
         className="relative aspect-[9/16] bg-zinc-900 overflow-hidden cursor-pointer group"
-        onClick={handleVideoClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {isVideoFile ? (
           <video 
+            ref={videoRef}
             src={submission.video_url} 
             className="w-full h-full object-cover"
             muted
+            loop
             playsInline
             preload="metadata"
           />
@@ -165,18 +188,22 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
           </div>
         )}
         
-        {/* Center play button */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+        {/* Center play/pause button - hidden when playing */}
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isPlaying ? 'opacity-0' : 'opacity-100 bg-black/20'}`}>
           <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
             <Play className="w-6 h-6 text-black ml-1" fill="currentColor" />
           </div>
         </div>
 
-        {/* Bottom controls bar - Play and Fullscreen icons */}
+        {/* Bottom controls bar */}
         <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/60 to-transparent">
           <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-white/80" />
+              {isPlaying ? (
+                <Pause className="w-4 h-4 text-white/80" />
+              ) : (
+                <Play className="w-4 h-4 text-white/80" />
+              )}
             </div>
             <Maximize2 className="w-4 h-4 text-white/80" />
           </div>
