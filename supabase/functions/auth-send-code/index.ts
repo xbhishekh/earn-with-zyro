@@ -64,8 +64,18 @@ Deno.serve(async (req) => {
     const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email);
     console.log(`User exists: ${userExists}, isSignup: ${body.isSignup}`);
 
-    // Generate OTP using Supabase's built-in mechanism
-    const verificationType = body.isSignup ? "signup" : "magiclink";
+    // If user exists but isSignup=true, switch to magiclink (login flow)
+    // If user doesn't exist and isSignup=false, return error
+    if (!userExists && !body.isSignup) {
+      return new Response(JSON.stringify({ error: { message: "No account found with this email. Please sign up first." } }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Use magiclink if user exists (regardless of isSignup), signup only for new users
+    const verificationType = userExists ? "magiclink" : "signup";
+    console.log(`Using verification type: ${verificationType}`);
     
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: verificationType as any,
