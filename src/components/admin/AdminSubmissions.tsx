@@ -165,11 +165,11 @@ const AdminSubmissions = () => {
 
       if (error) throw error;
       
-      // If updating views for approved submission, create pending balance transaction with 72h release
-      if (isUpdate && selectedSubmission.status === "approved") {
-        // Calculate release date (72 hours from now)
+      // If updating views for approved/paid submission, create pending balance transaction with 7 days release
+      if (isUpdate && (selectedSubmission.status === "approved" || selectedSubmission.status === "paid")) {
+        // Calculate release date (7 days from now)
         const releaseDate = new Date();
-        releaseDate.setHours(releaseDate.getHours() + 72);
+        releaseDate.setDate(releaseDate.getDate() + 7);
 
         // Add earnings to pending balance with release_date
         const { error: txError } = await supabase
@@ -217,9 +217,6 @@ const AdminSubmissions = () => {
           },
         });
 
-        // Update submission to paid status after adding to pending
-        await supabase.from("submissions").update({ status: "paid" }).eq("id", selectedSubmission.id);
-
         // If mark paid after update is checked, also move to available immediately
         if (markPaidAfterUpdate) {
           await supabase
@@ -231,6 +228,9 @@ const AdminSubmissions = () => {
             .eq("submission_id", selectedSubmission.id)
             .eq("status", "pending");
 
+          // Update submission to paid status
+          await supabase.from("submissions").update({ status: "paid" }).eq("id", selectedSubmission.id);
+
           await supabase.from("notifications").insert({
             user_id: selectedSubmission.user_id,
             type: "payment_available",
@@ -241,7 +241,7 @@ const AdminSubmissions = () => {
 
           toast.success(`Updated & Paid! $${earnings.toLocaleString()} added to available balance`);
         } else {
-          toast.success(`Updated! $${earnings.toLocaleString()} added to pending (available in 72h)`);
+          toast.success(`Updated! $${earnings.toLocaleString()} added to pending (available in 7 days)`);
         }
       } else {
         toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
@@ -680,6 +680,15 @@ const AdminSubmissions = () => {
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               Update Views
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              className="bg-green-500 hover:bg-green-600"
+                              onClick={() => setMarkPaidSubmission(s)}
+                            >
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              Mark Paid
                             </Button>
                             <Button 
                               size="sm" 
