@@ -847,7 +847,7 @@ const CampaignDetail = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                const shareUrl = `https://zyrozo.com/c/${campaign.slug || campaign.id}`;
+                const shareUrl = `https://zyrozo.com/${campaign.slug || campaign.id}`;
                 navigator.clipboard.writeText(shareUrl);
                 toast.success("Campaign link copied!");
               }}
