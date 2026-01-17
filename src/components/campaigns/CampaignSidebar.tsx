@@ -178,22 +178,24 @@ export const CampaignSidebar = ({
   return (
     <>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {/* Campaign Header - Whop Style Large Banner */}
+        {/* Campaign Header - Whop Style Full-Width Banner (24% of sidebar) */}
         <div className="relative">
-          {/* Large Hero Banner */}
-          <div className="h-40 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
-            {campaign.thumbnail_url && (
+          {/* Full-Bleed Hero Banner - Edge to Edge */}
+          <div className="aspect-[4/3] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
+            {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
-                alt="" 
+                alt={campaign.name}
                 className="w-full h-full object-cover"
               />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
             )}
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             
             {/* Motivational Text Overlay */}
-            <div className="absolute bottom-12 left-4 right-4">
+            <div className="absolute bottom-14 left-4 right-4">
               <p className="text-white font-display font-bold text-xl leading-tight drop-shadow-lg">
                 Make $$$<br />
                 <span className="text-white/90">doing what you love.</span>
