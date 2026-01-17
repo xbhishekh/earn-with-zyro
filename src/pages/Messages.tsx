@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useSearchParams, Link } from "react-router-dom";
@@ -14,27 +13,30 @@ import {
   Loader2,
   Send,
   ArrowLeft,
-  MoreVertical,
+  MoreHorizontal,
   Trash2,
   CheckCheck,
   Check,
   Paperclip,
-  Image as ImageIcon,
   X,
   Download,
   FileText,
   BadgeCheck,
-  Calendar,
-  Users,
-  MessageCircle,
+  Plus,
+  Smile,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -44,8 +46,6 @@ interface Profile {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
-  bio?: string | null;
-  created_at?: string;
   is_verified?: boolean | null;
 }
 
@@ -70,22 +70,16 @@ interface Message {
 }
 
 const ALLOWED_FILE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "application/pdf",
-  "application/msword",
+  "image/jpeg", "image/png", "image/gif", "image/webp",
+  "application/pdf", "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
-// Team Zyrozo system account
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const TEAM_ZYROZO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 const Messages = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin, isSuperAdmin, isOwner, isFounder } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,26 +93,22 @@ const Messages = () => {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unread" | "requests">("all");
-  const [showUserProfile, setShowUserProfile] = useState(false);
-  const [selectedUserProfile, setSelectedUserProfile] = useState<Profile | null>(null);
-  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
+  const [filter, setFilter] = useState<"unread" | "requests">("unread");
+  const [hoveredConvo, setHoveredConvo] = useState<string | null>(null);
   
-  // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load conversations
+  const canDeleteBroadcasts = isAdmin || isSuperAdmin || isOwner || isFounder;
+
   useEffect(() => {
     if (!user) return;
     fetchConversations();
     
-    // Real-time subscription for new messages
     const channel = supabase
       .channel("dm-messages-realtime")
       .on(
@@ -127,30 +117,24 @@ const Messages = () => {
         async (payload) => {
           if (payload.eventType === "INSERT") {
             const newMsg = payload.new as Message;
-            
-            // Check if this message is in a DM room the user is part of
             const { data: participant } = await supabase
               .from("dm_participants")
               .select("room_id")
               .eq("room_id", newMsg.room_id)
               .eq("user_id", user.id)
-              .single();
+              .maybeSingle();
             
             if (participant) {
               fetchConversations();
-              
               if (selectedConversation && newMsg.room_id === selectedConversation.room_id) {
                 setMessages(prev => {
                   if (prev.some(m => m.id === newMsg.id)) return prev;
                   return [...prev, newMsg];
                 });
                 scrollToBottom();
-                
                 if (newMsg.user_id !== user.id) {
                   markMessagesAsRead(selectedConversation.room_id);
                 }
-              } else if (newMsg.user_id !== user.id) {
-                showMessageNotification(newMsg);
               }
             }
           } else if (payload.eventType === "UPDATE") {
@@ -161,25 +145,21 @@ const Messages = () => {
           } else if (payload.eventType === "DELETE") {
             const deletedId = payload.old.id;
             setMessages(prev => prev.filter(m => m.id !== deletedId));
+            fetchConversations();
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user, selectedConversation]);
 
-  // Load messages for selected conversation
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.room_id);
-      fetchUserProfile(selectedConversation.other_user.user_id);
     }
   }, [selectedConversation]);
 
-  // Check for userId in URL to open chat
   useEffect(() => {
     const userId = searchParams.get("userId");
     if (userId && user && conversations.length > 0) {
@@ -191,78 +171,9 @@ const Messages = () => {
     }
   }, [searchParams, user, conversations]);
 
-  const fetchUserProfile = async (userId: string) => {
-    if (userId === TEAM_ZYROZO_USER_ID) {
-      setSelectedUserProfile({
-        user_id: TEAM_ZYROZO_USER_ID,
-        username: "zyrozo_team",
-        display_name: "Team Zyrozo",
-        avatar_url: "/favicon.jpeg",
-        bio: "Official Zyrozo notification channel",
-        is_verified: true,
-      });
-      setSocialAccounts([]);
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    if (profile) {
-      setSelectedUserProfile(profile);
-    }
-
-    // Fetch social accounts
-    const { data: socials } = await supabase
-      .from("social_accounts")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "verified");
-
-    setSocialAccounts(socials || []);
-  };
-
-  const showMessageNotification = async (message: Message) => {
-    const { data: senderProfile } = await supabase
-      .from("profiles")
-      .select("display_name, username")
-      .eq("user_id", message.user_id)
-      .single();
-    
-    const senderName = senderProfile?.display_name || senderProfile?.username || "Someone";
-    
-    toast.message(`New message from ${senderName}`, {
-      description: message.content.length > 50 
-        ? message.content.substring(0, 50) + "..." 
-        : message.content,
-      action: {
-        label: "View",
-        onClick: () => {
-          const convo = conversations.find(c => c.other_user.user_id === message.user_id);
-          if (convo) setSelectedConversation(convo);
-        },
-      },
-    });
-    
-    await supabase.from("notifications").insert({
-      user_id: user!.id,
-      type: "dm_message",
-      title: `New message from ${senderName}`,
-      message: message.content.length > 100 
-        ? message.content.substring(0, 100) + "..." 
-        : message.content,
-      metadata: { room_id: message.room_id, sender_id: message.user_id },
-    });
-  };
-
   const markMessagesAsRead = async (roomId: string) => {
     if (!user) return;
-    
     const now = new Date().toISOString();
-    
     await supabase
       .from("chat_messages")
       .update({ read_at: now })
@@ -271,11 +182,8 @@ const Messages = () => {
       .is("read_at", null);
     
     setMessages(prev => prev.map(m => 
-      m.user_id !== user.id && !m.read_at 
-        ? { ...m, read_at: now } 
-        : m
+      m.user_id !== user.id && !m.read_at ? { ...m, read_at: now } : m
     ));
-    
     setConversations(prev => prev.map(c => 
       c.room_id === roomId ? { ...c, unread_count: 0 } : c
     ));
@@ -304,7 +212,6 @@ const Messages = () => {
       }
 
       const roomIds = dmRooms.map(r => r.room_id);
-
       const { data: allParticipants, error: participantsError } = await supabase
         .from("dm_participants")
         .select("room_id, user_id")
@@ -314,7 +221,6 @@ const Messages = () => {
       if (participantsError) throw participantsError;
 
       const otherUserIds = [...new Set(allParticipants?.map(p => p.user_id) || [])];
-      
       if (otherUserIds.length === 0) {
         setConversations([]);
         setLoading(false);
@@ -323,7 +229,7 @@ const Messages = () => {
 
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, username, display_name, avatar_url")
+        .select("user_id, username, display_name, avatar_url, is_verified")
         .in("user_id", otherUserIds);
 
       if (profilesError) throw profilesError;
@@ -336,7 +242,8 @@ const Messages = () => {
           user_id: TEAM_ZYROZO_USER_ID,
           username: "zyrozo_team",
           display_name: "Team Zyrozo",
-          avatar_url: "/favicon.jpeg"
+          avatar_url: "/favicon.jpeg",
+          is_verified: true,
         });
       }
 
@@ -345,7 +252,6 @@ const Messages = () => {
       for (const room of dmRooms) {
         const otherParticipant = allParticipants?.find(p => p.room_id === room.room_id);
         if (!otherParticipant) continue;
-
         const profile = profileMap.get(otherParticipant.user_id);
         if (!profile) continue;
 
@@ -355,7 +261,7 @@ const Messages = () => {
           .eq("room_id", room.room_id)
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const { count: unreadCount } = await supabase
           .from("chat_messages")
@@ -364,17 +270,12 @@ const Messages = () => {
           .neq("user_id", user.id)
           .is("read_at", null);
 
-        let lastMessagePreview = lastMsg?.content;
+        let lastMessagePreview = lastMsg?.content || "";
         if (lastMsg?.attachment_type) {
-          if (lastMsg.attachment_type.startsWith("image/")) {
-            lastMessagePreview = "📷 Photo";
-          } else {
-            lastMessagePreview = "📎 File";
-          }
+          lastMessagePreview = lastMsg.attachment_type.startsWith("image/") ? "📷 Photo" : "📎 File";
         }
-        
-        if (lastMessagePreview && lastMessagePreview.length > 50) {
-          lastMessagePreview = lastMessagePreview.substring(0, 50) + "...";
+        if (lastMessagePreview.length > 40) {
+          lastMessagePreview = lastMessagePreview.substring(0, 40) + "...";
         }
 
         conversationsData.push({
@@ -387,12 +288,6 @@ const Messages = () => {
       }
 
       conversationsData.sort((a, b) => {
-        const aIsTeam = a.other_user.user_id === TEAM_ZYROZO_USER_ID;
-        const bIsTeam = b.other_user.user_id === TEAM_ZYROZO_USER_ID;
-        
-        if (aIsTeam && a.unread_count > 0 && (!bIsTeam || b.unread_count === 0)) return -1;
-        if (bIsTeam && b.unread_count > 0 && (!aIsTeam || a.unread_count === 0)) return 1;
-        
         if (!a.last_message_at) return 1;
         if (!b.last_message_at) return -1;
         return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
@@ -419,7 +314,6 @@ const Messages = () => {
       if (error) throw error;
       setMessages(data || []);
       scrollToBottom();
-      
       markMessagesAsRead(roomId);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -434,12 +328,11 @@ const Messages = () => {
       setSearchResults([]);
       return;
     }
-
     setSearchingUsers(true);
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, username, display_name, avatar_url, bio, is_verified, created_at")
+        .select("user_id, username, display_name, avatar_url, is_verified")
         .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
         .neq("user_id", user?.id)
         .limit(10);
@@ -461,13 +354,9 @@ const Messages = () => {
       setUserSearchQuery("");
       setSearchResults([]);
 
-      const existingConvo = conversations.find(
-        c => c.other_user.user_id === otherUser.user_id
-      );
-
+      const existingConvo = conversations.find(c => c.other_user.user_id === otherUser.user_id);
       if (existingConvo) {
         setSelectedConversation(existingConvo);
-        toast.success(`Chat with ${otherUser.display_name || otherUser.username} opened`);
         return;
       }
 
@@ -496,7 +385,6 @@ const Messages = () => {
             return [newConvo, ...prev];
           });
           setSelectedConversation(newConvo);
-          toast.success(`Chat with ${otherUser.display_name || otherUser.username} opened`);
           return;
         }
       }
@@ -509,14 +397,10 @@ const Messages = () => {
 
       if (roomError) throw roomError;
 
-      const { error: participantsError } = await supabase
-        .from("dm_participants")
-        .insert([
-          { room_id: room.id, user_id: user.id },
-          { room_id: room.id, user_id: otherUser.user_id },
-        ]);
-
-      if (participantsError) throw participantsError;
+      await supabase.from("dm_participants").insert([
+        { room_id: room.id, user_id: user.id },
+        { room_id: room.id, user_id: otherUser.user_id },
+      ]);
 
       const newConvo: Conversation = {
         room_id: room.id,
@@ -526,7 +410,6 @@ const Messages = () => {
 
       setConversations(prev => [newConvo, ...prev]);
       setSelectedConversation(newConvo);
-      toast.success(`Started chat with ${otherUser.display_name || otherUser.username}`);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start conversation");
@@ -536,19 +419,15 @@ const Messages = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       toast.error("File type not allowed");
       return;
     }
-
     if (file.size > MAX_FILE_SIZE) {
       toast.error("File size must be less than 10MB");
       return;
     }
-
     setSelectedFile(file);
-
     if (file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => setFilePreview(e.target?.result as string);
@@ -566,27 +445,16 @@ const Messages = () => {
 
   const uploadFile = async (): Promise<{ url: string; type: string; name: string } | null> => {
     if (!selectedFile || !user) return null;
-
     setUploading(true);
     try {
       const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from("chat-attachments")
         .upload(fileName, selectedFile);
-
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("chat-attachments")
-        .getPublicUrl(fileName);
-
-      return {
-        url: publicUrl,
-        type: selectedFile.type,
-        name: selectedFile.name,
-      };
+      const { data: { publicUrl } } = supabase.storage.from("chat-attachments").getPublicUrl(fileName);
+      return { url: publicUrl, type: selectedFile.type, name: selectedFile.name };
     } catch (error) {
       console.error("Error uploading file:", error);
       toast.error("Failed to upload file");
@@ -598,7 +466,6 @@ const Messages = () => {
 
   const sendMessage = async () => {
     if ((!newMessage.trim() && !selectedFile) || !selectedConversation || !user || sending) return;
-
     setSending(true);
     const messageContent = newMessage.trim();
     setNewMessage("");
@@ -610,19 +477,16 @@ const Messages = () => {
         clearSelectedFile();
       }
 
-      const { error } = await supabase
-        .from("chat_messages")
-        .insert({
-          room_id: selectedConversation.room_id,
-          user_id: user.id,
-          content: messageContent || (attachment ? "" : ""),
-          attachment_url: attachment?.url,
-          attachment_type: attachment?.type,
-          attachment_name: attachment?.name,
-        });
+      const { error } = await supabase.from("chat_messages").insert({
+        room_id: selectedConversation.room_id,
+        user_id: user.id,
+        content: messageContent || "",
+        attachment_url: attachment?.url,
+        attachment_type: attachment?.type,
+        attachment_name: attachment?.name,
+      });
 
       if (error) throw error;
-      
       fetchConversations();
     } catch (error) {
       console.error("Error sending message:", error);
@@ -633,73 +497,53 @@ const Messages = () => {
     }
   };
 
-  const deleteMessage = async (messageId: string) => {
+  const deleteMessage = async (messageId: string, isSystemMessage: boolean = false) => {
     try {
-      const { error } = await supabase
-        .from("chat_messages")
-        .delete()
-        .eq("id", messageId)
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
+      if (isSystemMessage && canDeleteBroadcasts) {
+        // Admin deleting broadcast - delete for everyone
+        const { error } = await supabase.from("chat_messages").delete().eq("id", messageId);
+        if (error) throw error;
+      } else {
+        // Regular user deleting own message
+        const { error } = await supabase
+          .from("chat_messages")
+          .delete()
+          .eq("id", messageId)
+          .eq("user_id", user?.id);
+        if (error) throw error;
+      }
       
       setMessages(prev => prev.filter(m => m.id !== messageId));
       toast.success("Message deleted");
+      fetchConversations();
     } catch (error) {
       console.error("Error deleting message:", error);
       toast.error("Failed to delete message");
     }
   };
 
-  const formatTime = (dateString: string) => {
+  const formatConvoTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: "short" });
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric" });
-    }
-  };
-
-  const formatReadReceipt = (readAt: string) => {
-    const date = new Date(readAt);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return "Read just now";
-    if (diffMins < 60) return `Read ${diffMins}m ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `Read ${diffHours}h ago`;
-    
-    return `Read ${format(date, "MMM d, h:mm a")}`;
+    if (diffDays === 0) return format(date, "h:mm a");
+    if (diffDays < 7) return format(date, "EEE");
+    return format(date, "M/d");
   };
 
   const formatDateSeparator = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
+    if (date.toDateString() === now.toDateString()) return "TODAY";
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === now.toDateString()) {
-      return "Today";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
-    } else {
-      return format(date, "MMMM d, yyyy");
-    }
+    if (date.toDateString() === yesterday.toDateString()) return "YESTERDAY";
+    return format(date, "EEEE h:mm a").toUpperCase();
   };
 
   const renderAttachment = (message: Message) => {
     if (!message.attachment_url) return null;
-
     const isImage = message.attachment_type?.startsWith("image/");
-
     if (isImage) {
       return (
         <div className="mt-2 rounded-lg overflow-hidden max-w-[200px]">
@@ -712,7 +556,6 @@ const Messages = () => {
         </div>
       );
     }
-
     return (
       <a
         href={message.attachment_url}
@@ -721,9 +564,7 @@ const Messages = () => {
         className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
       >
         <FileText className="w-5 h-5 text-muted-foreground" />
-        <span className="text-sm truncate flex-1">
-          {message.attachment_name || "File"}
-        </span>
+        <span className="text-sm truncate flex-1">{message.attachment_name || "File"}</span>
         <Download className="w-4 h-4 text-muted-foreground" />
       </a>
     );
@@ -734,12 +575,17 @@ const Messages = () => {
       ? (convo.other_user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
          convo.other_user.username?.toLowerCase().includes(searchQuery.toLowerCase()))
       : true;
-    
     if (filter === "unread") return matchesSearch && convo.unread_count > 0;
     return matchesSearch;
   });
 
-  // Group messages by date
+  const allConversations = conversations.filter(convo => {
+    return searchQuery
+      ? (convo.other_user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         convo.other_user.username?.toLowerCase().includes(searchQuery.toLowerCase()))
+      : true;
+  });
+
   const groupedMessages = messages.reduce((groups: { date: string; messages: Message[] }[], message) => {
     const date = new Date(message.created_at).toDateString();
     const existingGroup = groups.find(g => g.date === date);
@@ -753,7 +599,7 @@ const Messages = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -775,15 +621,13 @@ const Messages = () => {
         className="hidden"
       />
 
-      {/* Sidebar - Conversations List */}
-      <div
-        className={cn(
-          "w-full md:w-[360px] lg:w-[400px] border-r border-border flex flex-col bg-card shrink-0",
-          selectedConversation ? "hidden md:flex" : "flex"
-        )}
-      >
+      {/* Left Sidebar - Conversations */}
+      <div className={cn(
+        "w-full md:w-[380px] border-r border-border flex flex-col bg-background shrink-0",
+        selectedConversation ? "hidden md:flex" : "flex"
+      )}>
         {/* Header */}
-        <div className="p-4 border-b border-border space-y-4">
+        <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -791,7 +635,7 @@ const Messages = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="pl-9 bg-muted/50 border-0 h-10"
+                className="pl-9 bg-muted/50 border-0 h-10 rounded-lg"
               />
             </div>
             <Button
@@ -804,38 +648,26 @@ const Messages = () => {
             </Button>
           </div>
 
-          {/* Filters */}
+          {/* Filter Tabs - Whop style */}
           <div className="flex gap-2">
-            <button
-              onClick={() => setFilter("all")}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all",
-                filter === "all"
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              All
-            </button>
             <button
               onClick={() => setFilter("unread")}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2",
+                "px-4 py-1.5 rounded-full text-sm font-medium transition-all border",
                 filter === "unread"
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-transparent text-foreground border-border hover:bg-muted"
               )}
             >
-              <span className="w-2 h-2 rounded-full bg-red-500" />
               Unread
             </button>
             <button
               onClick={() => setFilter("requests")}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2",
+                "px-4 py-1.5 rounded-full text-sm font-medium transition-all border flex items-center gap-1.5",
                 filter === "requests"
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-transparent text-foreground border-border hover:bg-muted"
               )}
             >
               <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -850,76 +682,83 @@ const Messages = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredConversations.length === 0 ? (
+          ) : allConversations.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <p className="text-primary font-medium">No conversations yet</p>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Search className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-foreground">No conversations yet</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Click the <span className="text-primary">edit icon</span> to start a new chat
+                Click the edit icon to start a new chat
               </p>
             </div>
           ) : (
             <div>
-              {filteredConversations.map((convo) => {
+              {allConversations.map((convo) => {
                 const isTeamZyrozo = convo.other_user.user_id === TEAM_ZYROZO_USER_ID;
+                const isSelected = selectedConversation?.room_id === convo.room_id;
                 
                 return (
-                  <button
+                  <div
                     key={convo.room_id}
-                    onClick={() => setSelectedConversation(convo)}
-                    className={cn(
-                      "w-full p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50",
-                      selectedConversation?.room_id === convo.room_id && "bg-muted",
-                      isTeamZyrozo && "bg-gradient-to-r from-orange-50/50 to-purple-50/50 dark:from-orange-950/20 dark:to-purple-950/20"
-                    )}
+                    className="relative"
+                    onMouseEnter={() => setHoveredConvo(convo.room_id)}
+                    onMouseLeave={() => setHoveredConvo(null)}
                   >
-                    <div className="relative">
-                      <Avatar className={cn(
-                        "w-12 h-12 shrink-0",
-                        isTeamZyrozo && "ring-2 ring-primary"
-                      )}>
+                    <button
+                      onClick={() => setSelectedConversation(convo)}
+                      className={cn(
+                        "w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left",
+                        isSelected && "bg-muted"
+                      )}
+                    >
+                      <Avatar className="w-12 h-12 shrink-0">
                         <AvatarImage src={convo.other_user.avatar_url || undefined} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-medium">
+                        <AvatarFallback className={cn(
+                          "text-white font-medium",
+                          isTeamZyrozo ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
+                        )}>
                           {(convo.other_user.display_name || convo.other_user.username || "?").charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      {convo.unread_count > 0 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-                          {convo.unread_count > 9 ? "9+" : convo.unread_count}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <h4 className={cn(
-                            "truncate text-sm",
-                            convo.unread_count > 0 ? "font-bold text-foreground" : "font-semibold"
-                          )}>
-                            {convo.other_user.display_name || convo.other_user.username || "Unknown User"}
-                          </h4>
-                          {isTeamZyrozo && (
-                            <>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className={cn(
+                              "truncate text-sm",
+                              convo.unread_count > 0 ? "font-bold" : "font-medium"
+                            )}>
+                              {convo.other_user.display_name || convo.other_user.username}
+                            </span>
+                            {(isTeamZyrozo || convo.other_user.is_verified) && (
                               <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
-                              <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0 shrink-0">
-                                System
-                              </Badge>
-                            </>
+                            )}
+                          </div>
+                          {convo.last_message_at && (
+                            <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                              {formatConvoTime(convo.last_message_at)}
+                            </span>
                           )}
                         </div>
-                        {convo.last_message_at && (
-                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                            {formatTime(convo.last_message_at)}
-                          </span>
-                        )}
+                        <p className={cn(
+                          "text-sm truncate",
+                          convo.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"
+                        )}>
+                          {convo.last_message || "Start a conversation"}
+                        </p>
                       </div>
-                      <p className={cn(
-                        "text-sm truncate",
-                        convo.unread_count > 0 ? "text-foreground" : "text-muted-foreground"
-                      )}>
-                        {convo.last_message || "Start a conversation"}
-                      </p>
-                    </div>
-                  </button>
+                    </button>
+
+                    {/* Hover menu */}
+                    {hoveredConvo === convo.room_id && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-background shadow-sm">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -934,8 +773,8 @@ const Messages = () => {
       )}>
         {selectedConversation ? (
           <>
-            {/* Chat Header */}
-            <div className="h-16 border-b border-border flex items-center justify-between px-4 bg-card shrink-0">
+            {/* Chat Header - Whop style */}
+            <div className="h-14 border-b border-border flex items-center justify-between px-4 bg-background shrink-0">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -945,318 +784,204 @@ const Messages = () => {
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <button
-                  onClick={() => setShowUserProfile(!showUserProfile)}
-                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                >
-                  <Avatar className={cn("w-10 h-10", isTeamZyrozo && "ring-2 ring-primary")}>
-                    <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
-                      {(selectedConversation.other_user.display_name || selectedConversation.other_user.username || "?").charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-sm">
-                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                      </span>
-                      {isTeamZyrozo && (
-                        <>
-                          <BadgeCheck className="w-4 h-4 text-primary" />
-                          <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0">
-                            System
-                          </Badge>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      @{selectedConversation.other_user.username || "user"}
-                    </p>
-                  </div>
-                </button>
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                  <AvatarFallback className={cn(
+                    "text-white text-sm",
+                    isTeamZyrozo ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
+                  )}>
+                    {(selectedConversation.other_user.display_name || "?").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-sm">
+                    {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                  </span>
+                  {(isTeamZyrozo || selectedConversation.other_user.is_verified) && (
+                    <BadgeCheck className="w-4 h-4 text-primary" />
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowUserProfile(!showUserProfile)}
-                  className="hidden lg:flex"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Conversation
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Search className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 flex min-h-0">
-              {/* Messages */}
-              <ScrollArea className="flex-1">
-                <div className="p-4 min-h-full">
-                  {messagesLoading ? (
-                    <div className="flex items-center justify-center h-full py-20">
-                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <ScrollArea className="flex-1">
+              <div className="p-4 min-h-full">
+                {messagesLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">
+                        Start the conversation by sending a message
+                      </p>
                     </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full py-20">
-                      <div className="text-center">
-                        <Avatar className="w-20 h-20 mx-auto mb-4">
-                          <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-2xl">
-                            {(selectedConversation.other_user.display_name || selectedConversation.other_user.username || "?").charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <h3 className="font-semibold text-lg mb-1">
-                          {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                        </h3>
-                        <p className="text-muted-foreground text-sm">
-                          Start the conversation by sending a message
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {groupedMessages.map((group, groupIndex) => (
-                        <div key={group.date}>
-                          {/* Date Separator */}
-                          <div className="flex items-center justify-center my-6">
-                            <div className="px-4 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                              {formatDateSeparator(group.messages[0].created_at)}
-                            </div>
-                          </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {groupedMessages.map((group) => (
+                      <div key={group.date}>
+                        {/* Date Separator - Whop style */}
+                        <div className="flex items-center justify-center my-6">
+                          <span className="text-xs text-muted-foreground font-medium tracking-wide">
+                            {formatDateSeparator(group.messages[0].created_at)}
+                          </span>
+                        </div>
 
-                          {/* Messages */}
-                          {group.messages.map((message, index) => {
-                            const isOwn = message.user_id === user?.id;
-                            const isTeamZyrozo = message.user_id === TEAM_ZYROZO_USER_ID;
-                            const isLastOwn = isOwn && 
-                              (index === group.messages.length - 1 || 
-                               group.messages[index + 1]?.user_id !== user?.id);
-                            const showAvatar = !isOwn && (
-                              index === 0 || 
-                              group.messages[index - 1]?.user_id !== message.user_id
-                            );
-                            const showTimestamp = index === group.messages.length - 1 || 
-                              group.messages[index + 1]?.user_id !== message.user_id;
+                        {/* Messages */}
+                        {group.messages.map((message, index) => {
+                          const isOwn = message.user_id === user?.id;
+                          const isSysMsg = message.user_id === TEAM_ZYROZO_USER_ID;
+                          const showAvatar = !isOwn && (
+                            index === 0 || group.messages[index - 1]?.user_id !== message.user_id
+                          );
+                          const showName = showAvatar && !isOwn;
+                          const isLastInGroup = index === group.messages.length - 1 || 
+                            group.messages[index + 1]?.user_id !== message.user_id;
 
-                            return (
-                              <div
-                                key={message.id}
-                                className={cn(
-                                  "flex gap-2 group",
-                                  isOwn ? "justify-end" : "justify-start",
-                                  !showTimestamp && "mb-0.5"
-                                )}
-                              >
-                                {/* Avatar for other user */}
-                                {!isOwn && (
-                                  <div className="w-8 shrink-0">
-                                    {showAvatar && (
-                                      <Avatar className={cn("w-8 h-8", isTeamZyrozo && "ring-2 ring-primary")}>
-                                        <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                                        <AvatarFallback className="text-xs bg-muted">
-                                          {(selectedConversation.other_user.display_name || "?").charAt(0)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                    )}
-                                  </div>
-                                )}
-
-                                <div className={cn("flex flex-col max-w-[70%]", isOwn ? "items-end" : "items-start")}>
-                                  {/* Team Zyrozo label */}
-                                  {isTeamZyrozo && showAvatar && (
-                                    <div className="flex items-center gap-1.5 mb-1 ml-1">
-                                      <span className="text-xs font-semibold text-foreground">Team Zyrozo</span>
-                                      <BadgeCheck className="w-3.5 h-3.5 text-primary" />
-                                    </div>
-                                  )}
-
-                                  {/* Message Bubble */}
-                                  <div className={cn(
-                                    "px-4 py-2.5 relative",
-                                    isOwn 
-                                      ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md" 
-                                      : isTeamZyrozo && message.content?.includes("paid @")
-                                        ? "bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 dark:from-pink-950/50 dark:via-purple-950/50 dark:to-blue-950/50 rounded-2xl rounded-bl-md"
-                                        : isTeamZyrozo
-                                          ? "bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-2xl rounded-bl-md"
-                                          : "bg-muted rounded-2xl rounded-bl-md"
-                                  )}>
-                                    {message.content && (
-                                      isTeamZyrozo && message.content.includes("paid @") ? (
-                                        <p className="text-sm font-medium">
-                                          {message.content.split(/(@\w+)/g).map((part, idx) => {
-                                            if (part.startsWith("@Zyrozo")) {
-                                              return <span key={idx} className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-1.5 py-0.5 rounded font-semibold">{part}</span>;
-                                            } else if (part.startsWith("@")) {
-                                              return <span key={idx} className="bg-gradient-to-r from-purple-400 to-purple-500 text-white px-1.5 py-0.5 rounded font-semibold">{part}</span>;
-                                            } else if (part.includes("$")) {
-                                              const dollarMatch = part.match(/(\$[\d.]+)/);
-                                              if (dollarMatch) {
-                                                const beforeDollar = part.substring(0, part.indexOf(dollarMatch[0]));
-                                                const afterDollar = part.substring(part.indexOf(dollarMatch[0]) + dollarMatch[0].length);
-                                                return <span key={idx}>{beforeDollar}<span className="text-green-600 dark:text-green-400 font-bold">{dollarMatch[0]}</span>{afterDollar}</span>;
-                                              }
-                                            }
-                                            return <span key={idx}>{part}</span>;
-                                          })}
-                                        </p>
-                                      ) : (
-                                        <p className="text-sm whitespace-pre-wrap break-words">
-                                          {message.content}
-                                        </p>
-                                      )
-                                    )}
-                                    {renderAttachment(message)}
-                                    
-                                    {/* Delete button for own messages */}
-                                    {isOwn && (
-                                      <button
-                                        onClick={() => deleteMessage(message.id)}
-                                        className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                      </button>
-                                    )}
-                                  </div>
-
-                                  {/* Timestamp & Read receipt */}
-                                  {showTimestamp && (
-                                    <div className="flex items-center gap-1 mt-1 px-1">
-                                      <span className="text-[10px] text-muted-foreground">
-                                        {format(new Date(message.created_at), "h:mm a")}
-                                      </span>
-                                      {isOwn && isLastOwn && (
-                                        <>
-                                          {message.read_at ? (
-                                            <CheckCheck className="w-3 h-3 text-primary" />
-                                          ) : (
-                                            <Check className="w-3 h-3 text-muted-foreground" />
-                                          )}
-                                        </>
-                                      )}
-                                    </div>
+                          return (
+                            <div
+                              key={message.id}
+                              className={cn(
+                                "flex gap-2 group mb-1",
+                                isOwn ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              {/* Avatar for received messages */}
+                              {!isOwn && (
+                                <div className="w-8 shrink-0">
+                                  {showAvatar && (
+                                    <Avatar className="w-8 h-8">
+                                      <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                                      <AvatarFallback className={cn(
+                                        "text-white text-xs",
+                                        isSysMsg ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
+                                      )}>
+                                        {(selectedConversation.other_user.display_name || "?").charAt(0)}
+                                      </AvatarFallback>
+                                    </Avatar>
                                   )}
                                 </div>
+                              )}
+
+                              <div className={cn("flex flex-col max-w-[70%]", isOwn ? "items-end" : "items-start")}>
+                                {/* Name + timestamp for received */}
+                                {showName && (
+                                  <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
+                                    <span className="font-medium text-foreground">
+                                      {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                                    </span>
+                                    <span>•</span>
+                                    <span>{format(new Date(message.created_at), "MMM d, yyyy h:mm a")}</span>
+                                  </div>
+                                )}
+
+                                {/* Message Bubble */}
+                                <div className={cn(
+                                  "px-4 py-2 relative group",
+                                  isOwn 
+                                    ? "bg-[#5865F2] text-white rounded-2xl rounded-br-sm" 
+                                    : isSysMsg && message.content?.includes("paid")
+                                      ? "bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/40 dark:to-purple-800/40 rounded-2xl rounded-bl-sm"
+                                      : "bg-muted rounded-2xl rounded-bl-sm"
+                                )}>
+                                  {message.content && (
+                                    isSysMsg && message.content.includes("paid") ? (
+                                      <p className="text-sm">
+                                        {message.content.split(/(@\w+)/g).map((part, idx) => {
+                                          if (part.startsWith("@")) {
+                                            return (
+                                              <span key={idx} className="bg-primary text-white px-1.5 py-0.5 rounded font-medium">
+                                                {part}
+                                              </span>
+                                            );
+                                          } else if (part.includes("$")) {
+                                            const dollarMatch = part.match(/(\$[\d.]+)/);
+                                            if (dollarMatch) {
+                                              const [beforeDollar, afterDollar] = part.split(dollarMatch[0]);
+                                              return (
+                                                <span key={idx}>
+                                                  {beforeDollar}
+                                                  <span className="text-green-600 font-semibold">{dollarMatch[0]}</span>
+                                                  {afterDollar}
+                                                </span>
+                                              );
+                                            }
+                                          }
+                                          return <span key={idx}>{part}</span>;
+                                        })}
+                                        <span className="ml-1">💸</span>
+                                      </p>
+                                    ) : (
+                                      <p className="text-sm whitespace-pre-wrap break-words">
+                                        {message.content}
+                                      </p>
+                                    )
+                                  )}
+                                  {renderAttachment(message)}
+                                  
+                                  {/* Delete button */}
+                                  {(isOwn || (isSysMsg && canDeleteBroadcasts)) && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button
+                                          className={cn(
+                                            "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-black/10",
+                                            isOwn ? "-left-8" : "-right-8"
+                                          )}
+                                        >
+                                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align={isOwn ? "end" : "start"}>
+                                        <DropdownMenuItem
+                                          onClick={() => deleteMessage(message.id, isSysMsg)}
+                                          className="text-destructive"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          {isSysMsg ? "Delete for everyone" : "Delete"}
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
+                                </div>
+
+                                {/* Read receipt for own messages */}
+                                {isOwn && isLastInGroup && (
+                                  <div className="flex items-center gap-1 mt-0.5 px-1">
+                                    {message.read_at ? (
+                                      <CheckCheck className="w-3.5 h-3.5 text-primary" />
+                                    ) : (
+                                      <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ))}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-
-              {/* User Profile Panel - Desktop */}
-              <AnimatePresence>
-                {showUserProfile && selectedUserProfile && (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 320, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    className="hidden lg:block border-l border-border bg-card shrink-0 overflow-hidden"
-                  >
-                    <div className="w-[320px] h-full overflow-y-auto">
-                      {/* Profile Header */}
-                      <div className="relative">
-                        <div className="h-24 bg-gradient-to-br from-muted to-muted/50" />
-                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-                          <Avatar className={cn("w-20 h-20 border-4 border-card", isTeamZyrozo && "ring-2 ring-primary")}>
-                            <AvatarImage src={selectedUserProfile.avatar_url || undefined} />
-                            <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-2xl">
-                              {(selectedUserProfile.display_name || selectedUserProfile.username || "?").charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                      </div>
-
-                      <div className="pt-14 px-4 pb-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <h3 className="font-bold text-lg">
-                            {selectedUserProfile.display_name || selectedUserProfile.username}
-                          </h3>
-                          {(isTeamZyrozo || selectedUserProfile.is_verified) && (
-                            <BadgeCheck className="w-5 h-5 text-primary" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          @{selectedUserProfile.username}
-                        </p>
-
-                        {/* Social Accounts */}
-                        {socialAccounts.length > 0 && (
-                          <div className="flex flex-wrap justify-center gap-2 mt-4">
-                            {socialAccounts.map((account) => (
-                              <a
-                                key={account.id}
-                                href={account.profile_url || "#"}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-sm hover:bg-muted/80 transition-colors"
-                              >
-                                <span className="capitalize">{account.platform}</span>
-                                <span className="text-muted-foreground">@{account.username}</span>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Profile Info */}
-                        <div className="mt-4 space-y-2 text-sm">
-                          {selectedUserProfile.created_at && (
-                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              <span>Joined {format(new Date(selectedUserProfile.created_at), "MMM yyyy")}</span>
                             </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        {!isTeamZyrozo && (
-                          <div className="flex gap-2 mt-6">
-                            <Button className="flex-1 rounded-full" asChild>
-                              <Link to={`/u/${selectedUserProfile.username}`}>
-                                View Profile
-                              </Link>
-                            </Button>
-                          </div>
-                        )}
-
-                        {selectedUserProfile.bio && (
-                          <p className="mt-4 text-sm text-muted-foreground">
-                            {selectedUserProfile.bio}
-                          </p>
-                        )}
+                          );
+                        })}
                       </div>
-                    </div>
-                  </motion.div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
                 )}
-              </AnimatePresence>
-            </div>
+              </div>
+            </ScrollArea>
 
-            {/* Message Input Area */}
+            {/* Bottom Section */}
             {isTeamZyrozo ? (
-              <div className="px-4 py-4 border-t border-border bg-gradient-to-r from-orange-50 to-purple-50 dark:from-orange-950/30 dark:to-purple-950/30 shrink-0">
+              <div className="px-4 py-3 border-t border-border bg-background shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-primary flex items-center justify-center shrink-0">
-                    <BadgeCheck className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                    <BadgeCheck className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground text-sm">This is the official Zyrozo notification channel</p>
+                    <p className="font-medium text-foreground text-sm">This is the official Zyrozo notification channel</p>
                     <p className="text-xs text-muted-foreground">Zyrozo will always use verified accounts to communicate with you</p>
                   </div>
                 </div>
@@ -1268,11 +993,7 @@ const Messages = () => {
                   <div className="px-4 py-2 border-t border-border bg-muted/30 shrink-0">
                     <div className="flex items-center gap-3 p-2 rounded-lg bg-background">
                       {filePreview ? (
-                        <img 
-                          src={filePreview} 
-                          alt="Preview" 
-                          className="w-16 h-16 object-cover rounded"
-                        />
+                        <img src={filePreview} alt="Preview" className="w-14 h-14 object-cover rounded" />
                       ) : (
                         <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
                           <FileText className="w-6 h-6 text-muted-foreground" />
@@ -1280,29 +1001,19 @@ const Messages = () => {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(selectedFile.size / 1024).toFixed(1)} KB
-                        </p>
+                        <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={clearSelectedFile}
-                        className="shrink-0"
-                      >
+                      <Button variant="ghost" size="icon" onClick={clearSelectedFile} className="shrink-0">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 )}
 
-                {/* Message Input */}
-                <div className="p-4 border-t border-border bg-card shrink-0">
+                {/* Message Input - Whop style */}
+                <div className="p-3 border-t border-border bg-background shrink-0">
                   <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      sendMessage();
-                    }}
+                    onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
                     className="flex items-center gap-2"
                   >
                     <Button
@@ -1311,58 +1022,55 @@ const Messages = () => {
                       size="icon"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={sending || uploading}
-                      className="shrink-0"
+                      className="shrink-0 h-9 w-9 rounded-full"
                     >
-                      <Paperclip className="w-5 h-5" />
+                      <Plus className="w-5 h-5" />
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.accept = "image/*";
-                          fileInputRef.current.click();
-                          fileInputRef.current.accept = ALLOWED_FILE_TYPES.join(",");
-                        }
-                      }}
-                      disabled={sending || uploading}
-                      className="shrink-0"
-                    >
-                      <ImageIcon className="w-5 h-5" />
-                    </Button>
+                    
                     <div className="flex-1 relative">
                       <Input
                         ref={inputRef}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={`Message @${selectedConversation.other_user.username || "user"}...`}
-                        className="bg-muted border-0 pr-12"
+                        placeholder={`Message @${selectedConversation.other_user.username || "user"}`}
+                        className="pr-20 bg-muted/50 border-0 h-10 rounded-full"
                         disabled={sending || uploading}
                       />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
+                          <Smile className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
+                          <Paperclip className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button 
-                      type="submit" 
-                      size="icon" 
-                      disabled={(!newMessage.trim() && !selectedFile) || sending || uploading}
-                      className="shrink-0 rounded-full bg-primary hover:bg-primary/90"
-                    >
-                      {sending || uploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
+
+                    {(newMessage.trim() || selectedFile) && (
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={sending || uploading}
+                        className="shrink-0 h-9 w-9 rounded-full"
+                      >
+                        {sending || uploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                   </form>
                 </div>
               </>
             )}
           </>
         ) : (
+          /* Empty State - No conversation selected */
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                <MessageCircle className="w-8 h-8 text-muted-foreground" />
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Search className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="font-semibold text-lg mb-1">Your Messages</h3>
               <p className="text-muted-foreground text-sm mb-4">
@@ -1376,116 +1084,75 @@ const Messages = () => {
         )}
       </div>
 
-      {/* User Search Modal - Enhanced with Profile View */}
-      <AnimatePresence>
-        {showUserSearch && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-10 md:pt-20 px-4"
-            onClick={() => setShowUserSearch(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-lg">New Message</h3>
-                  <Button variant="ghost" size="icon" onClick={() => setShowUserSearch(false)}>
-                    <X className="w-5 h-5" />
-                  </Button>
+      {/* New Conversation Dialog */}
+      <Dialog open={showUserSearch} onOpenChange={setShowUserSearch}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Message</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={userSearchQuery}
+                onChange={(e) => {
+                  setUserSearchQuery(e.target.value);
+                  searchUsers(e.target.value);
+                }}
+                placeholder="Search by username or name..."
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+            
+            <ScrollArea className="max-h-[300px]">
+              {searchingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={userSearchQuery}
-                    onChange={(e) => {
-                      setUserSearchQuery(e.target.value);
-                      searchUsers(e.target.value);
-                    }}
-                    placeholder="Search users by username..."
-                    className="pl-9 bg-muted border-0"
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <ScrollArea className="max-h-[60vh]">
-                {searchingUsers ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {userSearchQuery ? "No users found" : "Search for a user to start chatting"}
-                  </div>
-                ) : (
-                  <div>
-                    {searchResults.map((profile) => (
-                      <div
-                        key={profile.user_id}
-                        className="p-4 border-b border-border/50 hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start gap-4">
-                          <Avatar className="w-14 h-14 shrink-0">
-                            <AvatarImage src={profile.avatar_url || undefined} />
-                            <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-lg">
-                              {(profile.display_name || profile.username || "?").charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <h4 className="font-bold text-base">
-                                {profile.display_name || profile.username || "Unknown"}
-                              </h4>
-                              {profile.is_verified && (
-                                <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              @{profile.username || "user"}
-                            </p>
-                            {profile.created_at && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-                                <Calendar className="w-3.5 h-3.5" />
-                                <span>Joined {format(new Date(profile.created_at), "MMM yyyy")}</span>
-                              </div>
-                            )}
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                className="flex-1 rounded-full"
-                                onClick={() => startConversation(profile)}
-                              >
-                                <MessageCircle className="w-4 h-4 mr-1.5" />
-                                Message
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="rounded-full"
-                                asChild
-                              >
-                                <Link to={`/u/${profile.username}`}>
-                                  View Profile
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
+              ) : searchResults.length > 0 ? (
+                <div className="space-y-1">
+                  {searchResults.map((profile) => (
+                    <button
+                      key={profile.user_id}
+                      onClick={() => startConversation(profile)}
+                      className="w-full p-3 flex items-center gap-3 hover:bg-muted rounded-lg transition-colors text-left"
+                    >
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarFallback className="bg-gradient-to-br from-gray-400 to-gray-600 text-white">
+                          {(profile.display_name || profile.username || "?").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium truncate">
+                            {profile.display_name || profile.username}
+                          </span>
+                          {profile.is_verified && (
+                            <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
+                          )}
                         </div>
+                        <p className="text-sm text-muted-foreground truncate">
+                          @{profile.username}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    </button>
+                  ))}
+                </div>
+              ) : userSearchQuery ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No users found
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Start typing to search for users
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
