@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Search, Shield, LogOut, Wallet, Home, Compass, 
-  MessageCircle, TrendingUp, Users, Crown
+  Search, Shield, LogOut, Wallet, Crown
 } from 'lucide-react';
 import logo from "@/assets/logo.jpeg";
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,78 @@ import NotificationsBell from '@/components/NotificationsBell';
 import { cn } from '@/lib/utils';
 import { calculateAvailableBalance } from '@/lib/balance-utils';
 
+// Colorful Home Icon
+const HomeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="home-grad" x1="3" y1="3" x2="21" y2="21">
+        <stop stopColor="#F97316" />
+        <stop offset="1" stopColor="#EF4444" />
+      </linearGradient>
+    </defs>
+    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="url(#home-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Colorful Campaigns Icon (Trending/Chart)
+const CampaignsIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="camp-grad" x1="2" y1="20" x2="22" y2="4">
+        <stop stopColor="#10B981" />
+        <stop offset="1" stopColor="#06B6D4" />
+      </linearGradient>
+    </defs>
+    <path d="M2 20h20M5 20V10l5-4 4 4v10M14 20V8l5-4v16" stroke="url(#camp-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Colorful Marketplace Icon
+const MarketplaceIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="market-grad" x1="2" y1="2" x2="22" y2="22">
+        <stop stopColor="#8B5CF6" />
+        <stop offset="1" stopColor="#EC4899" />
+      </linearGradient>
+    </defs>
+    <circle cx="12" cy="12" r="10" stroke="url(#market-grad)" strokeWidth="2"/>
+    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" stroke="url(#market-grad)" strokeWidth="2"/>
+    <path d="M2 12h20" stroke="url(#market-grad)" strokeWidth="2"/>
+  </svg>
+);
+
+// Colorful Messages Icon
+const MessagesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="msg-grad" x1="3" y1="3" x2="21" y2="21">
+        <stop stopColor="#3B82F6" />
+        <stop offset="1" stopColor="#06B6D4" />
+      </linearGradient>
+    </defs>
+    <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" fill="url(#msg-grad)"/>
+    <circle cx="8.5" cy="11.5" r="1" fill="white"/>
+    <circle cx="12" cy="11.5" r="1" fill="white"/>
+    <circle cx="15.5" cy="11.5" r="1" fill="white"/>
+  </svg>
+);
+
+// Colorful Affiliate Icon
+const AffiliateIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="aff-nav-grad" x1="2" y1="2" x2="22" y2="22">
+        <stop stopColor="#F59E0B" />
+        <stop offset="1" stopColor="#10B981" />
+      </linearGradient>
+    </defs>
+    <circle cx="9" cy="7" r="4" stroke="url(#aff-nav-grad)" strokeWidth="2"/>
+    <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke="url(#aff-nav-grad)" strokeWidth="2"/>
+    <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.85" stroke="url(#aff-nav-grad)" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
 interface Profile {
   avatar_url: string | null;
   display_name: string | null;
@@ -31,15 +102,15 @@ interface Profile {
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ElementType;
+  icon: React.FC<{ className?: string }>;
 }
 
 const desktopNavItems: NavItem[] = [
-  { label: 'Home', href: '/', icon: Home },
-  { label: 'Campaigns', href: '/campaigns', icon: TrendingUp },
-  { label: 'Marketplace', href: '/marketplace', icon: Compass },
-  { label: 'Messages', href: '/messages', icon: MessageCircle },
-  { label: 'Affiliate', href: '/affiliate', icon: Users },
+  { label: 'Home', href: '/', icon: HomeIcon },
+  { label: 'Campaigns', href: '/campaigns', icon: CampaignsIcon },
+  { label: 'Marketplace', href: '/marketplace', icon: MarketplaceIcon },
+  { label: 'Messages', href: '/messages', icon: MessagesIcon },
+  { label: 'Affiliate', href: '/affiliate', icon: AffiliateIcon },
 ];
 
 // Cache for profile and balance to prevent re-fetching
