@@ -684,20 +684,21 @@ const Messages = () => {
   const isTeamZyrozo = selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID;
 
   return (
-    <MainLayout showMobileNav={false}>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileSelect}
-        accept={ALLOWED_FILE_TYPES.join(",")}
-        className="hidden"
-      />
+    <MainLayout showMobileNav={false} className="h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex h-full">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept={ALLOWED_FILE_TYPES.join(",")}
+          className="hidden"
+        />
 
-      {/* Left Sidebar - Conversations - Always visible on desktop */}
-      <div className={cn(
-        "w-full md:w-[340px] lg:w-[380px] border-r border-border flex flex-col bg-background shrink-0 h-full",
-        selectedConversation ? "hidden md:flex" : "flex"
-      )}>
+        {/* Left Sidebar - Conversations - Always visible on desktop */}
+        <div className={cn(
+          "w-full md:w-[340px] lg:w-[380px] border-r border-border flex flex-col bg-background shrink-0 h-full",
+          selectedConversation ? "hidden md:flex" : "flex"
+        )}>
         {/* Header */}
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
@@ -1177,6 +1178,7 @@ const Messages = () => {
             </div>
           </div>
         )}
+      </div>
       </div>
 
       {/* New Conversation Dialog */}
