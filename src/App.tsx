@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 // Lazy load non-critical pages for better initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Campaigns = lazy(() => import("./pages/Campaigns"));
+const MySubmissions = lazy(() => import("./pages/MySubmissions"));
 const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
 const Balance = lazy(() => import("./pages/Balance"));
 const Suspended = lazy(() => import("./pages/Suspended"));
@@ -79,6 +80,7 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/dashboard" element={<RouteErrorBoundary routeName="Dashboard"><Dashboard /></RouteErrorBoundary>} />
                   <Route path="/campaigns" element={<RouteErrorBoundary routeName="Campaigns"><Campaigns /></RouteErrorBoundary>} />
+                  <Route path="/my-submissions" element={<RouteErrorBoundary routeName="My Submissions"><MySubmissions /></RouteErrorBoundary>} />
                   <Route path="/campaigns/:id" element={<RouteErrorBoundary routeName="Campaign"><CampaignDetail /></RouteErrorBoundary>} />
                   <Route path="/c/:slug" element={<RouteErrorBoundary routeName="Campaign"><CampaignDetail /></RouteErrorBoundary>} />
                   <Route path="/balance" element={<RouteErrorBoundary routeName="Balance"><Balance /></RouteErrorBoundary>} />

@@ -19,7 +19,9 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Instagram
+  Instagram,
+  Video,
+  Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatRoom } from '@/components/chat/ChatRoom';
@@ -32,8 +34,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { ClipDetailsModal } from '@/components/submissions/ClipDetailsModal';
 
 interface Campaign {
   id: string;
@@ -62,6 +66,16 @@ interface Submission {
   views_count: number | null;
   estimated_earnings: number | null;
   created_at: string;
+  approved_at?: string | null;
+  thumbnail_url?: string | null;
+  description?: string | null;
+  campaign_id: string;
+}
+
+interface Profile {
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
 }
 
 export const CampaignSidebar = ({ 
@@ -473,13 +487,28 @@ export const FullscreenSubmissionsView = ({
 }) => {
   const { user } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'rewards' | 'submissions'>('submissions');
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
+    const fetchData = async () => {
       if (!user) return;
       
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, display_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+      }
+
+      // Fetch submissions
       const { data } = await supabase
         .from('submissions')
         .select('*')
@@ -491,22 +520,33 @@ export const FullscreenSubmissionsView = ({
       setLoading(false);
     };
 
-    fetchSubmissions();
+    fetchData();
   }, [campaign.id, user]);
 
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-success/10 text-success border-0 text-xs">Accepted</Badge>;
+        return <Badge className="bg-success/10 text-success border-0 text-xs">Approved</Badge>;
       case 'paid':
-        return <Badge className="bg-orange-500 text-white border-0 text-xs">paid</Badge>;
+        return <Badge className="bg-teal-500/10 text-teal-500 border-0 text-xs">Paid</Badge>;
       case 'rejected':
         return <Badge className="bg-destructive/10 text-destructive border-0 text-xs">Rejected</Badge>;
       case 'flagged':
         return <Badge className="bg-warning/10 text-warning border-0 text-xs">Flagged</Badge>;
       default:
-        return <Badge className="bg-warning/10 text-warning border-0 text-xs">Decision any moment</Badge>;
+        return <Badge className="bg-muted text-muted-foreground border-0 text-xs">Submitted</Badge>;
     }
+  };
+
+  const formatViewCount = (count: number): string => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return count.toString();
+  };
+
+  const handleViewPayouts = (submission: Submission) => {
+    setSelectedSubmission(submission);
+    setDetailsModalOpen(true);
   };
 
   // Parse requirements from guidelines
@@ -521,6 +561,7 @@ export const FullscreenSubmissionsView = ({
   const requirements = parseRequirements(campaign.rules_guidelines);
 
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
@@ -607,53 +648,97 @@ export const FullscreenSubmissionsView = ({
                 <p className="text-muted-foreground">No submissions yet</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px]">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Title</th>
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Status</th>
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Total views</th>
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Submission</th>
-                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Reward rate</th>
-                      <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Paid out to you</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {submissions.map((sub) => (
-                      <tr key={sub.id} className="border-b border-border hover:bg-muted/30">
-                        <td className="py-3 px-2">
-                          <span className="text-sm">{campaign.name}</span>
-                        </td>
-                        <td className="py-3 px-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {submissions.map((sub) => {
+                  const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
+                  const username = profile?.username || 'Unknown';
+                  const displayName = profile?.display_name || username;
+                  
+                  return (
+                    <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-colors">
+                      {/* Video Thumbnail */}
+                      <div className="relative aspect-[9/16] bg-muted overflow-hidden">
+                        {thumbnailUrl ? (
+                          <img 
+                            src={thumbnailUrl} 
+                            alt="Video thumbnail" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                            <Video className="w-12 h-12 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        
+                        {/* Play button overlay */}
+                        <a 
+                          href={sub.social_link || sub.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors group"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Play className="w-5 h-5 text-black ml-1" fill="currentColor" />
+                          </div>
+                        </a>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-3 space-y-3">
+                        {/* Title and Status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium truncate flex-1">{campaign.name}</p>
                           {getStatusBadge(sub.status)}
-                        </td>
-                        <td className="py-3 px-2">
-                          <span className="text-sm">{(sub.views_count || 0).toLocaleString()}</span>
-                        </td>
-                        <td className="py-3 px-2">
-                          <a 
-                            href={sub.social_link || sub.video_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-primary hover:underline text-sm"
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-5 h-5">
+                            <AvatarImage src={profile?.avatar_url || ''} />
+                            <AvatarFallback className="text-[10px]">
+                              {displayName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs text-muted-foreground truncate">@{username}</span>
+                        </div>
+
+                        {/* Dates and Earnings */}
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Submitted</p>
+                            <p className="font-medium">{format(new Date(sub.created_at), 'MMM d')}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Status</p>
+                            <p className="font-medium capitalize">{sub.status || 'Pending'}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Est. Payout</p>
+                            <p className="font-medium text-success">${(sub.estimated_earnings || 0).toFixed(2)}</p>
+                          </div>
+                        </div>
+
+                        {/* Views and View Payouts Button */}
+                        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Eye className="w-4 h-4" />
+                            <span className="text-sm font-medium">
+                              {formatViewCount(sub.views_count || 0)}
+                            </span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs h-8"
+                            onClick={() => handleViewPayouts(sub)}
                           >
-                            <Instagram className="w-4 h-4" />
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </td>
-                        <td className="py-3 px-2">
-                          <span className="text-sm">${campaign.reward_per_1k_views || 1} / 1K</span>
-                        </td>
-                        <td className="py-3 px-2 text-right">
-                          <span className="text-sm font-medium">
-                            ${(sub.estimated_earnings || 0).toFixed(2)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            View Payouts
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </>
@@ -667,6 +752,15 @@ export const FullscreenSubmissionsView = ({
         </button>
       </div>
     </div>
+
+    {/* Clip Details Modal */}
+    <ClipDetailsModal
+      open={detailsModalOpen}
+      onOpenChange={setDetailsModalOpen}
+      submission={selectedSubmission}
+      campaign={selectedSubmission ? campaign : null}
+    />
+    </>
   );
 };
 
