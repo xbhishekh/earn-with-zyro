@@ -181,7 +181,7 @@ export const CampaignSidebar = ({
         {/* Campaign Header - Whop Style Full-Width Banner (24% of sidebar) */}
         <div className="relative">
           {/* Full-Bleed Hero Banner - Edge to Edge */}
-          <div className="aspect-[4/3] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
+          <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
             {campaign.thumbnail_url ? (
               <img 
                 src={campaign.thumbnail_url} 
