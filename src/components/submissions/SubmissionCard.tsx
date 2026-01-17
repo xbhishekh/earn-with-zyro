@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Instagram, Youtube, Play, Eye, Video, Volume2, Maximize2, Pause } from 'lucide-react';
+import { Instagram, Youtube, Play, Video, Volume2, Maximize2, Pause } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -39,28 +39,35 @@ interface SubmissionCardProps {
   onViewPayouts: (submission: Submission) => void;
 }
 
-const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'other' => {
+const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'twitter' | 'other' => {
   if (!url) return 'other';
   if (url.includes('instagram.com')) return 'instagram';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('tiktok.com')) return 'tiktok';
+  if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
   return 'other';
 };
 
-const PlatformIcon = ({ platform }: { platform: string }) => {
+const PlatformIcon = ({ platform, className = "w-5 h-5" }: { platform: string; className?: string }) => {
   switch (platform) {
     case 'instagram':
-      return <Instagram className="w-4 h-4" />;
+      return <Instagram className={className} />;
     case 'youtube':
-      return <Youtube className="w-4 h-4" />;
+      return <Youtube className={className} />;
     case 'tiktok':
       return (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
         </svg>
       );
+    case 'twitter':
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      );
     default:
-      return <Video className="w-4 h-4" />;
+      return <Video className={className} />;
   }
 };
 
@@ -68,31 +75,31 @@ const getStatusBadge = (status: string | null) => {
   switch (status) {
     case 'approved':
       return (
-        <Badge className="bg-success/10 text-success border-0 text-xs font-medium px-2.5 py-0.5">
+        <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs font-medium px-3 py-1 rounded-full">
           Approved
         </Badge>
       );
     case 'paid':
       return (
-        <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs font-medium px-2.5 py-0.5">
+        <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs font-medium px-3 py-1 rounded-full">
           Paid
         </Badge>
       );
     case 'rejected':
       return (
-        <Badge className="bg-destructive/10 text-destructive border-0 text-xs font-medium px-2.5 py-0.5">
+        <Badge className="bg-red-500/20 text-red-400 border-0 text-xs font-medium px-3 py-1 rounded-full">
           Rejected
         </Badge>
       );
     case 'flagged':
       return (
-        <Badge className="bg-warning/10 text-warning border-0 text-xs font-medium px-2.5 py-0.5">
+        <Badge className="bg-yellow-500/20 text-yellow-400 border-0 text-xs font-medium px-3 py-1 rounded-full">
           Flagged
         </Badge>
       );
     default:
       return (
-        <Badge className="bg-muted text-muted-foreground border border-border text-xs font-medium px-2.5 py-0.5">
+        <Badge className="bg-zinc-700/50 text-zinc-300 border-0 text-xs font-medium px-3 py-1 rounded-full">
           Submitted
         </Badge>
       );
@@ -108,9 +115,7 @@ const formatViewCount = (count: number): string => {
 export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }: SubmissionCardProps) => {
   const platform = detectPlatform(submission.social_link);
   const username = profile?.username || 'Unknown';
-  const displayName = profile?.display_name || username;
   const avatarUrl = profile?.avatar_url;
-  const isApprovedOrPaid = submission.status === 'approved' || submission.status === 'paid';
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -155,127 +160,120 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 transition-all">
-      {/* Header - Platform icon left, Volume icon right */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
-        <div className="text-muted-foreground">
-          <PlatformIcon platform={platform} />
-        </div>
-        <div className="text-muted-foreground">
-          <Volume2 className="w-4 h-4" />
-        </div>
-      </div>
-
-      {/* Video Thumbnail - Click to play/pause inline */}
-      <div 
-        className="relative aspect-[9/16] bg-zinc-900 overflow-hidden cursor-pointer group"
-        onClick={handleVideoClick}
-      >
-        {isVideoFile ? (
-          <video 
-            ref={videoRef}
-            src={submission.video_url} 
-            className="w-full h-full object-cover"
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
-        ) : submission.thumbnail_url ? (
-          <img 
-            src={submission.thumbnail_url} 
-            alt="Video thumbnail" 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <Video className="w-16 h-16 text-muted-foreground/30" />
+    <div className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all">
+      {/* Video Container with Platform Icon Overlay */}
+      <div className="relative">
+        {/* Top Bar - Platform icon left, Volume icon right */}
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-3">
+          <div className="text-white/90">
+            <PlatformIcon platform={platform} className="w-5 h-5" />
           </div>
-        )}
-        
-        {/* Center play/pause button - hidden when playing */}
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isPlaying ? 'opacity-0' : 'opacity-100 bg-black/20'}`}>
-          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-            <Play className="w-6 h-6 text-black ml-1" fill="currentColor" />
+          <div className="text-white/90">
+            <Volume2 className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Bottom controls bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/60 to-transparent">
-          <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isPlaying ? (
-                <Pause className="w-4 h-4 text-white/80" />
-              ) : (
-                <Play className="w-4 h-4 text-white/80" />
-              )}
+        {/* Video Thumbnail - Click to play/pause inline */}
+        <div 
+          className="relative aspect-[9/16] bg-zinc-950 overflow-hidden cursor-pointer group"
+          onClick={handleVideoClick}
+        >
+          {isVideoFile ? (
+            <video 
+              ref={videoRef}
+              src={submission.video_url} 
+              className="w-full h-full object-cover"
+              muted
+              loop
+              playsInline
+              preload="metadata"
+            />
+          ) : submission.thumbnail_url ? (
+            <img 
+              src={submission.thumbnail_url} 
+              alt="Video thumbnail" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+              <Video className="w-16 h-16 text-zinc-600" />
             </div>
-            <button 
-              onClick={handleFullscreen}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
-            >
-              <Maximize2 className="w-4 h-4 text-white/80" />
-            </button>
+          )}
+          
+          {/* Center play/pause button */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+              <Play className="w-7 h-7 text-zinc-900 ml-1" fill="currentColor" />
+            </div>
+          </div>
+
+          {/* Bottom controls bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+              <button className="p-1.5 hover:bg-white/20 rounded transition-colors">
+                {isPlaying ? (
+                  <Pause className="w-4 h-4 text-white" />
+                ) : (
+                  <Play className="w-4 h-4 text-white" />
+                )}
+              </button>
+              <button 
+                onClick={handleFullscreen}
+                className="p-1.5 hover:bg-white/20 rounded transition-colors"
+              >
+                <Maximize2 className="w-4 h-4 text-white" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-3.5 space-y-3">
+      <div className="p-4 space-y-4">
         {/* Title and Status Badge */}
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium line-clamp-2 leading-snug flex-1">{title}</p>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-base font-semibold text-white line-clamp-2 leading-snug flex-1">
+            {title}
+          </h3>
           {getStatusBadge(submission.status)}
         </div>
 
         {/* User Info */}
         <div className="flex items-center gap-2">
-          <Avatar className="w-5 h-5">
+          <Avatar className="w-6 h-6 border border-zinc-700">
             <AvatarImage src={avatarUrl || ''} />
-            <AvatarFallback className="text-[10px] bg-muted">
-              {displayName.charAt(0).toUpperCase()}
+            <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+              {username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-muted-foreground truncate">@{username}</span>
+          <span className="text-sm text-zinc-400">@{username}</span>
         </div>
 
-        {/* Dates and Earnings */}
-        <div className={`grid gap-2 text-xs ${isApprovedOrPaid ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {/* Dates and Earnings - Two columns */}
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground mb-0.5">Submitted on</p>
-            <p className="font-medium">{format(new Date(submission.created_at), 'MMM d, yyyy')}</p>
+            <p className="text-zinc-500 mb-1">Submitted on</p>
+            <p className="font-medium text-white">{format(new Date(submission.created_at), 'MMM d, yyyy')}</p>
           </div>
-          {isApprovedOrPaid && (
-            <div>
-              <p className="text-muted-foreground mb-0.5">Approved on</p>
-              <p className="font-medium">
-                {submission.approved_at 
-                  ? format(new Date(submission.approved_at), 'MMM d, yyyy')
-                  : format(new Date(submission.created_at), 'MMM d, yyyy')
-                }
-              </p>
-            </div>
-          )}
           <div className="text-right">
-            <p className="text-muted-foreground mb-0.5">Est. Payout</p>
-            <p className="font-medium text-success">
+            <p className="text-zinc-500 mb-1">Est. Payout</p>
+            <p className="font-medium text-emerald-400">
               ${(submission.estimated_earnings || 0).toFixed(2)}
             </p>
           </div>
         </div>
 
         {/* Views and View Payouts Button */}
-        <div className="flex items-center justify-between pt-3 border-t border-border/50">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-            <span className="text-sm font-medium">
+        <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+            <span className="text-sm font-semibold text-white">
               {formatViewCount(submission.views_count || 0)}
             </span>
           </div>
           <Button 
-            variant="outline" 
             size="sm" 
-            className="text-xs h-8 px-4 border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 rounded-lg font-medium"
+            className="text-sm h-9 px-5 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-medium shadow-lg shadow-orange-500/20"
             onClick={(e) => {
               e.stopPropagation();
               onViewPayouts(submission);
