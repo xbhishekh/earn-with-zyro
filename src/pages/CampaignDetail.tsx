@@ -1037,96 +1037,31 @@ const CampaignDetail = () => {
                 </div>
               </div>
 
-              {/* My Submissions - Whop Style Video Grid (No Redirect) */}
-              {isMember && submissions.length > 0 && (
+              {/* My Submissions Button */}
+              {isMember && (
                 <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs text-muted-foreground uppercase font-medium tracking-wide">MY SUBMISSIONS</h3>
-                    <Link 
-                      to="/my-submissions" 
-                      className="text-xs text-primary hover:underline"
+                  <Link to="/my-submissions">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-between h-14 px-4 rounded-xl border-border hover:bg-accent"
                     >
-                      View all →
-                    </Link>
-                  </div>
-                  
-                  {/* Video Grid - Responsive */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {submissions.slice(0, 6).map((sub) => {
-                      // Get video thumbnail or show placeholder
-                      const isVideoUrl = sub.video_url && (
-                        sub.video_url.includes('.mp4') || 
-                        sub.video_url.includes('.webm') || 
-                        sub.video_url.includes('.mov') ||
-                        sub.video_url.includes('supabase')
-                      );
-                      
-                      return (
-                        <div
-                          key={sub.id}
-                          className="relative rounded-xl overflow-hidden border border-border bg-card cursor-default group"
-                        >
-                          {/* Video Thumbnail */}
-                          <div className="relative aspect-[9/16] bg-muted">
-                            {isVideoUrl ? (
-                              <video 
-                                src={sub.video_url} 
-                                className="w-full h-full object-cover"
-                                muted
-                                playsInline
-                                preload="metadata"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                                <Play className="w-8 h-8 text-muted-foreground" />
-                              </div>
-                            )}
-                            
-                            {/* Play Button Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
-                                <Play className="w-5 h-5 text-white ml-0.5" />
-                              </div>
-                            </div>
-                            
-                            {/* Status Badge - Top Right */}
-                            <div className="absolute top-2 right-2">
-                              <Badge 
-                                className={`text-xs ${
-                                  sub.status === 'approved' || sub.status === 'paid'
-                                    ? 'bg-success text-white'
-                                    : sub.status === 'pending'
-                                    ? 'bg-warning text-white'
-                                    : sub.status === 'rejected'
-                                    ? 'bg-destructive text-white'
-                                    : 'bg-muted text-foreground'
-                                }`}
-                              >
-                                {sub.status === 'approved' ? 'Submitted' : sub.status === 'paid' ? 'Paid' : sub.status || 'pending'}
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          {/* Info Section */}
-                          <div className="p-3 space-y-2">
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(sub.created_at), 'MMM d, yyyy')}
-                            </p>
-                            
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Eye className="w-3 h-3" />
-                                <span>{(sub.views_count || 0).toLocaleString()}</span>
-                              </div>
-                              <p className="text-xs font-semibold text-success">
-                                ${(sub.estimated_earnings || 0).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Video className="w-5 h-5 text-primary" />
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="text-left">
+                          <p className="font-medium text-foreground">My Submissions</p>
+                          <p className="text-xs text-muted-foreground">
+                            {submissions.length > 0 
+                              ? `${submissions.length} video${submissions.length > 1 ? 's' : ''} submitted`
+                              : 'View your submissions'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </Button>
+                  </Link>
                 </div>
               )}
 
