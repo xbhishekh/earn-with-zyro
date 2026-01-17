@@ -749,10 +749,10 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      {/* Two Column Layout - Whop Style */}
-      <div className="flex">
-        {/* Left Sidebar */}
-        <aside className="hidden lg:block w-72 shrink-0 p-4 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+      {/* Two Column Layout - Whop Style (24% sidebar, 76% content) */}
+      <div className="flex min-h-[calc(100vh-3.5rem)]">
+        {/* Left Sidebar - 24% width */}
+        <aside className="hidden lg:block w-[24%] min-w-[280px] max-w-[320px] shrink-0 p-4 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
           <CampaignSidebar
             campaign={{
               id: campaign.id,
@@ -774,8 +774,8 @@ const CampaignDetail = () => {
           />
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 px-4 py-6 pb-24 max-w-4xl mx-auto">
+        {/* Main Content - Full width (76%), no side whitespace */}
+        <main className="flex-1 px-6 lg:px-8 py-6 pb-24">
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
