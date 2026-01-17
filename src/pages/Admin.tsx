@@ -18,7 +18,6 @@ import {
   FileText,
   HelpCircle,
   Radio,
-  Zap,
   LogOut,
   Menu,
   X,
@@ -28,6 +27,7 @@ import {
   Gauge,
   Flag,
 } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
@@ -158,9 +158,7 @@ const Admin = () => {
         {/* Logo */}
         <div className="p-4 border-b border-border">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            <img src={logo} alt="Zyrozo" className="w-10 h-10 rounded-xl flex-shrink-0 object-cover" />
             {sidebarOpen && (
               <div>
                 <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
@@ -223,9 +221,7 @@ const Admin = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border">
         <div className="flex items-center justify-between px-4 h-14">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <img src={logo} alt="Zyrozo" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-display font-bold gradient-text">Admin</span>
           </Link>
           <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
