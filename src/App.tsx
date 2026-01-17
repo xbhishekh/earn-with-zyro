@@ -7,7 +7,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 // Lazy load non-critical UI components to reduce initial bundle
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const SuspensionGuard = lazy(() => import("@/components/SuspensionGuard"));
+
+// Import SuspensionGuard directly (must be inside AuthProvider context)
+import SuspensionGuard from "@/components/SuspensionGuard";
 
 // Eager load critical pages
 import Index from "./pages/Index";
