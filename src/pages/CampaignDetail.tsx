@@ -974,10 +974,11 @@ const CampaignDetail = () => {
                 </div>
                 {campaign.platforms && campaign.platforms.length > 0 && (
                   <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">Platforms</p>
+                    <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">PLATFORMS</p>
                     <div className="flex items-center gap-2">
-                      {campaign.platforms.map((p) => (
-                        <div key={p} title={p} className="w-7 h-7 sm:w-8 sm:h-8">
+                      {/* Remove duplicates by normalizing to lowercase and using Set */}
+                      {[...new Set(campaign.platforms.map(p => p.toLowerCase()))].map((p) => (
+                        <div key={p} title={p.charAt(0).toUpperCase() + p.slice(1)} className="w-7 h-7 sm:w-8 sm:h-8">
                           <PlatformIcon platform={p} className="w-full h-full" />
                         </div>
                       ))}
