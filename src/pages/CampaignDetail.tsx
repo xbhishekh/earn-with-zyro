@@ -37,7 +37,10 @@ import {
   FullscreenChatView,
   FullscreenSubmissionsView,
   FullscreenAnnouncementsView,
+  InlineSubmissionsView,
 } from "@/components/campaigns/CampaignSidebar";
+import { ChatRoom } from "@/components/chat/ChatRoom";
+import { AnnouncementsList } from "@/components/announcements/AnnouncementsList";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,7 +130,10 @@ const CampaignDetail = () => {
   const [waitlistAnswers, setWaitlistAnswers] = useState<string[]>([]);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
 
-  // Fullscreen views
+  // Main content view state - 'details' | 'chat' | 'submissions' | 'announcements'
+  const [mainView, setMainView] = useState<'details' | 'chat' | 'submissions' | 'announcements'>('details');
+  
+  // Fullscreen views (kept for mobile)
   const [showFullscreenChat, setShowFullscreenChat] = useState(false);
   const [showFullscreenSubmissions, setShowFullscreenSubmissions] = useState(false);
   const [showFullscreenAnnouncements, setShowFullscreenAnnouncements] = useState(false);
@@ -759,10 +765,12 @@ const CampaignDetail = () => {
             chatRoomId={chatRoomId}
             isMember={isMember}
             submissions={submissions}
-            onOpenChat={() => setShowFullscreenChat(true)}
-            onOpenSubmissions={() => setShowFullscreenSubmissions(true)}
-            onOpenAnnouncements={() => setShowFullscreenAnnouncements(true)}
-            onSwitchToSubmissionsTab={() => setActiveTab('submissions')}
+            onOpenChat={() => setMainView('chat')}
+            onOpenSubmissions={() => setMainView('submissions')}
+            onOpenAnnouncements={() => setMainView('announcements')}
+            onSwitchToSubmissionsTab={() => setMainView('submissions')}
+            onBackToDetails={() => setMainView('details')}
+            activeView={mainView}
           />
         </aside>
 
@@ -771,9 +779,12 @@ const CampaignDetail = () => {
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button 
+                onClick={() => mainView === 'details' ? navigate("/campaigns") : setMainView('details')} 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
+                <span>{mainView === 'details' ? 'Back' : 'Back to Campaign'}</span>
               </button>
               <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
             </div>
@@ -791,230 +802,264 @@ const CampaignDetail = () => {
             </Button>
           </div>
 
-        {/* Platforms Icons Row */}
-        {campaign.platforms && campaign.platforms.length > 0 && (
-          <div className="flex gap-2 mb-6">
-            {campaign.platforms.map((p) => (
-              <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
-            ))}
-          </div>
-        )}
+          {/* Conditional Main Content based on mainView */}
+          {mainView === 'details' && (
+            <>
+              {/* Platforms Icons Row */}
+              {campaign.platforms && campaign.platforms.length > 0 && (
+                <div className="flex gap-2 mb-6">
+                  {campaign.platforms.map((p) => (
+                    <span key={p} className="text-2xl" title={p}>{getPlatformIcon(p)}</span>
+                  ))}
+                </div>
+              )}
 
-        {/* Video/Thumbnail Preview - Whop Style */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
-          <div className="relative rounded-2xl overflow-hidden">
-            {campaign.thumbnail_url ? (
-              <img 
-                src={campaign.thumbnail_url} 
-                alt={campaign.name} 
-                className="w-full aspect-video object-cover"
-              />
-            ) : (
-              <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <span className="text-6xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
+              {/* Video/Thumbnail Preview - Whop Style */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <div className="relative rounded-2xl overflow-hidden">
+                  {campaign.thumbnail_url ? (
+                    <img 
+                      src={campaign.thumbnail_url} 
+                      alt={campaign.name} 
+                      className="w-full aspect-video object-cover"
+                    />
+                  ) : (
+                    <div className="w-full aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <span className="text-6xl font-bold text-muted-foreground">{campaign.name.charAt(0)}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* About this campaign - Below thumbnail */}
+              {campaign.description && (
+                <div className="glass-card rounded-xl p-4 mb-6">
+                  <h3 className="font-medium mb-2">About this campaign</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
+                </div>
+              )}
+
+              {/* Info Banner - Yellow Warning Style */}
+              <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3 mb-6">
+                <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                <p className="text-sm text-warning">
+                  Only views after you submit count towards payout. Submit as soon as you post to get paid for all of your views.
+                </p>
               </div>
-            )}
-          </div>
-        </motion.div>
 
-        {/* About this campaign - Below thumbnail */}
-        {campaign.description && (
-          <div className="glass-card rounded-xl p-4 mb-6">
-            <h3 className="font-medium mb-2">About this campaign</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
-          </div>
-        )}
+              {/* Budget Progress - Whop Style */}
+              {budgetTotal > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-muted-foreground uppercase text-xs">PAID OUT</span>
+                    <span className="font-medium">{budgetPercent}%</span>
+                  </div>
+                  <p className="text-sm mb-2">
+                    ${budgetSpent.toLocaleString()} of ${budgetTotal.toLocaleString()} paid out
+                  </p>
+                  <Progress value={budgetPercent} className="h-2" />
+                </div>
+              )}
 
-        {/* Info Banner - Yellow Warning Style */}
-        <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3 mb-6">
-          <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-          <p className="text-sm text-warning">
-            Only views after you submit count towards payout. Submit as soon as you post to get paid for all of your views.
-          </p>
-        </div>
+              {/* Stats Grid - Whop Style */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border mb-6">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
+                  <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views} / 1K</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
+                  <Badge variant="outline">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
+                  <Badge variant="outline">${campaign.min_payout || 0}</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
+                  <Badge variant="outline">${campaign.max_payout || "∞"}</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
+                  <Badge variant="outline">{campaign.category || "General"}</Badge>
+                </div>
+              </div>
 
-        {/* Budget Progress - Whop Style */}
-        {budgetTotal > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-muted-foreground uppercase text-xs">PAID OUT</span>
-              <span className="font-medium">{budgetPercent}%</span>
-            </div>
-            <p className="text-sm mb-2">
-              ${budgetSpent.toLocaleString()} of ${budgetTotal.toLocaleString()} paid out
-            </p>
-            <Progress value={budgetPercent} className="h-2" />
-          </div>
-        )}
+              {/* Requirements Section - Whop Style Pills */}
+              {requirements.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-xs text-muted-foreground uppercase mb-3">REQUIREMENTS</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {requirements.map((req, i) => (
+                      <span 
+                        key={i} 
+                        className="inline-block bg-muted/80 text-foreground text-sm px-4 py-2 rounded-lg border border-border"
+                      >
+                        {req}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Stats Grid - Whop Style */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-4 border-y border-border mb-6">
-          <div>
-            <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
-            <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views} / 1K</Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase mb-1">Type</p>
-            <Badge variant="outline">{campaign.campaign_type?.toUpperCase() || "UGC"}</Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase mb-1">Min Payout</p>
-            <Badge variant="outline">${campaign.min_payout || 0}</Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase mb-1">Max Payout</p>
-            <Badge variant="outline">${campaign.max_payout || "∞"}</Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase mb-1">Category</p>
-            <Badge variant="outline">{campaign.category || "General"}</Badge>
-          </div>
-        </div>
+              {/* Assets Section - From Database */}
+              {(campaignAssets.length > 0 || assets.length > 0) && (
+                <div className="mb-6">
+                  <h3 className="text-xs text-muted-foreground uppercase mb-3">ASSETS</h3>
+                  <div className="space-y-2">
+                    {campaignAssets.map((asset) => {
+                      const getAssetIcon = () => {
+                        switch (asset.asset_type) {
+                          case 'video': return <Video className="w-5 h-5 text-primary" />;
+                          case 'image': return <ImageIcon className="w-5 h-5 text-primary" />;
+                          case 'file': return <FileText className="w-5 h-5 text-primary" />;
+                          case 'link': return <LinkIcon className="w-5 h-5 text-primary" />;
+                          default: return <ExternalLink className="w-5 h-5 text-primary" />;
+                        }
+                      };
+                      
+                      const formatFileSize = (bytes: number | null) => {
+                        if (!bytes) return '';
+                        if (bytes < 1024) return `${bytes} B`;
+                        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+                      };
 
-        {/* Requirements Section - Whop Style Pills */}
-        {requirements.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-xs text-muted-foreground uppercase mb-3">REQUIREMENTS</h3>
-            <div className="flex flex-wrap gap-2">
-              {requirements.map((req, i) => (
-                <span 
-                  key={i} 
-                  className="inline-block bg-muted/80 text-foreground text-sm px-4 py-2 rounded-lg border border-border"
-                >
-                  {req}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+                      return (
+                        <a
+                          key={asset.id}
+                          href={asset.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            {getAssetIcon()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground group-hover:text-primary truncate">{asset.title}</p>
+                              {asset.is_required && (
+                                <Badge variant="destructive" className="text-xs">Required</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {asset.description || asset.file_name || asset.url}
+                              {asset.file_size && ` • ${formatFileSize(asset.file_size)}`}
+                            </p>
+                          </div>
+                          {asset.asset_type === 'file' ? (
+                            <Download className="w-4 h-4 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                        </a>
+                      );
+                    })}
+                    
+                    {campaignAssets.length === 0 && assets.map((asset, i) => (
+                      <a
+                        key={i}
+                        href={asset.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+                      >
+                        <span className="text-2xl">{asset.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-primary group-hover:underline truncate">{asset.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{asset.url}</p>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Assets Section - From Database */}
-        {(campaignAssets.length > 0 || assets.length > 0) && (
-          <div className="mb-6">
-            <h3 className="text-xs text-muted-foreground uppercase mb-3">ASSETS</h3>
-            <div className="space-y-2">
-              {campaignAssets.map((asset) => {
-                const getAssetIcon = () => {
-                  switch (asset.asset_type) {
-                    case 'video': return <Video className="w-5 h-5 text-primary" />;
-                    case 'image': return <ImageIcon className="w-5 h-5 text-primary" />;
-                    case 'file': return <FileText className="w-5 h-5 text-primary" />;
-                    case 'link': return <LinkIcon className="w-5 h-5 text-primary" />;
-                    default: return <ExternalLink className="w-5 h-5 text-primary" />;
-                  }
-                };
-                
-                const formatFileSize = (bytes: number | null) => {
-                  if (!bytes) return '';
-                  if (bytes < 1024) return `${bytes} B`;
-                  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-                  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-                };
-
-                return (
+              {/* Rules Link if provided */}
+              {campaign.rules_link && (
+                <div className="mb-6">
                   <a
-                    key={asset.id}
-                    href={asset.url}
+                    href={campaign.rules_link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      {getAssetIcon()}
+                    <span className="text-2xl">📋</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-primary group-hover:underline">Full Guidelines & Rules</p>
+                      <p className="text-xs text-muted-foreground">View detailed campaign rules</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-foreground group-hover:text-primary truncate">{asset.title}</p>
-                        {asset.is_required && (
-                          <Badge variant="destructive" className="text-xs">Required</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {asset.description || asset.file_name || asset.url}
-                        {asset.file_size && ` • ${formatFileSize(asset.file_size)}`}
-                      </p>
-                    </div>
-                    {asset.asset_type === 'file' ? (
-                      <Download className="w-4 h-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                    )}
+                    <ExternalLink className="w-4 h-4 text-muted-foreground" />
                   </a>
-                );
-              })}
-              
-              {campaignAssets.length === 0 && assets.map((asset, i) => (
-                <a
-                  key={i}
-                  href={asset.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
-                >
-                  <span className="text-2xl">{asset.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-primary group-hover:underline truncate">{asset.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{asset.url}</p>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+                </div>
+              )}
 
-        {/* Rules Link if provided */}
-        {campaign.rules_link && (
-          <div className="mb-6">
-            <a
-              href={campaign.rules_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
-            >
-              <span className="text-2xl">📋</span>
-              <div className="flex-1">
-                <p className="font-medium text-primary group-hover:underline">Full Guidelines & Rules</p>
-                <p className="text-xs text-muted-foreground">View detailed campaign rules</p>
+              {/* Disclaimer - Whop Style */}
+              <div className="mb-6">
+                <h3 className="text-xs text-muted-foreground uppercase mb-2">DISCLAIMER</h3>
+                <p className="text-sm text-muted-foreground">
+                  Creators may reject submissions that don't meet requirements. By submitting, you grant full usage rights and agree to follow the platform guidelines.
+                </p>
               </div>
-              <ExternalLink className="w-4 h-4 text-muted-foreground" />
-            </a>
-          </div>
-        )}
 
-        {/* Disclaimer - Whop Style */}
-        <div className="mb-6">
-          <h3 className="text-xs text-muted-foreground uppercase mb-2">DISCLAIMER</h3>
-          <p className="text-sm text-muted-foreground">
-            Creators may reject submissions that don't meet requirements. By submitting, you grant full usage rights and agree to follow the platform guidelines.
-          </p>
-        </div>
+              {/* Mobile Quick Actions */}
+              <div className="lg:hidden mb-6">
+                <div className="glass-card rounded-xl p-4 space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setShowFullscreenChat(true)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Open Chat
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setShowFullscreenSubmissions(true)}
+                  >
+                    <ClipboardList className="w-4 h-4 mr-2" />
+                    View My Submissions
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
 
-        {/* Mobile Quick Actions */}
-        <div className="lg:hidden mb-6">
-          <div className="glass-card rounded-xl p-4 space-y-2">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => setShowFullscreenChat(true)}
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Open Chat
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => setShowFullscreenSubmissions(true)}
-            >
-              <ClipboardList className="w-4 h-4 mr-2" />
-              View My Submissions
-            </Button>
-          </div>
-        </div>
+          {/* Chat View - Inline */}
+          {mainView === 'chat' && chatRoomId && (
+            <div className="h-[calc(100vh-200px)] rounded-xl overflow-hidden border border-border">
+              <ChatRoom roomId={chatRoomId} roomName={campaign.name} />
+            </div>
+          )}
+
+          {/* Submissions View - Inline */}
+          {mainView === 'submissions' && (
+            <InlineSubmissionsView
+              campaign={{
+                id: campaign.id,
+                name: campaign.name,
+                slug: campaign.slug,
+                thumbnail_url: campaign.thumbnail_url,
+                rules_guidelines: campaign.rules_guidelines,
+                reward_per_1k_views: campaign.reward_per_1k_views
+              }}
+            />
+          )}
+
+          {/* Announcements View - Inline */}
+          {mainView === 'announcements' && (
+            <div className="space-y-4">
+              <h1 className="text-2xl font-bold">Announcements</h1>
+              <AnnouncementsList campaignId={campaign.id} />
+            </div>
+          )}
 
         {/* Fixed Bottom Bar - Whop Style */}
         <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card border-t border-border px-8 py-5 z-40">
