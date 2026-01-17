@@ -288,7 +288,7 @@ const MySubmissions = () => {
           </Select>
         </div>
 
-        {/* Submissions Grid */}
+        {/* Submissions Grid - 3 columns like Whop */}
         {filteredSubmissions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <ClipboardList className="w-16 h-16 text-muted-foreground/50 mb-4" />
@@ -307,7 +307,7 @@ const MySubmissions = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSubmissions.map((submission) => {
               const campaign = campaigns.get(submission.campaign_id);
               if (!campaign) return null;

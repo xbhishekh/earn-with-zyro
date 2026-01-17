@@ -691,11 +691,12 @@ export const FullscreenSubmissionsView = ({
                 const displayName = profile?.display_name || username;
                 const platform = detectPlatform(sub.social_link);
                 const isApprovedOrPaid = sub.status === 'approved' || sub.status === 'paid';
+                const title = sub.description || campaign.name;
                 
                 return (
-                  <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-colors">
-                    {/* Platform Header */}
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                  <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 transition-all">
+                    {/* Header - Platform icon left, Volume icon right */}
+                    <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
                       <div className="text-muted-foreground">
                         <PlatformIcon platform={platform} />
                       </div>
@@ -707,12 +708,12 @@ export const FullscreenSubmissionsView = ({
                       </div>
                     </div>
 
-                    {/* Video Thumbnail - Clickable to redirect */}
+                    {/* Video Thumbnail - Whop Style with player controls */}
                     <a 
                       href={sub.social_link || sub.video_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block relative aspect-[9/16] bg-muted overflow-hidden group cursor-pointer"
+                      className="block relative aspect-[9/16] bg-zinc-900 overflow-hidden group cursor-pointer"
                     >
                       {thumbnailUrl ? (
                         <img 
@@ -721,24 +722,39 @@ export const FullscreenSubmissionsView = ({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <Video className="w-12 h-12 text-muted-foreground/50" />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                          <Video className="w-16 h-16 text-muted-foreground/30" />
                         </div>
                       )}
                       
-                      {/* Play button overlay */}
+                      {/* Center play button */}
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
-                        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Play className="w-5 h-5 text-black ml-1" fill="currentColor" />
+                        <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                          <Play className="w-6 h-6 text-black ml-1" fill="currentColor" />
+                        </div>
+                      </div>
+
+                      {/* Bottom controls bar - Play and Fullscreen icons */}
+                      <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/60 to-transparent">
+                        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Play className="w-4 h-4 text-white/80" />
+                          </div>
+                          <svg className="w-4 h-4 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
+                          </svg>
                         </div>
                       </div>
                     </a>
 
                     {/* Content */}
-                    <div className="p-3 space-y-3">
-                      {/* Title and Status */}
+                    <div className="p-3.5 space-y-3">
+                      {/* Title and Status Badge */}
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium truncate flex-1">{campaign.name}</p>
+                        <p className="text-sm font-medium line-clamp-2 leading-snug flex-1">{title}</p>
                         {getStatusBadge(sub.status)}
                       </div>
 
@@ -746,35 +762,35 @@ export const FullscreenSubmissionsView = ({
                       <div className="flex items-center gap-2">
                         <Avatar className="w-5 h-5">
                           <AvatarImage src={profile?.avatar_url || ''} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-[10px] bg-muted">
                             {displayName.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs text-muted-foreground truncate">@{username}</span>
                       </div>
 
-                      {/* Dates and Earnings - Show Approved on for approved/paid */}
+                      {/* Dates and Earnings */}
                       <div className={`grid gap-2 text-xs ${isApprovedOrPaid ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <div>
-                          <p className="text-muted-foreground">Submitted on</p>
+                          <p className="text-muted-foreground mb-0.5">Submitted on</p>
                           <p className="font-medium">{format(new Date(sub.created_at), 'MMM d, yyyy')}</p>
                         </div>
                         {isApprovedOrPaid && (
                           <div>
-                            <p className="text-muted-foreground">Approved on</p>
+                            <p className="text-muted-foreground mb-0.5">Approved on</p>
                             <p className="font-medium">{format(new Date(sub.approved_at || sub.created_at), 'MMM d, yyyy')}</p>
                           </div>
                         )}
-                        <div className={isApprovedOrPaid ? 'text-right' : 'text-right'}>
-                          <p className="text-muted-foreground">Est. Payout</p>
+                        <div className="text-right">
+                          <p className="text-muted-foreground mb-0.5">Est. Payout</p>
                           <p className="font-medium text-success">${(sub.estimated_earnings || 0).toFixed(2)}</p>
                         </div>
                       </div>
 
                       {/* Views and View Payouts Button */}
-                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                        <div className="flex items-center gap-1.5 text-orange-500">
-                          <Eye className="w-4 h-4" />
+                      <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                           <span className="text-sm font-medium">
                             {formatViewCount(sub.views_count || 0)}
                           </span>
@@ -782,7 +798,7 @@ export const FullscreenSubmissionsView = ({
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs h-8 border-primary/50 text-primary hover:bg-primary/10"
+                          className="text-xs h-8 px-4 border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 rounded-lg font-medium"
                           onClick={() => handleViewPayouts(sub)}
                         >
                           View Payouts
