@@ -162,6 +162,11 @@ const CampaignDetail = () => {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  
+  // Social account verification state
+  const [verifiedPlatforms, setVerifiedPlatforms] = useState<string[]>([]);
+  const [showVerificationRequired, setShowVerificationRequired] = useState(false);
+  const [requiredPlatform, setRequiredPlatform] = useState<string>("");
 
   // Track affiliate clicks from ref param
   useEffect(() => {
@@ -223,17 +228,19 @@ const CampaignDetail = () => {
         }
       }
 
-      const [memberRes, submissionRes, roomRes, assetsRes] = await Promise.all([
+      const [memberRes, submissionRes, roomRes, assetsRes, socialAccountsRes] = await Promise.all([
         supabase.from("campaign_members").select("id").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
         supabase.from("submissions").select("*").eq("user_id", user!.id).eq("campaign_id", campaignId).order("created_at", { ascending: false }),
         supabase.from("chat_rooms").select("id").eq("campaign_id", campaignId).eq("type", "campaign").maybeSingle(),
         supabase.from("campaign_assets").select("*").eq("campaign_id", campaignId).order("sort_order", { ascending: true }),
+        supabase.from("social_accounts").select("platform, is_verified").eq("user_id", user!.id).eq("is_verified", true),
       ]);
 
       setIsMember(!!memberRes.data);
       setSubmissions(submissionRes.data as Submission[] || []);
       setCampaignAssets(assetsRes.data as CampaignAsset[] || []);
       if (roomRes.data) setChatRoomId(roomRes.data.id);
+      setVerifiedPlatforms(socialAccountsRes.data?.map(a => a.platform.toLowerCase()) || []);
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load campaign");
@@ -369,10 +376,30 @@ const CampaignDetail = () => {
     }
   };
 
+  // Detect platform from social media URL
+  const detectPlatformFromUrl = (url: string): string | null => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('instagram.com')) return 'instagram';
+    if (lowerUrl.includes('tiktok.com')) return 'tiktok';
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'twitter';
+    if (lowerUrl.includes('facebook.com')) return 'facebook';
+    if (lowerUrl.includes('snapchat.com')) return 'snapchat';
+    return null;
+  };
+
   const handleSubmission = async () => {
     if (!socialLink || !campaign) {
       toast.error("Please provide the social media link");
       return;
+    }
+
+    // Check if the platform is verified before allowing submission
+    const detectedPlatform = detectPlatformFromUrl(socialLink);
+    if (detectedPlatform && !verifiedPlatforms.includes(detectedPlatform)) {
+      setRequiredPlatform(detectedPlatform);
+      setShowVerificationRequired(true);
+      return; // Block submission
     }
 
     setSubmitting(true);
@@ -1301,9 +1328,41 @@ const CampaignDetail = () => {
             {submitting || uploadingVideo ? (
               <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploadingVideo ? "Uploading..." : "Submitting..."}</>
             ) : (
-              "Submit"
-            )}
-          </Button>
+          "Submit"
+        )}
+      </Button>
+    </DialogContent>
+  </Dialog>
+
+      {/* Verification Required Modal */}
+      <Dialog open={showVerificationRequired} onOpenChange={setShowVerificationRequired}>
+        <DialogContent className="max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Account Verification Required</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-orange-500" />
+            </div>
+            
+            <p className="text-muted-foreground mb-4">
+              You need to verify your <span className="font-bold text-foreground capitalize">{requiredPlatform}</span> account before submitting videos from this platform.
+            </p>
+            
+            <p className="text-sm text-muted-foreground">
+              Go to <strong>Profile → Social</strong> tab to link and verify your account.
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setShowVerificationRequired(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button asChild className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+              <Link to="/profile?tab=social">Link Account</Link>
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
