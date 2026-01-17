@@ -25,6 +25,7 @@ import {
   Plus,
   Smile,
 } from "lucide-react";
+import { QuickReactionsBar } from "@/components/chat/EmojiPicker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,13 @@ interface Conversation {
   unread_count: number;
 }
 
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -67,6 +75,7 @@ interface Message {
   attachment_url?: string | null;
   attachment_type?: string | null;
   attachment_name?: string | null;
+  reactions?: Reaction[];
 }
 
 const ALLOWED_FILE_TYPES = [
@@ -105,6 +114,7 @@ const Messages = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   const canDeleteBroadcasts = isAdmin || isSuperAdmin || isOwner || isFounder;
 
@@ -132,7 +142,7 @@ const Messages = () => {
               if (selectedConversation && newMsg.room_id === selectedConversation.room_id) {
                 setMessages(prev => {
                   if (prev.some(m => m.id === newMsg.id)) return prev;
-                  return [...prev, newMsg];
+                  return [...prev, { ...newMsg, reactions: [] }];
                 });
                 scrollToBottom();
                 if (newMsg.user_id !== user.id) {
@@ -149,6 +159,27 @@ const Messages = () => {
             const deletedId = payload.old.id;
             setMessages(prev => prev.filter(m => m.id !== deletedId));
             fetchConversations();
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_message_reactions" },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newReaction = payload.new as Reaction;
+            setMessages(prev => prev.map(msg => 
+              msg.id === newReaction.message_id 
+                ? { ...msg, reactions: [...(msg.reactions || []), newReaction] }
+                : msg
+            ));
+          } else if (payload.eventType === "DELETE") {
+            const deletedReaction = payload.old as Reaction;
+            setMessages(prev => prev.map(msg => 
+              msg.id === deletedReaction.message_id 
+                ? { ...msg, reactions: (msg.reactions || []).filter(r => r.id !== deletedReaction.id) }
+                : msg
+            ));
           }
         }
       )
@@ -354,7 +385,21 @@ const Messages = () => {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+
+      // Fetch reactions for all messages
+      const messageIds = data?.map(m => m.id) || [];
+      const { data: reactionsData } = await supabase
+        .from("chat_message_reactions")
+        .select("*")
+        .in("message_id", messageIds);
+
+      // Attach reactions to messages
+      const messagesWithReactions = (data || []).map(msg => ({
+        ...msg,
+        reactions: reactionsData?.filter(r => r.message_id === msg.id) || []
+      }));
+
+      setMessages(messagesWithReactions);
       scrollToBottom();
       markMessagesAsRead(roomId);
     } catch (error) {
@@ -363,6 +408,66 @@ const Messages = () => {
     } finally {
       setMessagesLoading(false);
     }
+  };
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+
+    try {
+      // Check if user already reacted with this emoji
+      const existingReaction = messages
+        .find(m => m.id === messageId)
+        ?.reactions?.find(r => r.user_id === user.id && r.emoji === emoji);
+
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from("chat_message_reactions")
+          .delete()
+          .eq("id", existingReaction.id);
+
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, reactions: msg.reactions?.filter(r => r.id !== existingReaction.id) }
+            : msg
+        ));
+      } else {
+        // Add reaction
+        const { data, error } = await supabase
+          .from("chat_message_reactions")
+          .insert({
+            message_id: messageId,
+            user_id: user.id,
+            emoji: emoji,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, reactions: [...(msg.reactions || []), data] }
+            : msg
+        ));
+      }
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+    }
+  };
+
+  const getReactionCounts = (reactions: Reaction[] = []) => {
+    const counts: { [emoji: string]: { count: number; userReacted: boolean } } = {};
+    reactions.forEach(r => {
+      if (!counts[r.emoji]) {
+        counts[r.emoji] = { count: 0, userReacted: false };
+      }
+      counts[r.emoji].count++;
+      if (r.user_id === user?.id) {
+        counts[r.emoji].userReacted = true;
+      }
+    });
+    return counts;
   };
 
   const searchUsers = async (query: string) => {
@@ -917,13 +1022,18 @@ const Messages = () => {
                           const isLastInGroup = index === group.messages.length - 1 || 
                             group.messages[index + 1]?.user_id !== message.user_id;
 
+                          const reactionCounts = getReactionCounts(message.reactions);
+                          const hasReactions = Object.keys(reactionCounts).length > 0;
+
                           return (
                             <div
                               key={message.id}
                               className={cn(
-                                "flex gap-2 group mb-1",
+                                "flex gap-2 group mb-1 relative",
                                 isOwn ? "justify-end" : "justify-start"
                               )}
+                              onMouseEnter={() => setHoveredMessageId(message.id)}
+                              onMouseLeave={() => setHoveredMessageId(null)}
                             >
                               {/* Avatar for received messages */}
                               {!isOwn && (
@@ -954,57 +1064,69 @@ const Messages = () => {
                                   </div>
                                 )}
 
-                                {/* Message Bubble */}
-                                <div className={cn(
-                                  "px-4 py-2 relative group",
-                                  isOwn 
-                                    ? "bg-[#5865F2] text-white rounded-2xl rounded-br-sm" 
-                                    : isSysMsg && message.content?.includes("paid")
-                                      ? "bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/40 dark:to-purple-800/40 rounded-2xl rounded-bl-sm"
-                                      : "bg-muted rounded-2xl rounded-bl-sm"
-                                )}>
-                                  {message.content && (
-                                    isSysMsg && message.content.includes("paid") ? (
-                                      <p className="text-sm">
-                                        {message.content.split(/(@\w+)/g).map((part, idx) => {
-                                          if (part.startsWith("@")) {
-                                            return (
-                                              <span key={idx} className="bg-primary text-white px-1.5 py-0.5 rounded font-medium">
-                                                {part}
-                                              </span>
-                                            );
-                                          } else if (part.includes("$")) {
-                                            const dollarMatch = part.match(/(\$[\d.]+)/);
-                                            if (dollarMatch) {
-                                              const [beforeDollar, afterDollar] = part.split(dollarMatch[0]);
+                                {/* Message Bubble with reactions */}
+                                <div className="relative">
+                                  <div className={cn(
+                                    "px-4 py-2 relative",
+                                    isOwn 
+                                      ? "bg-[#5865F2] text-white rounded-2xl rounded-br-sm" 
+                                      : isSysMsg && message.content?.includes("paid")
+                                        ? "bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-900/40 dark:to-purple-800/40 rounded-2xl rounded-bl-sm"
+                                        : "bg-muted rounded-2xl rounded-bl-sm"
+                                  )}>
+                                    {message.content && (
+                                      isSysMsg && message.content.includes("paid") ? (
+                                        <p className="text-sm">
+                                          {message.content.split(/(@\w+)/g).map((part, idx) => {
+                                            if (part.startsWith("@")) {
                                               return (
-                                                <span key={idx}>
-                                                  {beforeDollar}
-                                                  <span className="text-green-600 font-semibold">{dollarMatch[0]}</span>
-                                                  {afterDollar}
+                                                <span key={idx} className="bg-primary text-white px-1.5 py-0.5 rounded font-medium">
+                                                  {part}
                                                 </span>
                                               );
+                                            } else if (part.includes("$")) {
+                                              const dollarMatch = part.match(/(\$[\d.]+)/);
+                                              if (dollarMatch) {
+                                                const [beforeDollar, afterDollar] = part.split(dollarMatch[0]);
+                                                return (
+                                                  <span key={idx}>
+                                                    {beforeDollar}
+                                                    <span className="text-green-600 font-semibold">{dollarMatch[0]}</span>
+                                                    {afterDollar}
+                                                  </span>
+                                                );
+                                              }
                                             }
-                                          }
-                                          return <span key={idx}>{part}</span>;
-                                        })}
-                                        <span className="ml-1">💸</span>
-                                      </p>
-                                    ) : (
-                                      <p className="text-sm whitespace-pre-wrap break-words">
-                                        {message.content}
-                                      </p>
-                                    )
+                                            return <span key={idx}>{part}</span>;
+                                          })}
+                                          <span className="ml-1">💸</span>
+                                        </p>
+                                      ) : (
+                                        <p className="text-sm whitespace-pre-wrap break-words">
+                                          {message.content}
+                                        </p>
+                                      )
+                                    )}
+                                    {renderAttachment(message)}
+                                  </div>
+
+                                  {/* Quick reactions bar on hover */}
+                                  {hoveredMessageId === message.id && !isSysMsg && (
+                                    <div className={cn(
+                                      "absolute -top-8 z-10",
+                                      isOwn ? "right-0" : "left-0"
+                                    )}>
+                                      <QuickReactionsBar onReact={(emoji) => toggleReaction(message.id, emoji)} />
+                                    </div>
                                   )}
-                                  {renderAttachment(message)}
-                                  
+
                                   {/* Delete button */}
-                                  {(isOwn || (isSysMsg && canDeleteBroadcasts)) && (
+                                  {(isOwn || (isSysMsg && canDeleteBroadcasts)) && hoveredMessageId === message.id && (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           className={cn(
-                                            "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-black/10",
+                                            "absolute top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10 transition-opacity",
                                             isOwn ? "-left-8" : "-right-8"
                                           )}
                                         >
@@ -1021,6 +1143,30 @@ const Messages = () => {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
+                                  )}
+
+                                  {/* Reactions display */}
+                                  {hasReactions && (
+                                    <div className={cn(
+                                      "flex flex-wrap gap-1 mt-1",
+                                      isOwn ? "justify-end" : "justify-start"
+                                    )}>
+                                      {Object.entries(reactionCounts).map(([emoji, data]) => (
+                                        <button
+                                          key={emoji}
+                                          onClick={() => toggleReaction(message.id, emoji)}
+                                          className={cn(
+                                            "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors",
+                                            data.userReacted
+                                              ? "bg-primary/10 border-primary text-primary"
+                                              : "bg-muted border-border hover:bg-muted/80"
+                                          )}
+                                        >
+                                          <span>{emoji}</span>
+                                          <span className="font-medium">{data.count}</span>
+                                        </button>
+                                      ))}
+                                    </div>
                                   )}
                                 </div>
 
