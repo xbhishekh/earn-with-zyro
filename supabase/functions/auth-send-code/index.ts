@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     console.log("generateLink response keys:", Object.keys(data));
     
     // The OTP should be in data.properties.email_otp
-    const finalOtp = (data.properties as any)?.email_otp as string | undefined;
+    let finalOtp = (data.properties as any)?.email_otp as string | undefined;
     
     if (!finalOtp) {
       console.error("No email_otp returned from generateLink. Full response:", JSON.stringify(data));
@@ -106,6 +106,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Note: OTP length is controlled by Supabase auth settings
 
     console.log(`OTP generated: ${finalOtp.length} digits`);
 
