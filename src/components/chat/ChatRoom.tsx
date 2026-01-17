@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download, Reply, CornerDownRight } from 'lucide-react';
+import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download, Reply, CornerDownRight, BadgeCheck } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -794,9 +794,13 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                               <div className="flex items-center gap-2 mb-0.5">
                                 <Link 
                                   to={`/u/${msg.profiles?.username || msg.user_id}`}
-                                  className="font-semibold text-sm text-foreground hover:underline"
+                                  className="font-semibold text-sm text-foreground hover:underline flex items-center gap-1"
                                 >
                                   {msg.profiles?.username || 'Unknown'}
+                                  {/* Verified checkmark for Team Zyrozo */}
+                                  {msg.user_id === '00000000-0000-0000-0000-000000000001' && (
+                                    <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
+                                  )}
                                 </Link>
                                 {/* System Message Badge for Team Zyrozo */}
                                 {msg.user_id === '00000000-0000-0000-0000-000000000001' && (
