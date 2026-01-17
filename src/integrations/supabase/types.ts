@@ -1612,6 +1612,7 @@ export type Database = {
       }
       send_views_update_dm: {
         Args: {
+          p_admin_username?: string
           p_amount: number
           p_campaign_name: string
           p_release_date: string
