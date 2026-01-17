@@ -821,6 +821,14 @@ const CampaignDetail = () => {
           </div>
         </motion.div>
 
+        {/* About this campaign - Below thumbnail */}
+        {campaign.description && (
+          <div className="glass-card rounded-xl p-4 mb-6">
+            <h3 className="font-medium mb-2">About this campaign</h3>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
+          </div>
+        )}
+
         {/* Info Banner - Yellow Warning Style */}
         <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3 mb-6">
           <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" />
@@ -986,110 +994,24 @@ const CampaignDetail = () => {
           </p>
         </div>
 
-        {/* Tabs - About & My Submissions with Submit Button */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="w-auto">
-              <TabsTrigger value="rewards">About</TabsTrigger>
-              <TabsTrigger value="submissions">My submissions</TabsTrigger>
-            </TabsList>
+        {/* Mobile Quick Actions */}
+        <div className="lg:hidden mb-6">
+          <div className="glass-card rounded-xl p-4 space-y-2">
             <Button 
-              onClick={() => setShowSubmitModal(true)} 
-              size="lg"
-              className="h-10 px-6 font-semibold text-sm bg-primary hover:bg-primary/90"
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => setShowFullscreenChat(true)}
             >
-              Submit
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Open Chat
             </Button>
-          </div>
-
-          <TabsContent value="rewards" className="mt-0 space-y-4">
-            {campaign.description && (
-              <div className="glass-card rounded-xl p-4">
-                <h3 className="font-medium mb-2">About this campaign</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{campaign.description}</p>
-              </div>
-            )}
-
-            <div className="lg:hidden">
-              <div className="glass-card rounded-xl p-4 space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setShowFullscreenChat(true)}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Open Chat
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setShowFullscreenSubmissions(true)}
-                >
-                  <ClipboardList className="w-4 h-4 mr-2" />
-                  View My Submissions
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="submissions" className="mt-0">
-            {submissions.length === 0 ? (
-              <div className="glass-card rounded-xl p-8 text-center">
-                <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No submissions yet</p>
-                <Button onClick={() => setShowSubmitModal(true)} className="mt-4" variant="outline">
-                  Create your first submission
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {submissions.map((sub) => (
-                  <motion.div key={sub.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getSubmissionStatusIcon(sub.status)}
-                        <div>
-                          <a href={sub.social_link || sub.video_url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary flex items-center gap-1">
-                            View post <ExternalLink className="w-3 h-3" />
-                          </a>
-                          <p className="text-xs text-muted-foreground">{format(new Date(sub.created_at), "MMM d, yyyy")}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant={sub.status === "approved" || sub.status === "paid" ? "default" : sub.status === "rejected" ? "destructive" : "secondary"} className="text-xs">
-                          {sub.status || "pending"}
-                        </Badge>
-                        {(sub.views_count ?? 0) > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 justify-end">
-                            <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
-                          </div>
-                        )}
-                        {(sub.estimated_earnings ?? 0) > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-success font-medium mt-1 justify-end">
-                            <DollarSign className="w-3 h-3" /> ${Number(sub.estimated_earnings).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-        {/* Fixed Bottom Bar - Whop Style (inside main content area) */}
-        <div className="fixed bottom-0 right-0 lg:left-72 left-0 bg-card border-t border-border px-4 py-3 z-40">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-sm">{campaign.name}</h3>
-              <p className="text-xs text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
-            </div>
             <Button 
-              onClick={() => setShowSubmitModal(true)} 
-              size="lg"
-              className="h-10 px-8 rounded-full font-semibold bg-primary hover:bg-primary/90"
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => setShowFullscreenSubmissions(true)}
             >
-              Submit
+              <ClipboardList className="w-4 h-4 mr-2" />
+              View My Submissions
             </Button>
           </div>
         </div>
