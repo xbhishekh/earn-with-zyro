@@ -1216,7 +1216,7 @@ export const InlineSubmissionsView = ({
               const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
               const username = profile?.username || 'Unknown';
               const displayName = profile?.display_name || username;
-              const platform = detectPlatform(sub.social_link);
+              const platform = sharedDetectPlatform(sub.social_link);
               const isApprovedOrPaid = sub.status === 'approved' || sub.status === 'paid';
               const title = sub.description || campaign.name;
               
@@ -1224,7 +1224,7 @@ export const InlineSubmissionsView = ({
                 <div key={sub.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 transition-all">
                   <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
                     <div className="text-muted-foreground">
-                      <PlatformIcon platform={platform} />
+                      <SharedPlatformIcon platform={platform} />
                     </div>
                   </div>
 
