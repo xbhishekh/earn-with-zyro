@@ -4,6 +4,7 @@ import logo from "@/assets/logo.jpeg";
 const footerLinks = [
   { name: "Privacy Policy", href: "/privacy" },
   { name: "Terms of Service", href: "/terms" },
+  { name: "Help & Support", href: "/support" },
   { name: "Contact", href: "/contact" },
 ];
 
