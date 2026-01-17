@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo, useRef } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,14 +22,46 @@ interface Notification {
   metadata?: unknown;
 }
 
-const NotificationsBell = () => {
+// Cache notifications to prevent re-fetching on every render
+const notificationsCache = new Map<string, { data: Notification[]; timestamp: number }>();
+const CACHE_TTL = 30000; // 30 seconds
+
+const NotificationsBell = memo(() => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const hasFetched = useRef(false);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+
+    // Check cache first
+    const cached = notificationsCache.get(user.id);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setNotifications(cached.data);
+      setUnreadCount(cached.data.filter(n => !n.is_read).length);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, type, title, message, is_read, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (data) {
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.is_read).length);
+      // Update cache
+      notificationsCache.set(user.id, { data, timestamp: Date.now() });
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || hasFetched.current) return;
+    hasFetched.current = true;
 
     fetchNotifications();
 
@@ -46,7 +78,12 @@ const NotificationsBell = () => {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          setNotifications(prev => {
+            const updated = [newNotification, ...prev];
+            // Update cache
+            notificationsCache.set(user.id, { data: updated, timestamp: Date.now() });
+            return updated;
+          });
           setUnreadCount(prev => prev + 1);
         }
       )
@@ -54,26 +91,11 @@ const NotificationsBell = () => {
 
     return () => {
       supabase.removeChannel(channel);
+      hasFetched.current = false;
     };
-  }, [user]);
+  }, [user, fetchNotifications]);
 
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.is_read).length);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
+  const markAsRead = useCallback(async (id: string) => {
     await supabase
       .from("notifications")
       .update({ is_read: true })
@@ -83,9 +105,9 @@ const NotificationsBell = () => {
       prev.map(n => n.id === id ? { ...n, is_read: true } : n)
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+  }, []);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!user) return;
 
     await supabase
@@ -96,9 +118,9 @@ const NotificationsBell = () => {
 
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     setUnreadCount(0);
-  };
+  }, [user]);
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
       case "submission_approved":
         return <Check className="w-4 h-4 text-success" />;
@@ -109,7 +131,7 @@ const NotificationsBell = () => {
       default:
         return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
-  };
+  }, []);
 
   if (!user) return null;
 
@@ -181,6 +203,8 @@ const NotificationsBell = () => {
       </PopoverContent>
     </Popover>
   );
-};
+});
+
+NotificationsBell.displayName = 'NotificationsBell';
 
 export default NotificationsBell;

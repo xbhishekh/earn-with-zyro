@@ -25,10 +25,11 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // Vendor chunks - rarely change, cached long-term
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip', '@radix-ui/react-popover'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip', '@radix-ui/react-popover', '@radix-ui/react-select'],
           'query-vendor': ['@tanstack/react-query'],
           'supabase-vendor': ['@supabase/supabase-js'],
           'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge', 'zod'],
+          'animation-vendor': ['framer-motion'],
         },
       },
     },
@@ -40,6 +41,10 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     // Enable source maps for production debugging
     sourcemap: mode === 'development',
+    // CSS code splitting for faster initial load
+    cssCodeSplit: true,
+    // Inline assets smaller than 4kb
+    assetsInlineLimit: 4096,
   },
   // Optimize dependency pre-bundling
   optimizeDeps: {
@@ -49,6 +54,9 @@ export default defineConfig(({ mode }) => ({
       'react-router-dom',
       '@supabase/supabase-js',
       '@tanstack/react-query',
+      'sonner',
     ],
+    // Exclude large packages that are rarely used
+    exclude: ['recharts'],
   },
 }));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, Shield, LogOut, Wallet, Home, Compass, 
@@ -41,7 +41,11 @@ const desktopNavItems: NavItem[] = [
   { label: 'Affiliate', href: '/affiliate', icon: Users },
 ];
 
-export const AppHeader = () => {
+// Cache for profile and balance to prevent re-fetching
+const profileCache = new Map<string, { profile: Profile; balance: number; timestamp: number }>();
+const PROFILE_CACHE_TTL = 30000; // 30 seconds
+
+export const AppHeader = memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin, isSuperAdmin, isOwner, role, signOut } = useAuth();
@@ -49,8 +53,8 @@ export const AppHeader = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [balance, setBalance] = useState(0);
 
-  // Get badge based on role only (no hardcoded emails)
-  const getSpecialBadge = () => {
+  // Memoize badge based on role
+  const specialBadge = useMemo(() => {
     if (!user) return null;
     if (isOwner) {
       return { label: 'Owner', icon: Crown, className: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0' };
@@ -62,18 +66,28 @@ export const AppHeader = () => {
       return { label: 'Admin', icon: Shield, className: 'bg-muted text-foreground' };
     }
     return null;
-  };
+  }, [user, isOwner, isSuperAdmin, isAdmin, role]);
 
-  const specialBadge = getSpecialBadge();
-
-  const isActive = (href: string) => {
+  const isActive = useCallback((href: string) => {
     if (href === '/') return location.pathname === '/';
     return location.pathname.startsWith(href);
-  };
+  }, [location.pathname]);
 
-  // Fetch profile and balance
+  // Fetch profile and balance with caching
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setProfile(null);
+      setBalance(0);
+      return;
+    }
+
+    // Check cache first
+    const cached = profileCache.get(user.id);
+    if (cached && Date.now() - cached.timestamp < PROFILE_CACHE_TTL) {
+      setProfile(cached.profile);
+      setBalance(cached.balance);
+      return;
+    }
 
     const fetchData = async () => {
       const [profileRes, balanceRes] = await Promise.all([
@@ -85,37 +99,48 @@ export const AppHeader = () => {
         supabase
           .from('balance_transactions')
           .select('amount, type, status')
-          .eq('user_id', user.id),
+          .eq('user_id', user.id)
+          .eq('status', 'available'), // Only fetch available transactions
       ]);
 
-      if (profileRes.data) setProfile(profileRes.data);
+      const profileData = profileRes.data || null;
+      if (profileData) setProfile(profileData);
 
       // Calculate available balance
+      let calculatedBalance = 0;
       if (balanceRes.data) {
-        const available = balanceRes.data.reduce((acc, tx) => {
-          if (tx.status === 'available') {
-            // Add earnings: earning, referral, payout, pending_payout (when available)
-            if (tx.type === 'earning' || tx.type === 'referral' || tx.type === 'payout' || tx.type === 'pending_payout') {
-              return acc + tx.amount;
-            }
-            // Subtract withdrawals
-            if (tx.type === 'withdrawal') {
-              return acc - tx.amount;
-            }
+        calculatedBalance = balanceRes.data.reduce((acc, tx) => {
+          if (tx.type === 'earning' || tx.type === 'referral' || tx.type === 'payout' || tx.type === 'pending_payout' || tx.type === 'product_sale') {
+            return acc + tx.amount;
+          }
+          if (tx.type === 'withdrawal') {
+            return acc - tx.amount;
           }
           return acc;
         }, 0);
-        setBalance(Math.max(0, available));
+        calculatedBalance = Math.max(0, calculatedBalance);
+        setBalance(calculatedBalance);
+      }
+
+      // Update cache
+      if (profileData) {
+        profileCache.set(user.id, { 
+          profile: profileData, 
+          balance: calculatedBalance, 
+          timestamp: Date.now() 
+        });
       }
     };
 
     fetchData();
   }, [user]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
+    // Clear cache on sign out
+    if (user) profileCache.delete(user.id);
     await signOut();
     navigate('/');
-  };
+  }, [user, signOut, navigate]);
 
   return (
     <>
@@ -327,4 +352,6 @@ export const AppHeader = () => {
       <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
-};
+});
+
+AppHeader.displayName = 'AppHeader';

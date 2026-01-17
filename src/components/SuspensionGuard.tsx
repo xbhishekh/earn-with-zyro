@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuspensionCheck } from "@/hooks/useSuspensionCheck";
@@ -7,21 +7,29 @@ interface SuspensionGuardProps {
   children: ReactNode;
 }
 
+// Memoized public routes set for O(1) lookup
+const PUBLIC_ROUTES = new Set(["/", "/auth", "/suspended", "/terms", "/privacy", "/about", "/pricing", "/campaigns", "/marketplace", "/contact", "/careers"]);
+
 const SuspensionGuard = ({ children }: SuspensionGuardProps) => {
   const { user, loading: authLoading } = useAuth();
   const { isGloballySuspended, loading: suspensionLoading } = useSuspensionCheck();
   const location = useLocation();
 
-  // Public routes that don't need suspension check
-  const publicRoutes = ["/", "/auth", "/suspended", "/terms", "/privacy", "/about", "/pricing"];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  // Memoize public route check - includes dynamic routes that start with /c/ or /marketplace/
+  const isPublicRoute = useMemo(() => {
+    const path = location.pathname;
+    return PUBLIC_ROUTES.has(path) || 
+           path.startsWith("/c/") || 
+           path.startsWith("/marketplace/") ||
+           path.startsWith("/u/");
+  }, [location.pathname]);
 
-  // Skip check for public routes
+  // Skip check for public routes - render immediately
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Still loading auth or suspension status
+  // Show loading only for protected routes AND only while actually loading
   if (authLoading || (user && suspensionLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   Wallet, 
   TrendingUp, 
   FileVideo, 
-  CheckCircle, 
   Clock, 
   ArrowUpRight,
   Plus,
@@ -25,9 +23,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
-import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
-import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
-import DiscountCodesManager from "@/components/dashboard/DiscountCodesManager";
+import { lazy, Suspense } from "react";
+
+// Lazy load heavy components
+const SellerAnalytics = lazy(() => import("@/components/dashboard/SellerAnalytics"));
+const SellerBuyersManager = lazy(() => import("@/components/dashboard/SellerBuyersManager"));
+const DiscountCodesManager = lazy(() => import("@/components/dashboard/DiscountCodesManager"));
 
 interface DashboardStats {
   totalEarnings: number;
@@ -54,7 +55,10 @@ interface MyProduct {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut, isAdmin, isSuperAdmin, isOwner, role } = useAuth();
-  const isAdminUser = isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder";
+  const isAdminUser = useMemo(() => 
+    isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder",
+    [isAdmin, isSuperAdmin, isOwner, role]
+  );
   const [stats, setStats] = useState<DashboardStats>({
     totalEarnings: 0,
     pendingEarnings: 0,
@@ -75,10 +79,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
-      if (isAdminUser) {
-        fetchMyProducts();
-      }
+      // Batch both fetches together
+      Promise.all([
+        fetchDashboardData(),
+        isAdminUser ? fetchMyProducts() : Promise.resolve()
+      ]);
     }
   }, [user, isAdminUser]);
 
@@ -122,26 +127,28 @@ const Dashboard = () => {
     return formatted;
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) return;
     try {
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("username, display_name, avatar_url")
-        .eq("user_id", user!.id)
-        .maybeSingle();
+      // Batch profile and submissions fetch together
+      const [profileRes, submissionsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("username, display_name, avatar_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("submissions")
+          .select("status, views_count, estimated_earnings")
+          .eq("user_id", user.id)
+      ]);
 
-      if (profileData) {
-        setProfile(profileData);
+      if (profileRes.data) {
+        setProfile(profileRes.data);
       }
 
-      // Fetch submissions stats
-      const { data: submissions } = await supabase
-        .from("submissions")
-        .select("status, views_count, estimated_earnings")
-        .eq("user_id", user!.id);
-
-      if (submissions) {
+      if (submissionsRes.data) {
+        const submissions = submissionsRes.data;
         const totalViews = submissions.reduce((acc, s) => acc + (s.views_count || 0), 0);
         const approved = submissions.filter(s => s.status === "approved" || s.status === "paid");
         const totalEarnings = approved.reduce((acc, s) => acc + Number(s.estimated_earnings || 0), 0);
@@ -161,13 +168,13 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await signOut();
     toast.success("Logged out successfully");
     navigate("/");
-  };
+  }, [signOut, navigate]);
 
   if (authLoading || loading) {
     return (
@@ -177,7 +184,7 @@ const Dashboard = () => {
     );
   }
 
-  const statCards = [
+  const statCards = useMemo(() => [
     {
       title: "Total Earnings",
       value: `$${stats.totalEarnings.toLocaleString()}`,
@@ -206,33 +213,26 @@ const Dashboard = () => {
       color: "text-secondary",
       bgColor: "bg-secondary/10",
     },
-  ];
+  ], [stats]);
 
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">
             Welcome back, <span className="gradient-text">{profile?.display_name || "Creator"}</span>!
           </h1>
           <p className="text-muted-foreground">
             Here's an overview of your creator journey
           </p>
-        </motion.div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat, index) => (
-            <motion.div
+          {statCards.map((stat) => (
+            <div
               key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="glass-card rounded-2xl p-6"
             >
               <div className="flex items-start justify-between mb-4">
@@ -243,17 +243,12 @@ const Dashboard = () => {
               </div>
               <h3 className="text-sm text-muted-foreground mb-1">{stat.title}</h3>
               <p className="font-display text-2xl font-bold">{stat.value}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card rounded-2xl p-6 mb-8"
-        >
+        <div className="glass-card rounded-2xl p-6 mb-8">
           <h2 className="font-display text-xl font-bold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Button variant="hero" size="lg" className="h-auto py-4" asChild>
@@ -275,16 +270,11 @@ const Dashboard = () => {
               </Link>
             </Button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Seller Dashboard Section */}
         {isAdminUser && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="glass-card rounded-2xl p-6 mb-8"
-          >
+          <div className="glass-card rounded-2xl p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -432,17 +422,12 @@ const Dashboard = () => {
                 <DiscountCodesManager />
               </TabsContent>
             </Tabs>
-          </motion.div>
+          </div>
         )}
 
         {/* Empty State for Submissions */}
         {stats.totalSubmissions === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="glass-card rounded-2xl p-12 text-center"
-          >
+          <div className="glass-card rounded-2xl p-12 text-center">
             <div className="w-20 h-20 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-6">
               <FileVideo className="w-10 h-10 text-white" />
             </div>
@@ -456,7 +441,7 @@ const Dashboard = () => {
                 <ArrowUpRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
-          </motion.div>
+          </div>
         )}
       </div>
     </MainLayout>
