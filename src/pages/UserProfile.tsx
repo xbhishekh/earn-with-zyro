@@ -77,11 +77,26 @@ const UserProfile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First try to find by username
+      let { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
         .maybeSingle();
+
+      // If not found by username, try to find by user_id (for fallback links)
+      if (!data && username) {
+        const { data: dataById, error: errorById } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", username)
+          .maybeSingle();
+        
+        if (!errorById && dataById) {
+          data = dataById;
+          error = null;
+        }
+      }
 
       if (error) throw error;
 

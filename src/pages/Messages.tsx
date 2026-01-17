@@ -974,10 +974,10 @@ const Messages = () => {
                 {/* Clickable user profile area */}
                 {!isTeamZyrozo ? (
                   <Link 
-                    to={`/u/${selectedConversation.other_user.username}`}
+                    to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    <Avatar className="w-8 h-8">
+                    <Avatar className="w-8 h-8 hover:ring-2 hover:ring-primary/50 transition-all">
                       <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
                       <AvatarFallback className="text-white text-sm bg-gradient-to-br from-gray-400 to-gray-600">
                         {(selectedConversation.other_user.display_name || "?").charAt(0).toUpperCase()}
@@ -1020,7 +1020,7 @@ const Messages = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link to={`/u/${selectedConversation.other_user.username}`} className="flex items-center">
+                      <Link to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`} className="flex items-center">
                         <BadgeCheck className="w-4 h-4 mr-2" />
                         View Profile
                       </Link>
@@ -1099,7 +1099,7 @@ const Messages = () => {
                                         </AvatarFallback>
                                       </Avatar>
                                     ) : (
-                                      <Link to={`/u/${selectedConversation.other_user.username}`}>
+                                      <Link to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}>
                                         <Avatar className="w-8 h-8 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer">
                                           <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
                                           <AvatarFallback className="text-white text-xs bg-gradient-to-br from-gray-400 to-gray-600">
@@ -1122,7 +1122,7 @@ const Messages = () => {
                                       </span>
                                     ) : (
                                       <Link 
-                                        to={`/u/${selectedConversation.other_user.username}`}
+                                        to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
                                         className="font-medium text-foreground hover:underline"
                                       >
                                         {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
