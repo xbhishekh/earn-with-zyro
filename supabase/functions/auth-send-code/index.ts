@@ -144,8 +144,9 @@ Deno.serve(async (req) => {
   </body>
 </html>`;
 
+    // Use Resend sandbox email until domain is verified
     const { error: sendError } = await resend.emails.send({
-      from: "Zyrozo <noreply@zyrozo.com>",
+      from: "Zyrozo <onboarding@resend.dev>",
       to: [email],
       subject,
       html,
