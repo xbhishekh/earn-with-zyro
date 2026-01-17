@@ -53,6 +53,7 @@ interface CampaignSidebarProps {
   chatRoomId: string | null;
   isMember: boolean;
   memberCount?: number;
+  submissions?: Submission[];
   onOpenChat?: () => void;
   onOpenSubmissions?: () => void;
   onOpenAnnouncements?: () => void;
@@ -69,7 +70,7 @@ interface Submission {
   approved_at?: string | null;
   thumbnail_url?: string | null;
   description?: string | null;
-  campaign_id: string;
+  campaign_id?: string;
 }
 
 interface Profile {
@@ -83,6 +84,7 @@ export const CampaignSidebar = ({
   chatRoomId,
   isMember,
   memberCount = 0,
+  submissions = [],
   onOpenChat,
   onOpenSubmissions,
   onOpenAnnouncements
@@ -257,6 +259,73 @@ export const CampaignSidebar = ({
             )}
           </AnimatePresence>
         </div>
+
+        {/* My Submissions Section - Whop Style List */}
+        {submissions.length > 0 && (
+          <div className="border-b border-border">
+            <div className="px-4 py-2.5">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">My Submissions</span>
+            </div>
+            
+            <div className="px-3 pb-3 space-y-2">
+              {submissions.slice(0, 5).map((sub) => (
+                <a
+                  key={sub.id}
+                  href={sub.social_link || sub.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-muted/30 hover:bg-muted/50 rounded-lg p-3 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {sub.status === 'approved' || sub.status === 'paid' ? (
+                        <CheckCircle className="w-4 h-4 text-success shrink-0" />
+                      ) : sub.status === 'rejected' ? (
+                        <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium flex items-center gap-1">
+                          View post <ExternalLink className="w-3 h-3" />
+                        </span>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(sub.created_at), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <Badge 
+                        variant={sub.status === 'paid' ? 'default' : sub.status === 'approved' ? 'default' : sub.status === 'rejected' ? 'destructive' : 'secondary'}
+                        className={`text-xs ${sub.status === 'paid' ? 'bg-primary' : ''}`}
+                      >
+                        {sub.status || 'pending'}
+                      </Badge>
+                      {(sub.views_count ?? 0) > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 justify-end">
+                          <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
+                        </div>
+                      )}
+                      {(sub.estimated_earnings ?? 0) > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-success font-medium justify-end">
+                          $ ${Number(sub.estimated_earnings).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </a>
+              ))}
+              {submissions.length > 5 && (
+                <button
+                  onClick={onOpenSubmissions}
+                  className="w-full text-center text-xs text-primary hover:underline py-1"
+                >
+                  View all {submissions.length} submissions
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Chat Section - Whop Style */}
         <div>

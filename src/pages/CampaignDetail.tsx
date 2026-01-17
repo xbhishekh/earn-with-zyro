@@ -711,6 +711,7 @@ const CampaignDetail = () => {
                       }}
                       chatRoomId={chatRoomId}
                       isMember={isMember}
+                      submissions={submissions}
                       onOpenChat={() => {
                         setMobileSidebarOpen(false);
                         setShowFullscreenChat(true);
@@ -753,6 +754,7 @@ const CampaignDetail = () => {
             }}
             chatRoomId={chatRoomId}
             isMember={isMember}
+            submissions={submissions}
             onOpenChat={() => setShowFullscreenChat(true)}
             onOpenSubmissions={() => setShowFullscreenSubmissions(true)}
             onOpenAnnouncements={() => setShowFullscreenAnnouncements(true)}
