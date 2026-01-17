@@ -55,8 +55,8 @@ export default defineConfig(({ mode }) => ({
       '@supabase/supabase-js',
       '@tanstack/react-query',
       'sonner',
+      'recharts',
+      'lodash',
     ],
-    // Exclude large packages that are rarely used
-    exclude: ['recharts'],
   },
 }));
