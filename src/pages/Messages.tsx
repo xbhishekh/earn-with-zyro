@@ -99,9 +99,12 @@ const Messages = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const canDeleteBroadcasts = isAdmin || isSuperAdmin || isOwner || isFounder;
 
@@ -157,8 +160,47 @@ const Messages = () => {
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.room_id);
+      
+      // Set up typing indicator presence channel
+      const channelName = `typing:${selectedConversation.room_id}`;
+      
+      // Cleanup previous channel if exists
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+      }
+      
+      const channel = supabase.channel(channelName)
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const otherUserId = selectedConversation.other_user.user_id;
+          
+          // Check if other user is typing
+          let isTyping = false;
+          for (const key in state) {
+            const presences = state[key] as unknown as { user_id: string; typing: boolean }[];
+            if (presences.some((p) => p.user_id === otherUserId && p.typing)) {
+              isTyping = true;
+              break;
+            }
+          }
+          setIsOtherUserTyping(isTyping);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({ user_id: user?.id, typing: false });
+          }
+        });
+      
+      presenceChannelRef.current = channel;
+      
+      return () => {
+        if (presenceChannelRef.current) {
+          supabase.removeChannel(presenceChannelRef.current);
+          presenceChannelRef.current = null;
+        }
+      };
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, user?.id]);
 
   useEffect(() => {
     const userId = searchParams.get("userId");
@@ -464,11 +506,41 @@ const Messages = () => {
     }
   };
 
+  const broadcastTyping = useCallback(async (typing: boolean) => {
+    if (!presenceChannelRef.current || !user) return;
+    await presenceChannelRef.current.track({ user_id: user.id, typing });
+  }, [user]);
+
+  const handleTyping = useCallback(() => {
+    broadcastTyping(true);
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Stop typing after 2 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      broadcastTyping(false);
+    }, 2000);
+  }, [broadcastTyping]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    handleTyping();
+  };
+
   const sendMessage = async () => {
     if ((!newMessage.trim() && !selectedFile) || !selectedConversation || !user || sending) return;
     setSending(true);
     const messageContent = newMessage.trim();
     setNewMessage("");
+    
+    // Stop typing indicator when sending
+    broadcastTyping(false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     try {
       let attachment = null;
@@ -988,6 +1060,29 @@ const Messages = () => {
               </div>
             ) : (
               <>
+                {/* Typing Indicator */}
+                {isOtherUserTyping && (
+                  <div className="px-4 py-2 border-t border-border bg-background shrink-0">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-gradient-to-br from-gray-400 to-gray-600 text-white">
+                          {(selectedConversation.other_user.display_name || "?").charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-foreground">
+                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                      </span>
+                      <span>is typing</span>
+                      <span className="flex gap-0.5">
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* File Preview */}
                 {selectedFile && (
                   <div className="px-4 py-2 border-t border-border bg-muted/30 shrink-0">
@@ -1031,7 +1126,7 @@ const Messages = () => {
                       <Input
                         ref={inputRef}
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={handleInputChange}
                         placeholder={`Message @${selectedConversation.other_user.username || "user"}`}
                         className="pr-20 bg-muted/50 border-0 h-10 rounded-full"
                         disabled={sending || uploading}
