@@ -65,7 +65,28 @@ interface SocialAccount {
   created_at: string;
 }
 
-const platformConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; name: string; urlPattern: RegExp }> = {
+// Whop icon component
+const WhopIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <rect width="24" height="24" rx="6" fill="#FF6243" />
+    <path
+      d="M7 8h2l2 8 2-8h2l2 8 2-8h2"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+const platformConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; name: string; urlPattern: RegExp; isOAuth?: boolean }> = {
+  whop: {
+    icon: WhopIcon,
+    name: "Whop",
+    urlPattern: /(?:https?:\/\/)?(?:www\.)?whop\.com\/([a-zA-Z0-9_-]+)/,
+    isOAuth: true,
+  },
   instagram: {
     icon: InstagramIcon,
     name: "Instagram",
@@ -141,6 +162,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
   const [profileUrl, setProfileUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [whopConnecting, setWhopConnecting] = useState(false);
 
   const targetUserId = userId || user?.id;
 
@@ -175,6 +197,48 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
     
     const match = url.match(config.urlPattern);
     return match ? match[1] : null;
+  };
+
+  // Handle Whop OAuth connection
+  const handleWhopConnect = async () => {
+    // Check if Whop already linked
+    const existing = accounts.find(a => a.platform === "whop");
+    if (existing) {
+      toast.error("You already have a Whop account linked");
+      return;
+    }
+
+    setWhopConnecting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to connect your Whop account");
+        return;
+      }
+
+      const response = await supabase.functions.invoke("whop-oauth-start", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to start OAuth");
+      }
+
+      const { authUrl } = response.data;
+      if (authUrl) {
+        // Redirect to Whop OAuth
+        window.location.href = authUrl;
+      } else {
+        throw new Error("No OAuth URL returned");
+      }
+    } catch (error: any) {
+      console.error("Error starting Whop OAuth:", error);
+      toast.error(error.message || "Failed to connect to Whop");
+    } finally {
+      setWhopConnecting(false);
+    }
   };
 
   const handleAddAccount = async () => {
@@ -459,31 +523,63 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
                       <div className="flex items-center gap-2">
                         <config.icon className="w-4 h-4" />
                         {config.name}
+                        {config.isOAuth && (
+                          <span className="text-xs text-green-500 ml-1">• Auto-verify</span>
+                        )}
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Profile URL</label>
-              <Input
-                placeholder={`https://${selectedPlatform || "platform"}.com/yourusername`}
-                value={profileUrl}
-                onChange={(e) => setProfileUrl(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Enter the full URL to your profile
-              </p>
-            </div>
+
+            {/* Show Whop OAuth button when Whop is selected */}
+            {selectedPlatform === "whop" ? (
+              <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-lg p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Connect your Whop account for <span className="text-green-500 font-medium">instant verification</span> - no manual review needed!
+                </p>
+                <Button
+                  onClick={handleWhopConnect}
+                  disabled={whopConnecting}
+                  className="w-full bg-[#FF6243] hover:bg-[#e5573b] text-white"
+                >
+                  {whopConnecting ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <WhopIcon className="w-5 h-5 mr-2" />
+                      Connect with Whop
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Profile URL</label>
+                <Input
+                  placeholder={`https://${selectedPlatform || "platform"}.com/yourusername`}
+                  value={profileUrl}
+                  onChange={(e) => setProfileUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter the full URL to your profile
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddAccount} disabled={submitting}>
-              {submitting ? "Adding..." : "Add Account"}
-            </Button>
+            {selectedPlatform !== "whop" && (
+              <Button onClick={handleAddAccount} disabled={submitting}>
+                {submitting ? "Adding..." : "Add Account"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

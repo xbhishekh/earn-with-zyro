@@ -42,6 +42,7 @@ const Gallery = lazy(() => import("./pages/Gallery"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const WhopCallback = lazy(() => import("./pages/WhopCallback"));
 
 // Memoized loading fallback component
 const PageLoader = memo(() => (
@@ -104,6 +105,7 @@ const App = () => (
                   <Route path="/u/:username" element={<RouteErrorBoundary routeName="User Profile"><UserProfile /></RouteErrorBoundary>} />
                   <Route path="/messages" element={<RouteErrorBoundary routeName="Messages"><Messages /></RouteErrorBoundary>} />
                   <Route path="/support" element={<RouteErrorBoundary routeName="Support"><Support /></RouteErrorBoundary>} />
+                  <Route path="/auth/whop/callback" element={<WhopCallback />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </SuspensionGuard>
