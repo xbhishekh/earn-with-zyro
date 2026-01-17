@@ -217,6 +217,17 @@ const AdminSubmissions = () => {
           },
         });
 
+        // Send Team Zyrozo DM with payout notification (Whop-style)
+        const username = getUsername(selectedSubmission.user_id);
+        await supabase.rpc("send_views_update_dm", {
+          p_user_id: selectedSubmission.user_id,
+          p_username: username,
+          p_campaign_name: campaign.name,
+          p_views: views,
+          p_amount: earnings,
+          p_release_date: releaseDate.toISOString(),
+        });
+
         // If mark paid after update is checked, also move to available immediately
         if (markPaidAfterUpdate) {
           await supabase
