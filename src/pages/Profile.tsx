@@ -506,11 +506,19 @@ const Profile = () => {
                 <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
               <TabsTrigger value="social" className="gap-2">
-                <Share2 className="w-4 h-4" />
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" className="stroke-pink-500" strokeWidth="2"/>
+                  <circle cx="12" cy="10" r="3" className="fill-pink-500"/>
+                  <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6" className="stroke-violet-500" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
                 <span className="hidden sm:inline">Social</span>
               </TabsTrigger>
               <TabsTrigger value="affiliate" className="gap-2">
-                <Share2 className="w-4 h-4" />
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M8 12h8M12 8v8" className="stroke-emerald-500" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="10" className="stroke-emerald-500" strokeWidth="2"/>
+                  <path d="M7 7l10 10M17 7L7 17" className="stroke-amber-500" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
                 <span className="hidden sm:inline">Affiliate</span>
               </TabsTrigger>
               {isAdminUser && (
