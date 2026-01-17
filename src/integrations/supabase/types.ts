@@ -1549,6 +1549,10 @@ export type Database = {
       is_founder: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      send_payment_release_dm: {
+        Args: { p_amount: number; p_user_id: string; p_username: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:

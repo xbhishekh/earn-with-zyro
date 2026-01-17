@@ -165,9 +165,13 @@ const AdminSubmissions = () => {
 
       if (error) throw error;
       
-      // If updating views for approved submission, create pending balance transaction
+      // If updating views for approved submission, create pending balance transaction with 72h release
       if (isUpdate && selectedSubmission.status === "approved") {
-        // Add earnings to pending balance
+        // Calculate release date (72 hours from now)
+        const releaseDate = new Date();
+        releaseDate.setHours(releaseDate.getHours() + 72);
+
+        // Add earnings to pending balance with release_date
         const { error: txError } = await supabase
           .from("balance_transactions")
           .insert({
@@ -178,7 +182,7 @@ const AdminSubmissions = () => {
             campaign_id: selectedSubmission.campaign_id,
             submission_id: selectedSubmission.id,
             processed_by: user?.id,
-            processed_at: new Date().toISOString(),
+            release_date: releaseDate.toISOString(),
             notes: `Views update: ${views.toLocaleString()} views`,
           });
 
@@ -195,42 +199,49 @@ const AdminSubmissions = () => {
 
         await supabase.from("campaigns").update(updateData).eq("id", campaign.id);
 
-        // Notify user
+        // Format release date for notification
+        const releaseDateFormatted = format(releaseDate, "dd MMM yyyy, h:mm a");
+
+        // Notify user about pending payment with release date
         await supabase.from("notifications").insert({
           user_id: selectedSubmission.user_id,
           type: "payment_pending",
-          title: "Earnings Added to Pending!",
-          message: `$${earnings.toLocaleString()} has been added to your pending balance for ${views.toLocaleString()} views.`,
+          title: "Earnings Added! 💰",
+          message: `$${earnings.toLocaleString()} has been added to your pending balance for ${views.toLocaleString()} views. It will be available on ${releaseDateFormatted}.`,
           metadata: { 
             amount: earnings, 
             views,
             campaign_id: campaign.id,
             submission_id: selectedSubmission.id,
+            release_date: releaseDate.toISOString(),
           },
         });
 
         // Update submission to paid status after adding to pending
         await supabase.from("submissions").update({ status: "paid" }).eq("id", selectedSubmission.id);
 
-        // If mark paid after update is checked, also move to available
+        // If mark paid after update is checked, also move to available immediately
         if (markPaidAfterUpdate) {
           await supabase
             .from("balance_transactions")
-            .update({ status: "available" })
+            .update({ 
+              status: "available",
+              processed_at: new Date().toISOString(),
+            })
             .eq("submission_id", selectedSubmission.id)
             .eq("status", "pending");
 
           await supabase.from("notifications").insert({
             user_id: selectedSubmission.user_id,
             type: "payment_available",
-            title: "Payment Available!",
-            message: `$${earnings.toLocaleString()} is now available in your balance.`,
+            title: "Payment Available! 💰",
+            message: `$${earnings.toLocaleString()} is now available in your balance for withdrawal.`,
             metadata: { amount: earnings },
           });
 
           toast.success(`Updated & Paid! $${earnings.toLocaleString()} added to available balance`);
         } else {
-          toast.success(`Updated! $${earnings.toLocaleString()} added to pending balance`);
+          toast.success(`Updated! $${earnings.toLocaleString()} added to pending (available in 72h)`);
         }
       } else {
         toast.success(`Approved! Estimated earnings: $${earnings.toLocaleString()}`);
