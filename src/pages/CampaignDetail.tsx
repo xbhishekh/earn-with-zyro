@@ -1265,23 +1265,27 @@ const CampaignDetail = () => {
                 )}
               </div>
               {socialLink.trim() && detectPlatformFromUrl(socialLink) && (
-                <div className={`flex items-center gap-2 mt-2 text-sm ${
-                  verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!)
-                    ? 'text-green-500'
-                    : 'text-orange-500'
-                }`}>
-                  {verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!) ? (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      <span><span className="capitalize">{detectPlatformFromUrl(socialLink)}</span> account verified</span>
-                    </>
-                  ) : (
-                    <>
+                verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!) ? (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-green-500">
+                    <CheckCircle className="w-4 h-4" />
+                    <span><span className="capitalize">{detectPlatformFromUrl(socialLink)}</span> account verified</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 text-sm text-orange-500">
                       <AlertCircle className="w-4 h-4" />
                       <span><span className="capitalize">{detectPlatformFromUrl(socialLink)}</span> account not verified</span>
-                    </>
-                  )}
-                </div>
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                      onClick={() => window.open('/profile?tab=social', '_blank')}
+                    >
+                      Verify now →
+                    </Button>
+                  </div>
+                )
               )}
             </div>
 
