@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useChatNotification } from '@/hooks/useChatNotification';
 import { toast } from 'sonner';
 import { Send, Loader2, SmilePlus, AtSign, Search, X, Paperclip, Image as ImageIcon, FileText, Download, Reply, CornerDownRight, BadgeCheck } from 'lucide-react';
 import {
@@ -56,6 +57,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const ChatRoom = ({ roomId, roomName }: Props) => {
   const { user } = useAuth();
+  const { notify } = useChatNotification();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -80,6 +82,9 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   
   // Reply state
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  
+  // Track if this is initial load (don't notify on initial load)
+  const isInitialLoadRef = useRef(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -264,7 +269,12 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
   }, [broadcastTyping]);
 
   useEffect(() => {
-    fetchMessages();
+    fetchMessages().then(() => {
+      // Mark initial load as complete after messages are fetched
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
+    });
 
     const channel = supabase
       .channel(`room-${roomId}`)
@@ -285,6 +295,16 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
             .single();
 
           setMessages(prev => [...prev, { ...newMsg, profiles: profile || undefined, reactions: [] }]);
+          
+          // Play notification sound and show toast for messages from other users
+          // Only if not initial load and message is from someone else
+          if (!isInitialLoadRef.current && newMsg.user_id !== user?.id) {
+            const senderName = profile?.username || 'Someone';
+            const messagePreview = newMsg.content.length > 50 
+              ? newMsg.content.substring(0, 50) + '...' 
+              : newMsg.content || '📎 Sent an attachment';
+            notify(senderName, messagePreview, profile?.avatar_url || undefined);
+          }
         }
       )
       .subscribe();
@@ -308,7 +328,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       supabase.removeChannel(channel);
       supabase.removeChannel(reactionsChannel);
     };
-  }, [roomId]);
+  }, [roomId, user?.id, notify]);
 
   useEffect(() => {
     scrollToBottom();
