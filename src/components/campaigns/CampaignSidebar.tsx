@@ -213,7 +213,7 @@ export const CampaignSidebar = ({
 
         {/* Star Rating */}
         <div className="px-4 pb-3 border-b border-border">
-          <p className="text-xs text-muted-foreground mb-1.5">Rate this whop</p>
+          <p className="text-xs text-muted-foreground mb-1.5">Rate this campaign</p>
           <div className="flex items-center gap-0.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star 
