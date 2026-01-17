@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { calculateEarnings as calcEarnings } from "@/lib/balance-utils";
 
 interface Submission {
   id: string;
@@ -118,14 +119,7 @@ const AdminSubmissions = () => {
   };
 
   const calculateEarnings = (views: number, campaign: Campaign): number => {
-    let earnings = (views / 1000) * campaign.reward_per_1k_views;
-    if (campaign.min_payout && earnings < campaign.min_payout) {
-      earnings = 0;
-    }
-    if (campaign.max_payout && earnings > campaign.max_payout) {
-      earnings = campaign.max_payout;
-    }
-    return earnings;
+    return calcEarnings(views, campaign.reward_per_1k_views, campaign.min_payout, campaign.max_payout);
   };
 
   const handleApproveOrUpdate = async () => {

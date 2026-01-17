@@ -90,14 +90,15 @@ const AffiliateCenter = () => {
       const totalSignups = formattedLinks.reduce((sum, l) => sum + (l.signups || 0), 0);
       const totalConversions = formattedLinks.reduce((sum, l) => sum + (l.conversions || 0), 0);
 
-      // Fetch affiliate earnings from balance_transactions
+      // Fetch affiliate earnings from balance_transactions (only count available/completed)
       const { data: earningsData } = await supabase
         .from("balance_transactions")
-        .select("amount")
+        .select("amount, status")
         .eq("user_id", user!.id)
-        .eq("type", "affiliate_commission");
+        .eq("type", "affiliate_commission")
+        .in("status", ["available", "completed", "paid"]);
 
-      const totalEarned = (earningsData || []).reduce((sum, t) => sum + t.amount, 0);
+      const totalEarned = (earningsData || []).reduce((sum, t) => sum + Number(t.amount), 0);
 
       setStats({
         totalLinks: formattedLinks.length,

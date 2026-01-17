@@ -97,9 +97,11 @@ const AdminAnalytics = () => {
       const approvedCount = submissions.filter((s) => s.status === "approved" || s.status === "paid").length;
       const rejectedCount = submissions.filter((s) => s.status === "rejected").length;
       const totalViews = submissions.reduce((acc, s) => acc + (s.views_count || 0), 0);
+      // Total earnings: sum all credit transaction types (excluding debits)
+      const creditTypes = ['pending_payout', 'payout', 'deposit', 'affiliate_commission', 'referral_bonus', 'product_sale'];
       const totalEarnings = transactions
-        .filter((t) => t.type === "pending_payout" || t.type === "deposit")
-        .reduce((acc, t) => acc + Number(t.amount || 0), 0);
+        .filter((t) => creditTypes.includes(t.type))
+        .reduce((acc, t) => acc + Math.abs(Number(t.amount || 0)), 0);
 
       setStats({
         totalUsers: hasFullAccess ? (profilesRes.count || 0) : myCampaignMemberUserIds.length,
