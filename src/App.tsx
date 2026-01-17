@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, memo } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -14,7 +14,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import NetworkStatusToast from "@/components/NetworkStatusToast";
 
-// Eager load critical pages
+// Eager load critical pages - homepage and auth for fastest initial load
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 
@@ -43,21 +43,23 @@ const Messages = lazy(() => import("./pages/Messages"));
 const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Loading fallback component
-const PageLoader = () => (
+// Memoized loading fallback component
+const PageLoader = memo(() => (
   <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
-);
+));
+PageLoader.displayName = "PageLoader";
 
-// Optimized QueryClient with caching
+// Optimized QueryClient with aggressive caching for performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
-      retry: 1,
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
+      gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
+      retry: 1, // Only retry once on failure
+      refetchOnWindowFocus: false, // Don't refetch when window regains focus
+      refetchOnReconnect: false, // Don't refetch on reconnect
     },
   },
 });
