@@ -46,7 +46,43 @@ interface Campaign {
   thumbnail_url: string | null;
   rules_guidelines: string | null;
   reward_per_1k_views?: number;
+  category?: string | null;
+  campaign_type?: string | null;
 }
+
+// Category-based gradient colors
+const getCategoryGradient = (category?: string | null, campaignType?: string | null): string => {
+  const type = category?.toLowerCase() || campaignType?.toLowerCase() || '';
+  
+  switch (type) {
+    case 'gaming':
+      return 'from-purple-600/40 via-zinc-900 to-indigo-600/40';
+    case 'music':
+      return 'from-pink-600/40 via-zinc-900 to-rose-600/40';
+    case 'sports':
+      return 'from-green-600/40 via-zinc-900 to-emerald-600/40';
+    case 'tech':
+    case 'technology':
+      return 'from-blue-600/40 via-zinc-900 to-cyan-600/40';
+    case 'fashion':
+    case 'lifestyle':
+      return 'from-amber-600/40 via-zinc-900 to-orange-600/40';
+    case 'food':
+      return 'from-red-600/40 via-zinc-900 to-yellow-600/40';
+    case 'clipping':
+    case 'logo':
+      return 'from-violet-600/40 via-zinc-900 to-fuchsia-600/40';
+    case 'education':
+      return 'from-teal-600/40 via-zinc-900 to-sky-600/40';
+    case 'entertainment':
+      return 'from-rose-600/40 via-zinc-900 to-purple-600/40';
+    case 'finance':
+    case 'crypto':
+      return 'from-emerald-600/40 via-zinc-900 to-lime-600/40';
+    default:
+      return 'from-primary/30 via-zinc-900 to-secondary/30';
+  }
+};
 
 interface CampaignSidebarProps {
   campaign: Campaign;
@@ -182,8 +218,8 @@ export const CampaignSidebar = ({
         <div className="relative">
           {/* Full-Bleed Hero Banner - Edge to Edge */}
           <div className="h-[24vh] min-h-[140px] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center relative">
-            {/* Fallback gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-zinc-900 to-secondary/30" />
+            {/* Fallback gradient background - Category based */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(campaign.category, campaign.campaign_type)}`} />
             
             {campaign.thumbnail_url ? (
               <img 
