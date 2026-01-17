@@ -953,7 +953,7 @@ const Messages = () => {
 
       {/* Chat Area */}
       <div className={cn(
-        "flex-1 flex flex-col bg-background min-w-0",
+        "flex-1 flex flex-col bg-background min-w-0 h-full",
         !selectedConversation ? "hidden md:flex" : "flex"
       )}>
         {selectedConversation ? (
