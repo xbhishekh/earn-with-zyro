@@ -86,6 +86,21 @@ export const SnapchatIcon = ({ className = "w-5 h-5" }: { className?: string }) 
   </svg>
 );
 
+// Whop icon component
+export const WhopIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <rect width="24" height="24" rx="6" fill="#FF6243" />
+    <path
+      d="M7 8h2l2 8 2-8h2l2 8 2-8h2"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
 // Platform icon component that handles all platforms
 export const PlatformIcon = ({ 
   platform, 
@@ -98,6 +113,9 @@ export const PlatformIcon = ({
 }) => {
   const p = platform.toLowerCase();
   
+  if (p.includes('whop')) {
+    return <WhopIcon className={className} />;
+  }
   if (p.includes('instagram')) {
     return <InstagramIcon className={className} />;
   }
@@ -123,6 +141,7 @@ export const PlatformIcon = ({
 // Detect platform from URL
 export const detectPlatform = (url: string | null): string => {
   if (!url) return 'other';
+  if (url.includes('whop.com')) return 'whop';
   if (url.includes('instagram.com')) return 'instagram';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('tiktok.com')) return 'tiktok';
