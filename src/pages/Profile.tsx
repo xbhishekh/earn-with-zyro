@@ -483,7 +483,7 @@ const Profile = () => {
         <div>
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className={cn(
-              "grid w-full lg:w-auto lg:inline-grid",
+              "grid w-full",
               isAdminUser ? "grid-cols-6" : "grid-cols-5"
             )}>
               <TabsTrigger value="profile" className="gap-2">
