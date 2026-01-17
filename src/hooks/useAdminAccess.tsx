@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -9,6 +9,10 @@ interface AdminAccessData {
   loading: boolean;
 }
 
+// Cache to prevent redundant fetches
+const accessCache = new Map<string, { data: AdminAccessData; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute
+
 export const useAdminAccess = () => {
   const { user, isSuperAdmin, isOwner, isFounder } = useAuth();
   const [data, setData] = useState<AdminAccessData>({
@@ -17,6 +21,7 @@ export const useAdminAccess = () => {
     hasFullAccess: false,
     loading: true,
   });
+  const isFetching = useRef(false);
 
   const fetchAccessData = useCallback(async () => {
     if (!user) {
@@ -30,6 +35,18 @@ export const useAdminAccess = () => {
       setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: true, loading: false });
       return;
     }
+
+    // Check cache
+    const cacheKey = `admin_access_${user.id}`;
+    const cached = accessCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setData(cached.data);
+      return;
+    }
+
+    // Prevent duplicate concurrent requests
+    if (isFetching.current) return;
+    isFetching.current = true;
 
     try {
       // Normal admin: Get campaigns I created OR am assigned to
@@ -45,7 +62,9 @@ export const useAdminAccess = () => {
       const myCampaignIds = [...new Set([...createdIds, ...assignedIds])];
 
       if (myCampaignIds.length === 0) {
-        setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: false, loading: false });
+        const result = { myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: false, loading: false };
+        accessCache.set(cacheKey, { data: result, timestamp: Date.now() });
+        setData(result);
         return;
       }
 
@@ -59,26 +78,38 @@ export const useAdminAccess = () => {
 
       const myCampaignMemberUserIds = [...new Set((myMembers || []).map(m => m.user_id))];
 
-      setData({
+      const result: AdminAccessData = {
         myCampaignIds,
         myCampaignMemberUserIds,
         hasFullAccess: false,
         loading: false,
-      });
+      };
+
+      accessCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      setData(result);
     } catch (error) {
       console.error("Error fetching admin access data:", error);
       setData({ myCampaignIds: [], myCampaignMemberUserIds: [], hasFullAccess: false, loading: false });
+    } finally {
+      isFetching.current = false;
     }
-  }, [user, isSuperAdmin, isOwner, isFounder]);
+  }, [user?.id, isSuperAdmin, isOwner, isFounder]);
 
   useEffect(() => {
     fetchAccessData();
   }, [fetchAccessData]);
 
-  return {
-    ...data,
+  // Memoize returned arrays to prevent unnecessary re-renders in consumers
+  const memoizedCampaignIds = useMemo(() => data.myCampaignIds, [JSON.stringify(data.myCampaignIds)]);
+  const memoizedMemberUserIds = useMemo(() => data.myCampaignMemberUserIds, [JSON.stringify(data.myCampaignMemberUserIds)]);
+
+  return useMemo(() => ({
+    myCampaignIds: memoizedCampaignIds,
+    myCampaignMemberUserIds: memoizedMemberUserIds,
+    hasFullAccess: data.hasFullAccess,
+    loading: data.loading,
     refetch: fetchAccessData,
-  };
+  }), [memoizedCampaignIds, memoizedMemberUserIds, data.hasFullAccess, data.loading, fetchAccessData]);
 };
 
 export default useAdminAccess;
