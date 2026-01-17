@@ -59,7 +59,7 @@ const Auth = () => {
       if (isOwner || isAdmin) {
         navigate("/admin", { replace: true });
       } else {
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     }
   }, [user, authLoading, isAdmin, isOwner, navigate]);

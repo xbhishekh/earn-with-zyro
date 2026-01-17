@@ -368,13 +368,57 @@ export const CampaignSidebar = ({
 // Fullscreen Chat View Component
 export const FullscreenChatView = ({
   campaign,
-  chatRoomId,
+  chatRoomId: initialChatRoomId,
   onClose
 }: {
   campaign: Campaign;
   chatRoomId: string | null;
   onClose: () => void;
 }) => {
+  const [chatRoomId, setChatRoomId] = useState<string | null>(initialChatRoomId);
+  const [loading, setLoading] = useState(!initialChatRoomId);
+
+  // Create or fetch chat room if not provided
+  useEffect(() => {
+    if (initialChatRoomId) {
+      setChatRoomId(initialChatRoomId);
+      setLoading(false);
+      return;
+    }
+
+    const ensureChatRoom = async () => {
+      // Try to find existing chat room
+      const { data: existingRoom } = await supabase
+        .from('chat_rooms')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .eq('type', 'campaign')
+        .maybeSingle();
+
+      if (existingRoom) {
+        setChatRoomId(existingRoom.id);
+      } else {
+        // Create new chat room
+        const { data: newRoom, error } = await supabase
+          .from('chat_rooms')
+          .insert({
+            campaign_id: campaign.id,
+            type: 'campaign',
+            name: campaign.name
+          })
+          .select('id')
+          .single();
+
+        if (!error && newRoom) {
+          setChatRoomId(newRoom.id);
+        }
+      }
+      setLoading(false);
+    };
+
+    ensureChatRoom();
+  }, [campaign.id, initialChatRoomId]);
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
@@ -383,31 +427,35 @@ export const FullscreenChatView = ({
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-            <MessageCircle className="w-4 h-4 text-muted-foreground" />
+          <div className="w-8 h-8 rounded-lg overflow-hidden">
+            {campaign.thumbnail_url ? (
+              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
+              </div>
+            )}
           </div>
-          <span className="font-medium">Chat</span>
+          <div>
+            <span className="font-medium">{campaign.name}</span>
+            <span className="text-xs text-muted-foreground ml-2">Chat</span>
+          </div>
         </div>
       </header>
 
-      {/* Pinned Message */}
-      <div className="bg-primary/5 border-b border-border px-4 py-2">
-        <div className="flex items-start gap-2">
-          <span className="text-xs text-primary font-medium shrink-0">Pinned Message (1/1)</span>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-          Don't ask for approvals. Don't ask for reviews. Don't tell me you submitted...
-        </p>
-      </div>
-
       {/* Chat Content */}
       <div className="flex-1 overflow-hidden">
-        {chatRoomId ? (
-          <ChatRoom roomId={chatRoomId} roomName={campaign.name} />
-        ) : (
+        {loading ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
             <p>Loading chat...</p>
+          </div>
+        ) : chatRoomId ? (
+          <ChatRoom roomId={chatRoomId} roomName={campaign.name} />
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <MessageCircle className="h-8 w-8 mr-2 opacity-50" />
+            <p>Unable to load chat. Please try again.</p>
           </div>
         )}
       </div>
@@ -426,6 +474,7 @@ export const FullscreenSubmissionsView = ({
   const { user } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'rewards' | 'submissions'>('submissions');
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -460,6 +509,17 @@ export const FullscreenSubmissionsView = ({
     }
   };
 
+  // Parse requirements from guidelines
+  const parseRequirements = (guidelines: string | null): string[] => {
+    if (!guidelines) return [];
+    return guidelines
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && !line.startsWith('#'));
+  };
+
+  const requirements = parseRequirements(campaign.rules_guidelines);
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
@@ -484,10 +544,16 @@ export const FullscreenSubmissionsView = ({
       {/* Tabs */}
       <div className="border-b border-border bg-card">
         <div className="flex">
-          <button className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button 
+            onClick={() => setActiveTab('rewards')}
+            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'rewards' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
             Rewards
           </button>
-          <button className="px-4 py-3 text-sm font-medium border-b-2 border-primary">
+          <button 
+            onClick={() => setActiveTab('submissions')}
+            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'submissions' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
             My submissions
           </button>
         </div>
@@ -495,64 +561,102 @@ export const FullscreenSubmissionsView = ({
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : submissions.length === 0 ? (
-          <div className="text-center py-12">
-            <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">No submissions yet</p>
+        {activeTab === 'rewards' ? (
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Campaign Thumbnail */}
+            {campaign.thumbnail_url && (
+              <div className="rounded-xl overflow-hidden aspect-video bg-muted">
+                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Reward Info */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="bg-card border border-border rounded-lg p-3">
+                <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
+                <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views || 1} / 1K</Badge>
+              </div>
+            </div>
+
+            {/* Requirements */}
+            {requirements.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3 uppercase text-muted-foreground">Requirements</h3>
+                <div className="flex flex-wrap gap-2">
+                  {requirements.slice(0, 5).map((req, i) => (
+                    <Badge key={i} variant="outline" className="text-sm">{req}</Badge>
+                  ))}
+                </div>
+                {requirements.length > 5 && (
+                  <p className="text-sm text-muted-foreground mt-3 bg-muted/50 rounded-lg p-3">
+                    {requirements.slice(5).join('\n')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Title</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Total views</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Submission</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Reward rate</th>
-                  <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Paid out to you</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((sub) => (
-                  <tr key={sub.id} className="border-b border-border hover:bg-muted/30">
-                    <td className="py-3 px-2">
-                      <span className="text-sm">{campaign.name}</span>
-                    </td>
-                    <td className="py-3 px-2">
-                      {getStatusBadge(sub.status)}
-                    </td>
-                    <td className="py-3 px-2">
-                      <span className="text-sm">{(sub.views_count || 0).toLocaleString()}</span>
-                    </td>
-                    <td className="py-3 px-2">
-                      <a 
-                        href={sub.social_link || sub.video_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-primary hover:underline text-sm"
-                      >
-                        <Instagram className="w-4 h-4" />
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </td>
-                    <td className="py-3 px-2">
-                      <span className="text-sm">${campaign.reward_per_1k_views || 1} / 1K</span>
-                    </td>
-                    <td className="py-3 px-2 text-right">
-                      <span className="text-sm font-medium">
-                        ${(sub.estimated_earnings || 0).toFixed(2)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : submissions.length === 0 ? (
+              <div className="text-center py-12">
+                <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No submissions yet</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Title</th>
+                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Status</th>
+                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Total views</th>
+                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Submission</th>
+                      <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Reward rate</th>
+                      <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Paid out to you</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {submissions.map((sub) => (
+                      <tr key={sub.id} className="border-b border-border hover:bg-muted/30">
+                        <td className="py-3 px-2">
+                          <span className="text-sm">{campaign.name}</span>
+                        </td>
+                        <td className="py-3 px-2">
+                          {getStatusBadge(sub.status)}
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className="text-sm">{(sub.views_count || 0).toLocaleString()}</span>
+                        </td>
+                        <td className="py-3 px-2">
+                          <a 
+                            href={sub.social_link || sub.video_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline text-sm"
+                          >
+                            <Instagram className="w-4 h-4" />
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className="text-sm">${campaign.reward_per_1k_views || 1} / 1K</span>
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <span className="text-sm font-medium">
+                            ${(sub.estimated_earnings || 0).toFixed(2)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -574,6 +678,19 @@ export const FullscreenAnnouncementsView = ({
   campaign: Campaign;
   onClose: () => void;
 }) => {
+  const [activeTab, setActiveTab] = useState<'rewards' | 'announcements'>('announcements');
+
+  // Parse requirements from guidelines
+  const parseRequirements = (guidelines: string | null): string[] => {
+    if (!guidelines) return [];
+    return guidelines
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && !line.startsWith('#'));
+  };
+
+  const requirements = parseRequirements(campaign.rules_guidelines);
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
@@ -598,10 +715,16 @@ export const FullscreenAnnouncementsView = ({
       {/* Tabs */}
       <div className="border-b border-border bg-card">
         <div className="flex">
-          <button className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button 
+            onClick={() => setActiveTab('rewards')}
+            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'rewards' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
             Rewards
           </button>
-          <button className="px-4 py-3 text-sm font-medium border-b-2 border-primary">
+          <button 
+            onClick={() => setActiveTab('announcements')}
+            className={`px-4 py-3 text-sm transition-colors ${activeTab === 'announcements' ? 'font-medium border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          >
             Announcements
           </button>
         </div>
@@ -609,14 +732,50 @@ export const FullscreenAnnouncementsView = ({
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <Megaphone className="w-5 h-5 text-primary" />
-            <h2 className="font-semibold">Campaign Announcements</h2>
+        {activeTab === 'rewards' ? (
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Campaign Thumbnail */}
+            {campaign.thumbnail_url && (
+              <div className="rounded-xl overflow-hidden aspect-video bg-muted">
+                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Reward Info */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="bg-card border border-border rounded-lg p-3">
+                <p className="text-xs text-muted-foreground uppercase mb-1">Reward</p>
+                <Badge className="bg-primary text-primary-foreground">${campaign.reward_per_1k_views || 1} / 1K</Badge>
+              </div>
+            </div>
+
+            {/* Requirements */}
+            {requirements.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3 uppercase text-muted-foreground">Requirements</h3>
+                <div className="flex flex-wrap gap-2">
+                  {requirements.slice(0, 5).map((req, i) => (
+                    <Badge key={i} variant="outline" className="text-sm">{req}</Badge>
+                  ))}
+                </div>
+                {requirements.length > 5 && (
+                  <p className="text-sm text-muted-foreground mt-3 bg-muted/50 rounded-lg p-3">
+                    {requirements.slice(5).join('\n')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-          
-          <AnnouncementsList campaignId={campaign.id} />
-        </div>
+        ) : (
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center gap-2 mb-4">
+              <Megaphone className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold">Campaign Announcements</h2>
+            </div>
+            
+            <AnnouncementsList campaignId={campaign.id} />
+          </div>
+        )}
       </div>
     </div>
   );
