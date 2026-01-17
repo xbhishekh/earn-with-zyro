@@ -80,6 +80,57 @@ const MegaphoneIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+// Orange Document/Rules Icon - Whop Style
+const RulesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+      fill="#F97316"
+      stroke="#F97316"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M14 2v6h6"
+      stroke="#FED7AA"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8 13h8M8 17h5"
+      stroke="#FED7AA"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+// Orange Video/Submissions Icon - Whop Style
+const SubmissionsIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <rect
+      x="2"
+      y="4"
+      width="20"
+      height="16"
+      rx="3"
+      fill="#F97316"
+      stroke="#F97316"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M10 8.5v7l6-3.5-6-3.5z"
+      fill="#FED7AA"
+      stroke="#FED7AA"
+      strokeWidth="1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 interface Campaign {
   id: string;
   name: string;
@@ -332,10 +383,12 @@ export const CampaignSidebar = ({
                 <div className="px-2 pb-2 space-y-0.5">
                   {/* Community Rules */}
                   <button
-                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                   >
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Community Rules</span>
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                      <RulesIcon className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium">Community Rules</span>
                   </button>
                   
                   {/* Announcements */}
@@ -359,8 +412,8 @@ export const CampaignSidebar = ({
               to={`/my-submissions?campaign=${campaign.id}`}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
             >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Video className="w-4 h-4 text-primary" />
+              <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <SubmissionsIcon className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm font-medium">My Submissions</p>
