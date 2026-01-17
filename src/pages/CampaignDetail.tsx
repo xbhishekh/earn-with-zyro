@@ -31,6 +31,8 @@ import {
   Menu,
   MessageCircle,
   ClipboardList,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   CampaignSidebar,
@@ -158,6 +160,7 @@ const CampaignDetail = () => {
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showMySubmissions, setShowMySubmissions] = useState(true);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Track affiliate clicks from ref param
@@ -1027,6 +1030,87 @@ const CampaignDetail = () => {
                   Creators may reject submissions that don't meet requirements. By submitting, you grant full usage rights and agree to follow the platform guidelines.
                 </p>
               </div>
+
+              {/* My Submissions - Collapsible Section */}
+              {isMember && submissions.length > 0 && (
+                <div className="mb-6 border border-border rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setShowMySubmissions(!showMySubmissions)}
+                    className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-xs text-muted-foreground uppercase font-medium tracking-wide">MY SUBMISSIONS</span>
+                    {showMySubmissions ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  
+                  {showMySubmissions && (
+                    <div className="divide-y divide-border">
+                      {submissions.slice(0, 5).map((sub) => (
+                        <a
+                          key={sub.id}
+                          href={sub.social_link || sub.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground group-hover:text-primary">View post</span>
+                                <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(sub.created_at), 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-4">
+                            <Badge 
+                              className={
+                                sub.status === 'approved' || sub.status === 'paid'
+                                  ? 'bg-success text-white'
+                                  : sub.status === 'pending'
+                                  ? 'bg-warning text-white'
+                                  : sub.status === 'rejected'
+                                  ? 'bg-destructive text-white'
+                                  : 'bg-muted text-foreground'
+                              }
+                            >
+                              {sub.status || 'pending'}
+                            </Badge>
+                            
+                            <div className="text-right">
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{(sub.views_count || 0).toLocaleString()}</span>
+                              </div>
+                              <p className="text-sm font-semibold text-success">
+                                ${(sub.estimated_earnings || 0).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                      
+                      {submissions.length > 5 && (
+                        <button
+                          onClick={() => setMainView('submissions')}
+                          className="w-full p-3 text-center text-sm text-primary hover:bg-muted/30 transition-colors"
+                        >
+                          View all {submissions.length} submissions →
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Mobile Quick Actions */}
               <div className="lg:hidden mb-6">
