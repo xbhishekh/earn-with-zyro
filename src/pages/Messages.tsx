@@ -1192,7 +1192,8 @@ const Messages = () => {
               </div>
             </ScrollArea>
 
-            {/* Bottom Section */}
+            {/* Bottom Section - Always at the very bottom */}
+            <div className="mt-auto">
             {isTeamZyrozo ? (
               <div className="px-4 py-3 border-t border-border bg-background shrink-0">
                 <div className="flex items-center gap-3">
@@ -1306,6 +1307,7 @@ const Messages = () => {
                 </div>
               </>
             )}
+            </div>
           </>
         ) : (
           /* Empty State - No conversation selected */
