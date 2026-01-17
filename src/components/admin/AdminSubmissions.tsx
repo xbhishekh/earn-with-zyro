@@ -288,24 +288,33 @@ const AdminSubmissions = () => {
 
     setActionLoading(true);
     try {
-      // First, try to move ALL pending transactions for this submission to available.
-      // (There can be multiple pending rows if views were updated multiple times.)
-      const { data: pendingTxs, error: pendingError } = await supabase
+      // Fetch any transactions already linked to this submission
+      // (we avoid double-paying if an available tx already exists)
+      const { data: submissionTxs, error: txFetchError } = await supabase
         .from("balance_transactions")
-        .select("id, amount")
+        .select("id, amount, status")
         .eq("submission_id", markPaidSubmission.id)
-        .eq("status", "pending");
+        .in("status", ["pending", "available", "paid"]);
 
-      if (pendingError) throw pendingError;
+      if (txFetchError) throw txFetchError;
 
-      const pendingTotal = (pendingTxs || []).reduce(
-        (sum, t: any) => sum + Number(t.amount || 0),
-        0
+      const pendingTxs = (submissionTxs || []).filter((t: any) => t.status === "pending");
+      const availableTxs = (submissionTxs || []).filter(
+        (t: any) => t.status === "available" || t.status === "paid"
       );
 
-      let amountToNotify = pendingTotal || Number(markPaidSubmission.estimated_earnings || 0);
+      const pendingTotal = pendingTxs.reduce((sum, t: any) => sum + Number(t.amount || 0), 0);
+      const availableTotal = availableTxs.reduce((sum, t: any) => sum + Number(t.amount || 0), 0);
 
-      if ((pendingTxs || []).length > 0) {
+      // Prefer: move pending -> available. If none pending but already available exists, do nothing.
+      // Fallback: create a new available transaction from estimated_earnings.
+      let shouldNotify = false;
+      const amountToNotify =
+        pendingTotal || availableTotal || Number(markPaidSubmission.estimated_earnings || 0);
+
+      if (pendingTxs.length > 0) {
+        shouldNotify = true;
+
         const { error: updateError } = await supabase
           .from("balance_transactions")
           .update({
@@ -321,8 +330,14 @@ const AdminSubmissions = () => {
         toast.success(
           `Moved $${amountToNotify.toLocaleString()} from pending to available balance`
         );
+      } else if (availableTxs.length > 0) {
+        toast.success(
+          `Already paid: $${amountToNotify.toLocaleString()} is already in available balance`
+        );
       } else {
-        // No pending tx found: create new available transaction
+        shouldNotify = true;
+
+        // No pending/available tx found: create new available transaction
         const campaign = getCampaign(markPaidSubmission.campaign_id);
         if (!campaign) throw new Error("Campaign not found");
 
@@ -331,7 +346,8 @@ const AdminSubmissions = () => {
           .insert({
             user_id: markPaidSubmission.user_id,
             amount: amountToNotify,
-            type: "payout",
+            // NOTE: DB constraint only allows these types; "payout" is not allowed.
+            type: "pending_payout",
             status: "available",
             campaign_id: markPaidSubmission.campaign_id,
             submission_id: markPaidSubmission.id,
@@ -365,17 +381,19 @@ const AdminSubmissions = () => {
 
       if (subError) throw subError;
 
-      await supabase.from("notifications").insert({
-        user_id: markPaidSubmission.user_id,
-        type: "payment_available",
-        title: "Payment Available!",
-        message: `$${amountToNotify.toLocaleString()} is now available in your balance for withdrawal.`,
-        metadata: {
-          amount: amountToNotify,
-          campaign_id: markPaidSubmission.campaign_id,
-          submission_id: markPaidSubmission.id,
-        },
-      });
+      if (shouldNotify) {
+        await supabase.from("notifications").insert({
+          user_id: markPaidSubmission.user_id,
+          type: "payment_available",
+          title: "Payment Available!",
+          message: `$${amountToNotify.toLocaleString()} is now available in your balance for withdrawal.`,
+          metadata: {
+            amount: amountToNotify,
+            campaign_id: markPaidSubmission.campaign_id,
+            submission_id: markPaidSubmission.id,
+          },
+        });
+      }
 
       setMarkPaidSubmission(null);
       fetchData();
