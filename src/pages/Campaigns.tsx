@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AvatarImageOptimized } from "@/components/ui/optimized-image";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { setRedirectIntent } from "@/lib/redirect-intent";
@@ -318,6 +319,12 @@ const Campaigns = () => {
 
   return (
     <MainLayout>
+      <SEO
+        title="Active Campaigns - Earn Money Creating Content"
+        description="Browse active clipping campaigns on Zyrozo. Earn $1-5 per 1,000 views creating content for top brands. Join campaigns for TikTok, YouTube, and Instagram."
+        keywords="clipping campaigns, UGC campaigns, earn money TikTok, YouTube monetization, creator campaigns, content creation jobs"
+        canonical="/campaigns"
+      />
       <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">

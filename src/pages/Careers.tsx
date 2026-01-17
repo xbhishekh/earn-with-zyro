@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { SEO } from "@/components/SEO";
 
 const perks = [
   {
@@ -87,6 +88,12 @@ const openPositions = [
 const Careers = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Careers at Zyrozo - Join the Creator Economy"
+        description="Join Zyrozo and help build the future of creator monetization. We're hiring engineers, designers, and marketing professionals. Remote-first, global team."
+        keywords="Zyrozo careers, creator economy jobs, remote jobs, startup jobs, tech jobs"
+        canonical="/careers"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { SEO } from "@/components/SEO";
 import { toast } from "sonner";
 
 const contactMethods = [
@@ -104,6 +105,12 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Contact Us - Get in Touch with Zyrozo"
+        description="Have questions about Zyrozo? Contact our team for support, partnerships, or general inquiries. We typically respond within 24-48 hours."
+        keywords="contact Zyrozo, creator support, partnership inquiry, customer service"
+        canonical="/contact"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

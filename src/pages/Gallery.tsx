@@ -7,6 +7,7 @@ import { Footer } from "@/components/landing/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApprovedSubmission {
@@ -94,6 +95,12 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Creator Gallery - Top Performing Content"
+        description="Explore approved content from Zyrozo's talented creators. See viral clips, trending videos, and get inspired by top-performing content across campaigns."
+        keywords="creator gallery, viral content, trending videos, UGC showcase, content examples"
+        canonical="/gallery"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

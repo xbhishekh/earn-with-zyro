@@ -4,7 +4,7 @@ import { Target, Users, Zap, Globe, Award, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-
+import { SEO, organizationSchema } from "@/components/SEO";
 const values = [
   {
     icon: Target,
@@ -38,6 +38,13 @@ const stats = [
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About Zyrozo - Empowering Creators to Earn More"
+        description="Learn about Zyrozo's mission to democratize creator monetization. We've paid $500K+ to 5,000+ creators. Discover our values, story, and how we help creators succeed."
+        keywords="about Zyrozo, creator platform, content creator earnings, UGC monetization, creator economy"
+        canonical="/about"
+        structuredData={organizationSchema}
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

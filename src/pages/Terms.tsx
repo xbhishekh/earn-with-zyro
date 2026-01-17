@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { SEO } from "@/components/SEO";
 
 const termsContent = `
 # Terms of Service
@@ -81,6 +82,11 @@ For questions about these Terms, contact us at legal@zyrozo.com
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Terms of Service"
+        description="Zyrozo Terms of Service - Review the terms and conditions for using the Zyrozo creator rewards platform."
+        canonical="/terms"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

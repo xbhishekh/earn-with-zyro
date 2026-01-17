@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { SEO } from "@/components/SEO";
 
 const privacyContent = `
 # Privacy Policy
@@ -104,6 +105,11 @@ For data protection inquiries:
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Privacy Policy"
+        description="Zyrozo Privacy Policy - Learn how we collect, use, and protect your personal information. Your privacy is important to us."
+        canonical="/privacy"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
