@@ -315,6 +315,36 @@ const MarketplaceProductDetail = () => {
         if (transactionError) throw transactionError;
       }
 
+      // Get buyer profile for notification
+      const { data: buyerProfile } = await supabase
+        .from("profiles")
+        .select("username, display_name")
+        .eq("user_id", user.id)
+        .single();
+
+      const buyerName = buyerProfile?.display_name || buyerProfile?.username || "A user";
+      const platformFee = finalPrice * 0.10;
+      const sellerEarnings = finalPrice - platformFee;
+
+      // Send notification to seller
+      await supabase.from("notifications").insert({
+        user_id: product.seller_id,
+        type: "product_sale",
+        title: finalPrice === 0 ? "New Member Joined!" : "New Sale! 🎉",
+        message: finalPrice === 0 
+          ? `${buyerName} joined your product "${product.title}" for free.`
+          : `${buyerName} purchased "${product.title}" for $${finalPrice.toLocaleString()}. You earned $${sellerEarnings.toLocaleString()} (after 10% platform fee).`,
+        metadata: {
+          product_id: product.id,
+          product_title: product.title,
+          buyer_id: user.id,
+          buyer_name: buyerName,
+          amount: finalPrice,
+          seller_earnings: sellerEarnings,
+          discount_applied: appliedDiscount?.code || null
+        }
+      });
+
       toast.success(finalPrice === 0 ? "Successfully joined!" : "Purchase successful!");
       setHasPurchased(true);
       setShowPurchaseModal(false);
