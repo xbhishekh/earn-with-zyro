@@ -1017,16 +1017,16 @@ const CampaignDetail = () => {
         </div>
 
         {/* Fixed Bottom Bar - Whop Style Centered */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card/95 backdrop-blur-sm border-t border-border px-6 py-5 z-40">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card/95 backdrop-blur-sm border-t border-border px-6 py-4 z-40">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             <div>
-              <h3 className="font-bold text-lg text-foreground">{campaign.name}</h3>
-              <p className="text-base text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
+              <h3 className="font-semibold text-base text-foreground">{campaign.name}</h3>
+              <p className="text-sm text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
             </div>
             <Button 
               onClick={() => setShowSubmitModal(true)} 
-              size="lg"
-              className="h-14 px-12 rounded-xl font-bold text-lg bg-primary hover:bg-primary/90 shadow-lg"
+              size="default"
+              className="h-11 px-8 rounded-xl font-semibold bg-primary hover:bg-primary/90 shadow-md"
             >
               Submit
             </Button>
