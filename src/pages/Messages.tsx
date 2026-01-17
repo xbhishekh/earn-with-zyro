@@ -297,13 +297,27 @@ const Messages = () => {
 
       if (profilesError) throw profilesError;
 
+      // Create a profile map including Team Zyrozo fallback
+      const profileMap = new Map<string, Profile>();
+      profiles?.forEach(p => profileMap.set(p.user_id, p));
+      
+      // Add Team Zyrozo fallback if not in profiles (shouldn't happen but just in case)
+      if (!profileMap.has(TEAM_ZYROZO_USER_ID) && otherUserIds.includes(TEAM_ZYROZO_USER_ID)) {
+        profileMap.set(TEAM_ZYROZO_USER_ID, {
+          user_id: TEAM_ZYROZO_USER_ID,
+          username: "zyrozo_team",
+          display_name: "Team Zyrozo",
+          avatar_url: "/favicon.jpeg"
+        });
+      }
+
       const conversationsData: Conversation[] = [];
 
       for (const room of dmRooms) {
         const otherParticipant = allParticipants?.find(p => p.room_id === room.room_id);
         if (!otherParticipant) continue;
 
-        const profile = profiles?.find(p => p.user_id === otherParticipant.user_id);
+        const profile = profileMap.get(otherParticipant.user_id);
         if (!profile) continue;
 
         const { data: lastMsg } = await supabase
@@ -330,6 +344,11 @@ const Messages = () => {
             lastMessagePreview = "📎 File";
           }
         }
+        
+        // Truncate long messages for preview
+        if (lastMessagePreview && lastMessagePreview.length > 60) {
+          lastMessagePreview = lastMessagePreview.substring(0, 60) + "...";
+        }
 
         conversationsData.push({
           room_id: room.room_id,
@@ -340,7 +359,15 @@ const Messages = () => {
         });
       }
 
+      // Sort conversations: Team Zyrozo first (if has unread), then by last message time
       conversationsData.sort((a, b) => {
+        // Team Zyrozo with unread messages goes to top
+        const aIsTeam = a.other_user.user_id === TEAM_ZYROZO_USER_ID;
+        const bIsTeam = b.other_user.user_id === TEAM_ZYROZO_USER_ID;
+        
+        if (aIsTeam && a.unread_count > 0 && (!bIsTeam || b.unread_count === 0)) return -1;
+        if (bIsTeam && b.unread_count > 0 && (!aIsTeam || a.unread_count === 0)) return 1;
+        
         if (!a.last_message_at) return 1;
         if (!b.last_message_at) return -1;
         return new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime();
@@ -789,59 +816,67 @@ const Messages = () => {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filteredConversations.map((convo) => (
-                <motion.button
-                  key={convo.room_id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={() => setSelectedConversation(convo)}
-                  className={cn(
-                    "w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left",
-                    selectedConversation?.room_id === convo.room_id && "bg-muted/50"
-                  )}
-                >
-                  {convo.unread_count > 0 && (
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-4 -ml-1" />
-                  )}
-                  <Avatar className="w-12 h-12 shrink-0">
-                    <AvatarImage src={convo.other_user.avatar_url || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
-                      {(convo.other_user.display_name || convo.other_user.username || "?").charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <h4 className={cn(
-                          "truncate",
-                          convo.unread_count > 0 ? "font-bold" : "font-semibold"
-                        )}>
-                          {convo.other_user.display_name || convo.other_user.username || "Unknown User"}
-                        </h4>
-                        {convo.other_user.user_id === TEAM_ZYROZO_USER_ID && (
-                          <>
-                            <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
-                            <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0 shrink-0">
-                              System
-                            </Badge>
-                          </>
+              {filteredConversations.map((convo) => {
+                const isTeamZyrozo = convo.other_user.user_id === TEAM_ZYROZO_USER_ID;
+                
+                return (
+                  <motion.button
+                    key={convo.room_id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    onClick={() => setSelectedConversation(convo)}
+                    className={cn(
+                      "w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left",
+                      selectedConversation?.room_id === convo.room_id && "bg-muted/50",
+                      isTeamZyrozo && "bg-gradient-to-r from-orange-50/50 to-purple-50/50 dark:from-orange-950/20 dark:to-purple-950/20"
+                    )}
+                  >
+                    {convo.unread_count > 0 && (
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-4 -ml-1" />
+                    )}
+                    <Avatar className={cn(
+                      "w-12 h-12 shrink-0",
+                      isTeamZyrozo && "ring-2 ring-primary"
+                    )}>
+                      <AvatarImage src={convo.other_user.avatar_url || undefined} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                        {(convo.other_user.display_name || convo.other_user.username || "?").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <h4 className={cn(
+                            "truncate",
+                            convo.unread_count > 0 ? "font-bold" : "font-semibold"
+                          )}>
+                            {convo.other_user.display_name || convo.other_user.username || "Unknown User"}
+                          </h4>
+                          {isTeamZyrozo && (
+                            <>
+                              <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
+                              <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-orange-500 to-purple-500 text-white border-0 shrink-0">
+                                System
+                              </Badge>
+                            </>
+                          )}
+                        </div>
+                        {convo.last_message_at && (
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                            {formatTime(convo.last_message_at)}
+                          </span>
                         )}
                       </div>
-                      {convo.last_message_at && (
-                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                          {formatTime(convo.last_message_at)}
-                        </span>
-                      )}
+                      <p className={cn(
+                        "text-sm truncate",
+                        convo.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"
+                      )}>
+                        {convo.last_message || "Start a conversation"}
+                      </p>
                     </div>
-                    <p className={cn(
-                      "text-sm truncate",
-                      convo.unread_count > 0 ? "text-foreground font-medium" : "text-muted-foreground"
-                    )}>
-                      {convo.last_message || "Start a conversation"}
-                    </p>
-                  </div>
-                </motion.button>
-              ))}
+                  </motion.button>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
@@ -1052,108 +1087,110 @@ const Messages = () => {
               )}
             </ScrollArea>
 
-            {/* Team Zyrozo Official Notice */}
-            {selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID && (
-              <div className="px-4 py-3 border-t border-border bg-muted/30">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-primary flex items-center justify-center">
-                    <BadgeCheck className="w-4 h-4 text-white" />
+            {/* Team Zyrozo Official Notice - Read Only Channel */}
+            {selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID ? (
+              <div className="px-4 py-4 border-t border-border bg-gradient-to-r from-orange-50 to-purple-50 dark:from-orange-950/30 dark:to-purple-950/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-primary flex items-center justify-center shrink-0">
+                    <BadgeCheck className="w-5 h-5 text-white" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold text-foreground">This is the official Zyrozo notification channel</p>
-                    <p className="text-xs text-muted-foreground">Zyrozo will always use verified accounts to communicate with you</p>
+                    <p className="text-sm text-muted-foreground">Zyrozo will always use verified accounts to communicate with you</p>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* File Preview */}
-            {selectedFile && (
-              <div className="px-4 py-2 border-t border-border bg-muted/30">
-                <div className="flex items-center gap-3 p-2 rounded-lg bg-background">
-                  {filePreview ? (
-                    <img 
-                      src={filePreview} 
-                      alt="Preview" 
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-muted-foreground" />
+            ) : (
+              <>
+                {/* File Preview */}
+                {selectedFile && (
+                  <div className="px-4 py-2 border-t border-border bg-muted/30">
+                    <div className="flex items-center gap-3 p-2 rounded-lg bg-background">
+                      {filePreview ? (
+                        <img 
+                          src={filePreview} 
+                          alt="Preview" 
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(selectedFile.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={clearSelectedFile}
+                        className="shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(selectedFile.size / 1024).toFixed(1)} KB
-                    </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={clearSelectedFile}
-                    className="shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* Message Input */}
-            <div className="p-4 border-t border-border">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  sendMessage();
-                }}
-                className="flex items-center gap-2"
-              >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={sending || uploading}
-                >
-                  <Paperclip className="w-5 h-5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (fileInputRef.current) {
-                      fileInputRef.current.accept = "image/*";
-                      fileInputRef.current.click();
-                      fileInputRef.current.accept = ALLOWED_FILE_TYPES.join(",");
-                    }
-                  }}
-                  disabled={sending || uploading}
-                >
-                  <ImageIcon className="w-5 h-5" />
-                </Button>
-                <Input
-                  ref={inputRef}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                  disabled={sending || uploading}
-                />
-                <Button 
-                  type="submit" 
-                  size="icon" 
-                  disabled={(!newMessage.trim() && !selectedFile) || sending || uploading}
-                >
-                  {sending || uploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </Button>
-              </form>
-            </div>
+                {/* Message Input - Only for non-Team Zyrozo chats */}
+                <div className="p-4 border-t border-border">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      sendMessage();
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={sending || uploading}
+                    >
+                      <Paperclip className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.accept = "image/*";
+                          fileInputRef.current.click();
+                          fileInputRef.current.accept = ALLOWED_FILE_TYPES.join(",");
+                        }
+                      }}
+                      disabled={sending || uploading}
+                    >
+                      <ImageIcon className="w-5 h-5" />
+                    </Button>
+                    <Input
+                      ref={inputRef}
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1"
+                      disabled={sending || uploading}
+                    />
+                    <Button 
+                      type="submit" 
+                      size="icon" 
+                      disabled={(!newMessage.trim() && !selectedFile) || sending || uploading}
+                    >
+                      {sending || uploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
