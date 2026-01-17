@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -54,9 +54,13 @@ const AdminAnalytics = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  // Memoize IDs to prevent unnecessary effect runs
+  const campaignIdsKey = useMemo(() => myCampaignIds.join(','), [myCampaignIds]);
+  const memberIdsKey = useMemo(() => myCampaignMemberUserIds.join(','), [myCampaignMemberUserIds]);
+  
   useEffect(() => {
     if (!accessLoading) fetchStats();
-  }, [accessLoading, hasFullAccess, myCampaignIds, myCampaignMemberUserIds]);
+  }, [accessLoading, hasFullAccess, campaignIdsKey, memberIdsKey]);
 
   const fetchStats = async () => {
     try {

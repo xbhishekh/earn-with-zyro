@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useSearchParams, Link } from "react-router-dom";
@@ -119,6 +119,15 @@ const Messages = () => {
 
   const canDeleteBroadcasts = isAdmin || isSuperAdmin || isOwner || isFounder;
 
+  // Stable ref for selected conversation to avoid channel recreation
+  const selectedConversationRef = useRef<Conversation | null>(null);
+  
+  // Update ref when selectedConversation changes
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
+
+  // Single real-time channel for all DM messages - does NOT depend on selectedConversation
   useEffect(() => {
     if (!user) return;
     fetchConversations();
@@ -140,14 +149,16 @@ const Messages = () => {
             
             if (participant) {
               fetchConversations();
-              if (selectedConversation && newMsg.room_id === selectedConversation.room_id) {
+              // Use ref to get current value without re-subscribing
+              const currentConvo = selectedConversationRef.current;
+              if (currentConvo && newMsg.room_id === currentConvo.room_id) {
                 setMessages(prev => {
                   if (prev.some(m => m.id === newMsg.id)) return prev;
                   return [...prev, { ...newMsg, reactions: [] }];
                 });
                 scrollToBottom();
                 if (newMsg.user_id !== user.id) {
-                  markMessagesAsRead(selectedConversation.room_id);
+                  markMessagesAsRead(currentConvo.room_id);
                 }
               }
             }
@@ -187,7 +198,7 @@ const Messages = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, selectedConversation]);
+  }, [user]); // Only depends on user - NOT selectedConversation
 
   useEffect(() => {
     if (selectedConversation) {
@@ -269,7 +280,7 @@ const Messages = () => {
     }, 100);
   };
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -286,13 +297,31 @@ const Messages = () => {
       }
 
       const roomIds = dmRooms.map(r => r.room_id);
-      const { data: allParticipants, error: participantsError } = await supabase
-        .from("dm_participants")
-        .select("room_id, user_id")
-        .in("room_id", roomIds)
-        .neq("user_id", user.id);
+      
+      // Batch all queries in parallel to avoid N+1
+      const [participantsRes, lastMessagesRes, unreadCountsRes] = await Promise.all([
+        supabase
+          .from("dm_participants")
+          .select("room_id, user_id")
+          .in("room_id", roomIds)
+          .neq("user_id", user.id),
+        // Get last message for all rooms in one query
+        supabase
+          .from("chat_messages")
+          .select("room_id, content, created_at, user_id, attachment_type")
+          .in("room_id", roomIds)
+          .order("created_at", { ascending: false }),
+        // Get unread counts for all rooms in one query  
+        supabase
+          .from("chat_messages")
+          .select("room_id")
+          .in("room_id", roomIds)
+          .neq("user_id", user.id)
+          .is("read_at", null),
+      ]);
 
-      if (participantsError) throw participantsError;
+      if (participantsRes.error) throw participantsRes.error;
+      const allParticipants = participantsRes.data;
 
       const otherUserIds = [...new Set(allParticipants?.map(p => p.user_id) || [])];
       if (otherUserIds.length === 0) {
@@ -321,34 +350,33 @@ const Messages = () => {
         });
       }
 
+      // Build last message map (get only the latest per room)
+      const lastMessageMap = new Map<string, { content: string; created_at: string; user_id: string; attachment_type: string | null }>();
+      for (const msg of (lastMessagesRes.data || [])) {
+        if (!lastMessageMap.has(msg.room_id)) {
+          lastMessageMap.set(msg.room_id, msg);
+        }
+      }
+
+      // Build unread count map
+      const unreadCountMap = new Map<string, number>();
+      for (const msg of (unreadCountsRes.data || [])) {
+        unreadCountMap.set(msg.room_id, (unreadCountMap.get(msg.room_id) || 0) + 1);
+      }
+
       const conversationsData: Conversation[] = [];
-      const seenUserIds = new Set<string>(); // Track unique users to prevent duplicates
+      const seenUserIds = new Set<string>();
 
       for (const room of dmRooms) {
         const otherParticipant = allParticipants?.find(p => p.room_id === room.room_id);
         if (!otherParticipant) continue;
         
-        // Skip if we already have a conversation with this user (prevent duplicates)
         if (seenUserIds.has(otherParticipant.user_id)) continue;
         
         const profile = profileMap.get(otherParticipant.user_id);
         if (!profile) continue;
 
-        const { data: lastMsg } = await supabase
-          .from("chat_messages")
-          .select("content, created_at, user_id, attachment_type")
-          .eq("room_id", room.room_id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const { count: unreadCount } = await supabase
-          .from("chat_messages")
-          .select("*", { count: "exact", head: true })
-          .eq("room_id", room.room_id)
-          .neq("user_id", user.id)
-          .is("read_at", null);
-
+        const lastMsg = lastMessageMap.get(room.room_id);
         let lastMessagePreview = lastMsg?.content || "";
         if (lastMsg?.attachment_type) {
           lastMessagePreview = lastMsg.attachment_type.startsWith("image/") ? "📷 Photo" : "📎 File";
@@ -357,14 +385,14 @@ const Messages = () => {
           lastMessagePreview = lastMessagePreview.substring(0, 40) + "...";
         }
 
-        seenUserIds.add(otherParticipant.user_id); // Mark user as seen
+        seenUserIds.add(otherParticipant.user_id);
         
         conversationsData.push({
           room_id: room.room_id,
           other_user: profile,
           last_message: lastMessagePreview,
           last_message_at: lastMsg?.created_at,
-          unread_count: unreadCount || 0,
+          unread_count: unreadCountMap.get(room.room_id) || 0,
         });
       }
 
@@ -381,7 +409,7 @@ const Messages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const fetchMessages = async (roomId: string) => {
     setMessagesLoading(true);

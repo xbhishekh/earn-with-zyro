@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SEO, createCampaignSchema, createBreadcrumbSchema } from "@/components/SEO";
@@ -186,19 +186,10 @@ const CampaignDetail = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      const target = `${location.pathname}${location.search}${location.hash}`;
-      setRedirectIntent(target);
-      navigate(`/auth?redirectTo=${encodeURIComponent(target)}`, { replace: true });
-      return;
-    }
-    if ((id || slug) && user) {
-      fetchCampaignData();
-    }
-  }, [id, slug, user, authLoading, navigate, location.pathname, location.search, location.hash]);
-
-  const fetchCampaignData = async () => {
+  // Memoized fetch function to prevent recreation on every render
+  const fetchCampaignData = useCallback(async () => {
+    if (!user) return;
+    
     try {
       let campaignData;
       
@@ -229,11 +220,11 @@ const CampaignDetail = () => {
       }
 
       const [memberRes, submissionRes, roomRes, assetsRes, socialAccountsRes] = await Promise.all([
-        supabase.from("campaign_members").select("id").eq("user_id", user!.id).eq("campaign_id", campaignId).maybeSingle(),
-        supabase.from("submissions").select("*").eq("user_id", user!.id).eq("campaign_id", campaignId).order("created_at", { ascending: false }),
+        supabase.from("campaign_members").select("id").eq("user_id", user.id).eq("campaign_id", campaignId).maybeSingle(),
+        supabase.from("submissions").select("*").eq("user_id", user.id).eq("campaign_id", campaignId).order("created_at", { ascending: false }),
         supabase.from("chat_rooms").select("id").eq("campaign_id", campaignId).eq("type", "campaign").maybeSingle(),
         supabase.from("campaign_assets").select("*").eq("campaign_id", campaignId).order("sort_order", { ascending: true }),
-        supabase.from("social_accounts").select("platform, is_verified").eq("user_id", user!.id).eq("is_verified", true),
+        supabase.from("social_accounts").select("platform, is_verified").eq("user_id", user.id).eq("is_verified", true),
       ]);
 
       setIsMember(!!memberRes.data);
@@ -247,7 +238,19 @@ const CampaignDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, slug, user]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      const target = `${location.pathname}${location.search}${location.hash}`;
+      setRedirectIntent(target);
+      navigate(`/auth?redirectTo=${encodeURIComponent(target)}`, { replace: true });
+      return;
+    }
+    if ((id || slug) && user) {
+      fetchCampaignData();
+    }
+  }, [id, slug, user, authLoading, navigate, fetchCampaignData]);
 
   const openWaitlist = () => {
     const count = campaign?.waitlist_questions?.length || 0;

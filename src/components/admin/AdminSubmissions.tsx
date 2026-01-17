@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search, Filter, CheckCircle, XCircle, ExternalLink, Download, RefreshCw, DollarSign, Ban, Play, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,9 +69,12 @@ const AdminSubmissions = () => {
   // Video Preview modal
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
 
+  // Memoize campaignIds string to prevent unnecessary effect runs
+  const campaignIdsKey = useMemo(() => myCampaignIds.join(','), [myCampaignIds]);
+  
   useEffect(() => { 
     if (!accessLoading) fetchData(); 
-  }, [statusFilter, accessLoading, hasFullAccess, myCampaignIds]);
+  }, [statusFilter, accessLoading, hasFullAccess, campaignIdsKey]);
 
   const fetchData = async () => {
     try {
