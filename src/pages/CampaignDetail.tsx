@@ -1040,7 +1040,7 @@ const CampaignDetail = () => {
               {/* My Submissions Button */}
               {user && (
                 <div className="mb-6">
-                  <Link to="/my-submissions">
+                  <Link to={`/my-submissions?campaign=${campaign.id}`}>
                     <Button 
                       variant="outline" 
                       className="w-full justify-between h-14 px-4 rounded-xl border-border hover:bg-accent"
