@@ -311,26 +311,34 @@ export const CampaignSidebar = ({
           </AnimatePresence>
         </div>
 
-        {/* My Submissions Section - Whop Style List */}
-        {submissions.length > 0 && (
+        {/* My Submissions Section - Whop Style */}
+        {isMember && (
           <div className="border-b border-border">
-            <button
-              onClick={onSwitchToSubmissionsTab}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors"
+            <Link
+              to={`/my-submissions?campaign=${campaign.id}`}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
             >
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">My Submissions</span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Video className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">My Submissions</p>
+                <p className="text-xs text-muted-foreground">
+                  {submissions.length} video{submissions.length !== 1 ? 's' : ''} submitted
+                </p>
+              </div>
+            </Link>
             
-            <div className="px-3 pb-3 space-y-2">
-              {submissions.slice(0, 5).map((sub) => (
-                <Link
-                  key={sub.id}
-                  to="/my-submissions"
-                  className="block bg-muted/30 hover:bg-muted/50 rounded-lg p-3 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+            {/* Submission List */}
+            {submissions.length > 0 && (
+              <div className="px-3 pb-3 space-y-2">
+                {submissions.slice(0, 5).map((sub) => (
+                  <div
+                    key={sub.id}
+                    className="flex items-center justify-between gap-3 px-2 py-2 rounded-lg hover:bg-muted/30 transition-colors"
+                  >
+                    {/* Left - Icon and View Post */}
+                    <div className="flex items-center gap-2.5 min-w-0">
                       {sub.status === 'approved' || sub.status === 'paid' ? (
                         <CheckCircle className="w-4 h-4 text-success shrink-0" />
                       ) : sub.status === 'rejected' ? (
@@ -339,44 +347,60 @@ export const CampaignSidebar = ({
                         <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                       )}
                       <div className="min-w-0">
-                        <span className="text-sm font-medium flex items-center gap-1">
+                        <a 
+                          href={sub.social_link || sub.video_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium hover:underline flex items-center gap-1"
+                        >
                           View post <ExternalLink className="w-3 h-3" />
-                        </span>
+                        </a>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(sub.created_at), 'MMM d, yyyy')}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
+                    
+                    {/* Right - Badge, Views, Earnings */}
+                    <div className="text-right shrink-0 space-y-0.5">
                       <Badge 
-                        variant={sub.status === 'paid' ? 'default' : sub.status === 'approved' ? 'default' : sub.status === 'rejected' ? 'destructive' : 'secondary'}
-                        className={`text-xs ${sub.status === 'paid' ? 'bg-primary' : ''}`}
+                        className={`text-xs rounded-full ${
+                          sub.status === 'paid' 
+                            ? 'bg-primary text-white' 
+                            : sub.status === 'approved' 
+                            ? 'bg-success/20 text-success border-0' 
+                            : sub.status === 'rejected' 
+                            ? 'bg-destructive/20 text-destructive border-0' 
+                            : 'bg-muted text-muted-foreground border-0'
+                        }`}
                       >
                         {sub.status || 'pending'}
                       </Badge>
-                      {(sub.views_count ?? 0) > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 justify-end">
-                          <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
-                        </div>
-                      )}
-                      {(sub.estimated_earnings ?? 0) > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-success font-medium justify-end">
-                          ${Number(sub.estimated_earnings).toFixed(2)}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-xs justify-end">
+                        {(sub.views_count ?? 0) > 0 && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
+                          </span>
+                        )}
+                        {(sub.estimated_earnings ?? 0) > 0 && (
+                          <span className="text-success font-medium">
+                            ${Number(sub.estimated_earnings).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-              {submissions.length > 5 && (
-                <button
-                  onClick={onSwitchToSubmissionsTab}
-                  className="w-full text-center text-xs text-primary hover:underline py-1"
-                >
-                  View all {submissions.length} submissions
-                </button>
-              )}
-            </div>
+                ))}
+                {submissions.length > 5 && (
+                  <Link
+                    to={`/my-submissions?campaign=${campaign.id}`}
+                    className="block text-center text-xs text-primary hover:underline py-1"
+                  >
+                    View all {submissions.length} submissions
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         )}
 
