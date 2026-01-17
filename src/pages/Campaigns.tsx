@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, CheckCircle, Ban, Clock, Loader2 } from "lucide-react";
+import { PlatformIcon } from "@/components/ui/platform-icons";
 import { CampaignCardSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -227,15 +228,7 @@ const Campaigns = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const getPlatformIcon = (platform: string) => {
-    const p = platform.toLowerCase();
-    if (p.includes("tiktok")) return "🎵";
-    if (p.includes("youtube")) return "📺";
-    if (p.includes("instagram")) return "📸";
-    if (p.includes("twitter") || p.includes("x")) return "𝕏";
-    if (p.includes("facebook")) return "📘";
-    return "🌐";
-  };
+  // Platform icons now use branded PlatformIcon component
 
   const renderActionButton = (campaign: Campaign) => {
     const isJoining = joiningCampaignId === campaign.id;
@@ -411,9 +404,9 @@ const Campaigns = () => {
                             </Link>
                             <CheckCircle className="w-4 h-4 text-primary" />
                             {campaign.platforms && campaign.platforms.length > 0 && (
-                              <div className="flex gap-1 ml-2">
+                              <div className="flex items-center gap-1.5 ml-2">
                                 {campaign.platforms.map((p) => (
-                                  <span key={p} className="text-sm">{getPlatformIcon(p)}</span>
+                                  <PlatformIcon key={p} platform={p} className="w-4 h-4" />
                                 ))}
                               </div>
                             )}

@@ -19,6 +19,7 @@ import {
   Package,
   MessageCircle,
 } from "lucide-react";
+import { PlatformIcon } from "@/components/ui/platform-icons";
 import { CampaignAssetsManager } from "./CampaignAssetsManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -563,9 +564,10 @@ const AdminCampaigns = () => {
                   <Badge
                     key={platform}
                     variant={formData.platforms.includes(platform) ? "default" : "outline"}
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5"
                     onClick={() => togglePlatform(platform)}
                   >
+                    <PlatformIcon platform={platform} className="w-4 h-4" />
                     {platform}
                   </Badge>
                 ))}
