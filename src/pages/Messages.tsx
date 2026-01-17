@@ -24,6 +24,7 @@ import {
   BadgeCheck,
   Plus,
   Smile,
+  DollarSign,
 } from "lucide-react";
 import { QuickReactionsBar } from "@/components/chat/EmojiPicker";
 import {
@@ -969,27 +970,70 @@ const Messages = () => {
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                  <AvatarFallback className={cn(
-                    "text-white text-sm",
-                    isTeamZyrozo ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
-                  )}>
-                    {(selectedConversation.other_user.display_name || "?").charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-sm">
-                    {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                  </span>
-                  {(isTeamZyrozo || selectedConversation.other_user.is_verified) && (
-                    <BadgeCheck className="w-4 h-4 text-primary" />
-                  )}
-                </div>
+                
+                {/* Clickable user profile area */}
+                {!isTeamZyrozo ? (
+                  <Link 
+                    to={`/u/${selectedConversation.other_user.username}`}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  >
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                      <AvatarFallback className="text-white text-sm bg-gradient-to-br from-gray-400 to-gray-600">
+                        {(selectedConversation.other_user.display_name || "?").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-sm">
+                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                      </span>
+                      {selectedConversation.other_user.is_verified && (
+                        <BadgeCheck className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                      <AvatarFallback className="text-white text-sm bg-primary">
+                        {(selectedConversation.other_user.display_name || "?").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-sm">
+                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                      </span>
+                      <BadgeCheck className="w-4 h-4 text-primary" />
+                    </div>
+                  </div>
+                )}
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Search className="w-4 h-4" />
-              </Button>
+              
+              {/* Header Actions */}
+              {!isTeamZyrozo && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to={`/u/${selectedConversation.other_user.username}`} className="flex items-center">
+                        <BadgeCheck className="w-4 h-4 mr-2" />
+                        View Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={`/balance?pay=${selectedConversation.other_user.user_id}`} className="flex items-center">
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Pay User
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Messages Area - flex-1 with overflow to push input to bottom */}
@@ -1043,30 +1087,47 @@ const Messages = () => {
                               onMouseEnter={() => setHoveredMessageId(message.id)}
                               onMouseLeave={() => setHoveredMessageId(null)}
                             >
-                              {/* Avatar for received messages */}
+                              {/* Avatar for received messages - clickable to profile */}
                               {!isOwn && (
                                 <div className="w-8 shrink-0">
                                   {showAvatar && (
-                                    <Avatar className="w-8 h-8">
-                                      <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                                      <AvatarFallback className={cn(
-                                        "text-white text-xs",
-                                        isSysMsg ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
-                                      )}>
-                                        {(selectedConversation.other_user.display_name || "?").charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
+                                    isSysMsg ? (
+                                      <Avatar className="w-8 h-8">
+                                        <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                                        <AvatarFallback className="text-white text-xs bg-primary">
+                                          {(selectedConversation.other_user.display_name || "?").charAt(0)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    ) : (
+                                      <Link to={`/u/${selectedConversation.other_user.username}`}>
+                                        <Avatar className="w-8 h-8 hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer">
+                                          <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
+                                          <AvatarFallback className="text-white text-xs bg-gradient-to-br from-gray-400 to-gray-600">
+                                            {(selectedConversation.other_user.display_name || "?").charAt(0)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                      </Link>
+                                    )
                                   )}
                                 </div>
                               )}
 
                               <div className={cn("flex flex-col max-w-[70%]", isOwn ? "items-end" : "items-start")}>
-                                {/* Name + timestamp for received */}
+                                {/* Name + timestamp for received - clickable name */}
                                 {showName && (
                                   <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
-                                    <span className="font-medium text-foreground">
-                                      {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
-                                    </span>
+                                    {isSysMsg ? (
+                                      <span className="font-medium text-foreground">
+                                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                                      </span>
+                                    ) : (
+                                      <Link 
+                                        to={`/u/${selectedConversation.other_user.username}`}
+                                        className="font-medium text-foreground hover:underline"
+                                      >
+                                        {selectedConversation.other_user.display_name || selectedConversation.other_user.username}
+                                      </Link>
+                                    )}
                                     <span>•</span>
                                     <span>{format(new Date(message.created_at), "MMM d, yyyy h:mm a")}</span>
                                   </div>
