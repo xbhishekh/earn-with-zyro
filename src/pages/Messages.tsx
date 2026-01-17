@@ -1110,10 +1110,10 @@ const Messages = () => {
                                     {renderAttachment(message)}
                                   </div>
 
-                                  {/* Quick reactions bar on hover */}
+                                  {/* Quick reactions bar on hover - bottom */}
                                   {hoveredMessageId === message.id && !isSysMsg && (
                                     <div className={cn(
-                                      "absolute -top-8 z-10",
+                                      "absolute -bottom-8 z-10",
                                       isOwn ? "right-0" : "left-0"
                                     )}>
                                       <QuickReactionsBar onReact={(emoji) => toggleReaction(message.id, emoji)} />
