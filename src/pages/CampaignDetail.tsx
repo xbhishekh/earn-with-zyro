@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { SEO, createCampaignSchema, createBreadcrumbSchema } from "@/components/SEO";
 import {
   ArrowLeft,
   Clock,
@@ -474,10 +475,47 @@ const CampaignDetail = () => {
   if (!campaign) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
+        <SEO 
+          title="Campaign Not Found"
+          description="The campaign you're looking for doesn't exist or has been removed."
+          noindex={true}
+        />
         <p className="text-muted-foreground">Campaign not found</p>
       </div>
     );
   }
+
+  // Generate dynamic SEO data
+  const campaignUrl = campaign.slug ? `/c/${campaign.slug}` : `/campaign/${campaign.id}`;
+  const campaignDescription = campaign.description 
+    ? campaign.description.substring(0, 155) + (campaign.description.length > 155 ? '...' : '')
+    : `Earn $${campaign.reward_per_1k_views} per 1,000 views on ${campaign.name}. Join this ${campaign.category || 'creator'} campaign on Zyrozo and start earning today!`;
+  
+  const seoTitle = `${campaign.name} - Earn $${campaign.reward_per_1k_views}/1K Views`;
+  const seoKeywords = [
+    campaign.name,
+    campaign.category,
+    'creator campaign',
+    'earn money',
+    'content creator',
+    'clipping',
+    ...(campaign.platforms || [])
+  ].filter(Boolean).join(', ');
+
+  const campaignSchema = createCampaignSchema({
+    name: campaign.name,
+    description: campaignDescription,
+    image: campaign.thumbnail_url || undefined,
+    creator: creatorProfile?.display_name || undefined,
+    reward: campaign.reward_per_1k_views,
+    url: campaignUrl
+  });
+
+  const breadcrumbSchema = createBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Campaigns', url: '/campaigns' },
+    { name: campaign.name, url: campaignUrl }
+  ]);
 
   // If not a member, show join / waitlist status here (so shared links work)
   if (!isMember) {
@@ -485,6 +523,14 @@ const CampaignDetail = () => {
 
     return (
       <div className="min-h-screen bg-background">
+        <SEO
+          title={seoTitle}
+          description={campaignDescription}
+          keywords={seoKeywords}
+          canonical={campaignUrl}
+          image={campaign.thumbnail_url || undefined}
+          structuredData={[campaignSchema, breadcrumbSchema]}
+        />
         <header className="glass-card border-b border-border sticky top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-14">
@@ -687,6 +733,14 @@ const CampaignDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={seoTitle}
+        description={campaignDescription}
+        keywords={seoKeywords}
+        canonical={campaignUrl}
+        image={campaign.thumbnail_url || undefined}
+        structuredData={[campaignSchema, breadcrumbSchema]}
+      />
       {/* Header */}
       <header className="glass-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4">
