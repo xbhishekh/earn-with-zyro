@@ -693,9 +693,9 @@ const Messages = () => {
         className="hidden"
       />
 
-      {/* Left Sidebar - Conversations */}
+      {/* Left Sidebar - Conversations - Always visible on desktop */}
       <div className={cn(
-        "w-full md:w-[380px] border-r border-border flex flex-col bg-background shrink-0",
+        "w-full md:w-[340px] lg:w-[380px] border-r border-border flex flex-col bg-background shrink-0 h-full",
         selectedConversation ? "hidden md:flex" : "flex"
       )}>
         {/* Header */}
