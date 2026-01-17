@@ -51,6 +51,7 @@ interface CampaignSidebarProps {
   memberCount?: number;
   onOpenChat?: () => void;
   onOpenSubmissions?: () => void;
+  onOpenAnnouncements?: () => void;
 }
 
 interface Submission {
@@ -69,7 +70,8 @@ export const CampaignSidebar = ({
   isMember,
   memberCount = 0,
   onOpenChat,
-  onOpenSubmissions
+  onOpenSubmissions,
+  onOpenAnnouncements
 }: CampaignSidebarProps) => {
   const { user } = useAuth();
   const [onlineCount, setOnlineCount] = useState(0);
@@ -230,6 +232,7 @@ export const CampaignSidebar = ({
                   
                   {/* Announcements */}
                   <button
+                    onClick={onOpenAnnouncements}
                     className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                   >
                     <Megaphone className="w-4 h-4 text-muted-foreground" />
@@ -558,6 +561,62 @@ export const FullscreenSubmissionsView = ({
         <button className="text-xs text-muted-foreground hover:text-foreground">
           How do Content Rewards work?
         </button>
+      </div>
+    </div>
+  );
+};
+
+// Fullscreen Announcements View Component
+export const FullscreenAnnouncementsView = ({
+  campaign,
+  onClose
+}: {
+  campaign: Campaign;
+  onClose: () => void;
+}) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+        <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg overflow-hidden">
+            {campaign.thumbnail_url ? (
+              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
+              </div>
+            )}
+          </div>
+          <span className="font-medium">{campaign.name}</span>
+        </div>
+      </header>
+
+      {/* Tabs */}
+      <div className="border-b border-border bg-card">
+        <div className="flex">
+          <button className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Rewards
+          </button>
+          <button className="px-4 py-3 text-sm font-medium border-b-2 border-primary">
+            Announcements
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <Megaphone className="w-5 h-5 text-primary" />
+            <h2 className="font-semibold">Campaign Announcements</h2>
+          </div>
+          
+          <AnnouncementsList campaignId={campaign.id} />
+        </div>
       </div>
     </div>
   );
