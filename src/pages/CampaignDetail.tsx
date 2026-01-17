@@ -724,6 +724,10 @@ const CampaignDetail = () => {
                         setMobileSidebarOpen(false);
                         setShowFullscreenAnnouncements(true);
                       }}
+                      onSwitchToSubmissionsTab={() => {
+                        setMobileSidebarOpen(false);
+                        setActiveTab('submissions');
+                      }}
                     />
                   </div>
                 </SheetContent>
@@ -758,11 +762,12 @@ const CampaignDetail = () => {
             onOpenChat={() => setShowFullscreenChat(true)}
             onOpenSubmissions={() => setShowFullscreenSubmissions(true)}
             onOpenAnnouncements={() => setShowFullscreenAnnouncements(true)}
+            onSwitchToSubmissionsTab={() => setActiveTab('submissions')}
           />
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 px-4 py-6 max-w-4xl mx-auto">
+        <main className="flex-1 px-4 py-6 pb-24 max-w-4xl mx-auto">
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -1073,6 +1078,23 @@ const CampaignDetail = () => {
           </TabsContent>
         </Tabs>
         </main>
+      </div>
+
+      {/* Fixed Bottom Bar - Whop Style */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-3 z-40">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-sm">{campaign.name}</h3>
+            <p className="text-xs text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
+          </div>
+          <Button 
+            onClick={() => setShowSubmitModal(true)} 
+            size="lg"
+            className="h-10 px-8 rounded-full font-semibold bg-primary hover:bg-primary/90"
+          >
+            Submit
+          </Button>
+        </div>
       </div>
 
       {/* Submit Modal - Whop Style with Video Upload */}
