@@ -361,33 +361,18 @@ export const CampaignSidebar = ({
                       </div>
                     </div>
                     
-                    {/* Right - Badge, Views, Earnings */}
-                    <div className="text-right shrink-0 space-y-0.5">
-                      <Badge 
-                        className={`text-xs rounded-full ${
-                          sub.status === 'paid' 
-                            ? 'bg-primary text-white' 
-                            : sub.status === 'approved' 
-                            ? 'bg-success/20 text-success border-0' 
-                            : sub.status === 'rejected' 
-                            ? 'bg-destructive/20 text-destructive border-0' 
-                            : 'bg-muted text-muted-foreground border-0'
-                        }`}
-                      >
-                        {sub.status || 'pending'}
-                      </Badge>
-                      <div className="flex items-center gap-2 text-xs justify-end">
-                        {(sub.views_count ?? 0) > 0 && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
-                          </span>
-                        )}
-                        {(sub.estimated_earnings ?? 0) > 0 && (
-                          <span className="text-success font-medium">
-                            ${Number(sub.estimated_earnings).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                    {/* Right - Views, Earnings */}
+                    <div className="flex items-center gap-2 text-xs shrink-0">
+                      {(sub.views_count ?? 0) > 0 && (
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Eye className="w-3 h-3" /> {sub.views_count?.toLocaleString()}
+                        </span>
+                      )}
+                      {(sub.estimated_earnings ?? 0) > 0 && (
+                        <span className="text-success font-medium">
+                          ${Number(sub.estimated_earnings).toFixed(2)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
