@@ -12,6 +12,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -226,6 +227,12 @@ const Marketplace = () => {
 
   return (
     <MainLayout>
+      <SEO
+        title="Creator Marketplace - Buy & Sell Digital Products"
+        description="Discover courses, templates, and digital products from top creators. Buy or sell on Zyrozo's marketplace. Coaching, software, communities, and more."
+        keywords="creator marketplace, digital products, online courses, creator economy, templates, coaching, memberships"
+        canonical="/marketplace"
+      />
       <div className="container mx-auto px-4 py-4">
           {/* Search Header */}
           <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm py-4 border-b border-border mb-6">

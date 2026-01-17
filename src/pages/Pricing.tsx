@@ -4,6 +4,7 @@ import { Check, Zap, Crown, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { SEO } from "@/components/SEO";
 
 const plans = [
   {
@@ -68,6 +69,12 @@ const plans = [
 const Pricing = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pricing - Free & Pro Plans for Creators"
+        description="Zyrozo pricing plans for creators. Start free, upgrade to Pro for unlimited submissions, priority access, and 10% bonus earnings. Simple, transparent pricing."
+        keywords="Zyrozo pricing, creator plans, Pro subscription, free creator platform"
+        canonical="/pricing"
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
