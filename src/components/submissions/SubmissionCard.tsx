@@ -106,11 +106,18 @@ const formatViewCount = (count: number): string => {
 
 export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }: SubmissionCardProps) => {
   const platform = detectPlatform(submission.social_link);
-  const thumbnailUrl = submission.thumbnail_url || campaign.thumbnail_url;
   const username = profile?.username || 'Unknown';
   const displayName = profile?.display_name || username;
   const avatarUrl = profile?.avatar_url;
   const isApprovedOrPaid = submission.status === 'approved' || submission.status === 'paid';
+  
+  // Check if video_url is a direct video file (for video preview)
+  const isVideoFile = submission.video_url && (
+    submission.video_url.includes('.mp4') || 
+    submission.video_url.includes('.webm') || 
+    submission.video_url.includes('.mov') ||
+    submission.video_url.includes('supabase')
+  );
   
   // Get description/title from submission or use campaign name
   const title = (submission as any).description || campaign.name;
@@ -133,14 +140,22 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
         </div>
       </div>
 
-      {/* Video Thumbnail - Whop Style with player controls */}
+      {/* Video Thumbnail - Shows user's submitted video */}
       <div 
         className="relative aspect-[9/16] bg-zinc-900 overflow-hidden cursor-pointer group"
         onClick={handleVideoClick}
       >
-        {thumbnailUrl ? (
+        {isVideoFile ? (
+          <video 
+            src={submission.video_url} 
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+          />
+        ) : submission.thumbnail_url ? (
           <img 
-            src={thumbnailUrl} 
+            src={submission.thumbnail_url} 
             alt="Video thumbnail" 
             className="w-full h-full object-cover"
           />
