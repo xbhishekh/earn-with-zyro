@@ -34,6 +34,7 @@ import {
   ClipboardList,
   ChevronRight,
 } from "lucide-react";
+import { PlatformIcon } from "@/components/ui/platform-icons";
 import {
   CampaignSidebar,
   FullscreenChatView,
@@ -713,15 +714,7 @@ const CampaignDetail = () => {
   const requirements = parseRequirements(campaign.rules_guidelines);
   const assets = extractAssets(campaign.rules_guidelines);
 
-  const getPlatformIcon = (platform: string) => {
-    const p = platform.toLowerCase();
-    if (p.includes("tiktok")) return "🎵";
-    if (p.includes("youtube")) return "📺";
-    if (p.includes("instagram")) return "📸";
-    if (p.includes("twitter") || p.includes("x")) return "𝕏";
-    if (p.includes("facebook")) return "📘";
-    return "🌐";
-  };
+  // Using professional branded platform icons
 
   const getSubmissionStatusIcon = (status: string | null) => {
     switch (status) {
@@ -954,10 +947,12 @@ const CampaignDetail = () => {
                 </div>
                 {campaign.platforms && campaign.platforms.length > 0 && (
                   <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">PLATFORMS</p>
+                    <p className="text-xs text-muted-foreground uppercase mb-2 font-medium tracking-wide">Platforms</p>
                     <div className="flex items-center gap-2">
                       {campaign.platforms.map((p) => (
-                        <span key={p} className="text-xl sm:text-2xl" title={p}>{getPlatformIcon(p)}</span>
+                        <div key={p} title={p} className="w-7 h-7 sm:w-8 sm:h-8">
+                          <PlatformIcon platform={p} className="w-full h-full" />
+                        </div>
                       ))}
                     </div>
                   </div>

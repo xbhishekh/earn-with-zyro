@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   MessageCircle, 
-  Megaphone, 
   ChevronDown, 
   ChevronRight,
   Lock,
@@ -19,7 +18,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Instagram,
   Video,
   Play
 } from 'lucide-react';
@@ -38,6 +36,49 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ClipDetailsModal } from '@/components/submissions/ClipDetailsModal';
+import { PlatformIcon as SharedPlatformIcon, detectPlatform as sharedDetectPlatform } from '@/components/ui/platform-icons';
+
+// Orange Chat Icon - Whop Style
+const ChatIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+      fill="#F97316"
+      stroke="#F97316"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+// Orange Megaphone Icon - Whop Style
+const MegaphoneIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M3 11v2a1 1 0 0 0 1 1h2l6 6V2L6 8H4a1 1 0 0 0-1 1z"
+      fill="#F97316"
+      stroke="#F97316"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M16 8a4 4 0 0 1 0 8"
+      stroke="#F97316"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M19 5a7 7 0 0 1 0 14"
+      stroke="#F97316"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 interface Campaign {
   id: string;
@@ -302,8 +343,8 @@ export const CampaignSidebar = ({
                     onClick={onOpenAnnouncements}
                     className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                   >
-                    <Megaphone className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Announcements</span>
+                    <MegaphoneIcon className="w-4 h-4" />
+                    <span className="text-sm">Campaign Announcements</span>
                   </button>
                 </div>
               </motion.div>
@@ -401,7 +442,7 @@ export const CampaignSidebar = ({
               onClick={onOpenChat}
               className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
             >
-              <MessageCircle className="w-4 h-4 text-muted-foreground" />
+              <ChatIcon className="w-4 h-4" />
               <span className="text-sm">Chat</span>
             </button>
           </div>
@@ -671,28 +712,10 @@ export const FullscreenSubmissionsView = ({
     setDetailsModalOpen(true);
   };
 
-  const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'other' => {
-    if (!url) return 'other';
-    if (url.includes('instagram.com')) return 'instagram';
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-    if (url.includes('tiktok.com')) return 'tiktok';
-    return 'other';
-  };
-
-  const PlatformIcon = ({ platform }: { platform: string }) => {
-    switch (platform) {
-      case 'instagram':
-        return <Instagram className="w-4 h-4" />;
-      case 'tiktok':
-        return (
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-          </svg>
-        );
-      default:
-        return <Video className="w-4 h-4" />;
-    }
-  };
+  // Use shared platform icon from ui/platform-icons
+  const SubPlatformIcon = ({ platform }: { platform: string }) => (
+    <SharedPlatformIcon platform={platform} className="w-4 h-4" />
+  );
 
   const statusFilters = [
     { value: 'all', label: 'All Clips' },
@@ -786,7 +809,7 @@ export const FullscreenSubmissionsView = ({
                 const thumbnailUrl = sub.thumbnail_url || campaign.thumbnail_url;
                 const username = profile?.username || 'Unknown';
                 const displayName = profile?.display_name || username;
-                const platform = detectPlatform(sub.social_link);
+                const platform = sharedDetectPlatform(sub.social_link);
                 const isApprovedOrPaid = sub.status === 'approved' || sub.status === 'paid';
                 const title = sub.description || campaign.name;
                 
@@ -795,7 +818,7 @@ export const FullscreenSubmissionsView = ({
                     {/* Header - Platform icon left, Volume icon right */}
                     <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
                       <div className="text-muted-foreground">
-                        <PlatformIcon platform={platform} />
+                        <SharedPlatformIcon platform={platform} className="w-4 h-4" />
                       </div>
                       <div className="text-muted-foreground">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1021,7 +1044,7 @@ export const FullscreenAnnouncementsView = ({
         ) : (
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
-              <Megaphone className="w-5 h-5 text-primary" />
+              <MegaphoneIcon className="w-5 h-5" />
               <h2 className="font-semibold">Campaign Announcements</h2>
             </div>
             
@@ -1119,28 +1142,10 @@ export const InlineSubmissionsView = ({
     return count.toString();
   };
 
-  const detectPlatform = (url: string | null): 'instagram' | 'youtube' | 'tiktok' | 'other' => {
-    if (!url) return 'other';
-    if (url.includes('instagram.com')) return 'instagram';
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-    if (url.includes('tiktok.com')) return 'tiktok';
-    return 'other';
-  };
-
-  const PlatformIcon = ({ platform }: { platform: string }) => {
-    switch (platform) {
-      case 'instagram':
-        return <Instagram className="w-4 h-4" />;
-      case 'tiktok':
-        return (
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-          </svg>
-        );
-      default:
-        return <Video className="w-4 h-4" />;
-    }
-  };
+  // Use shared platform utilities
+  const LocalPlatformIcon = ({ platform }: { platform: string }) => (
+    <SharedPlatformIcon platform={platform} className="w-4 h-4" />
+  );
 
   const statusFilters = [
     { value: 'all', label: 'All Clips' },
