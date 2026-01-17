@@ -209,9 +209,13 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
     }
 
     setWhopConnecting(true);
+    // NOTE: Some sites (like Whop) refuse to load inside the editor preview iframe.
+    // Open a new tab immediately to avoid popup blockers.
+    const popup = window.open("about:blank", "_blank");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        popup?.close();
         toast.error("Please sign in to connect your Whop account");
         return;
       }
@@ -223,15 +227,38 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
       });
 
       if (response.error) {
+        popup?.close();
         throw new Error(response.error.message || "Failed to start OAuth");
       }
 
-      const { authUrl } = response.data;
-      if (authUrl) {
-        // Redirect to Whop OAuth
-        window.location.href = authUrl;
-      } else {
+      const { authUrl } = response.data as { authUrl?: string };
+      if (!authUrl) {
+        popup?.close();
         throw new Error("No OAuth URL returned");
+      }
+
+      // Prefer the popup/new tab (works even when preview is inside an iframe)
+      if (popup && !popup.closed) {
+        try {
+          // Prevent the new page from having access to the opener
+          popup.opener = null;
+        } catch {
+          // ignore
+        }
+        popup.location.href = authUrl;
+        popup.focus?.();
+        return;
+      }
+
+      // Fallbacks
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = authUrl;
+        } else {
+          window.location.href = authUrl;
+        }
+      } catch {
+        window.location.href = authUrl;
       }
     } catch (error: any) {
       console.error("Error starting Whop OAuth:", error);
