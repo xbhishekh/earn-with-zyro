@@ -26,6 +26,7 @@ import {
   Shield,
   ChevronRight,
   Gauge,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,6 +56,7 @@ import AdminFAQs from "@/components/admin/AdminFAQs";
 import AdminEmailBroadcast from "@/components/admin/AdminEmailBroadcast";
 import AdminMarketplace from "@/components/admin/AdminMarketplace";
 import AdminPerformance from "@/components/admin/AdminPerformance";
+import { AdminReports } from "@/components/admin/AdminReports";
 
 interface Tab {
   id: string;
@@ -82,6 +84,7 @@ const tabs: Tab[] = [
   { id: "activity-log", label: "Activity Log", icon: Activity, component: AdminActivityLog, requiresFounderOrOwner: true },
   { id: "affiliates", label: "Affiliates", icon: Link2, component: AdminAffiliates },
   { id: "waitlist", label: "Waitlist", icon: ClipboardList, component: AdminWaitlist },
+  { id: "reports", label: "User Reports", icon: Flag, component: AdminReports },
   { id: "support", label: "Support", icon: MessageSquare, component: AdminSupport },
   { id: "support-settings", label: "Support Settings", icon: Settings, component: AdminSupportSettings, requiresSuperAdmin: true },
   { id: "footer", label: "Footer", icon: Globe, component: AdminFooter, requiresSuperAdmin: true },
