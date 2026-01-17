@@ -455,29 +455,29 @@ const CampaignDetail = () => {
   };
 
   // Extract URLs from rules_guidelines for assets section
-  const extractAssets = (guidelines: string | null): { title: string; url: string; icon: string }[] => {
+  const extractAssets = (guidelines: string | null): { title: string; url: string; platform: string }[] => {
     if (!guidelines) return [];
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const matches = guidelines.match(urlRegex) || [];
     
     return matches.map(url => {
-      let icon = "🔗";
+      let platform = "other";
       let title = url;
       
       if (url.includes("instagram.com")) {
-        icon = "📸";
+        platform = "instagram";
         title = "Instagram Link";
       } else if (url.includes("tiktok.com")) {
-        icon = "🎵";
+        platform = "tiktok";
         title = "TikTok Link";
       } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        icon = "📺";
+        platform = "youtube";
         title = "YouTube Link";
       } else if (url.includes("drive.google.com")) {
-        icon = "📁";
+        platform = "drive";
         title = "Google Drive Asset";
       } else if (url.includes("dropbox.com")) {
-        icon = "📦";
+        platform = "dropbox";
         title = "Dropbox Asset";
       } else {
         try {
@@ -488,7 +488,7 @@ const CampaignDetail = () => {
         }
       }
       
-      return { title, url, icon };
+      return { title, url, platform };
     });
   };
 
@@ -1066,9 +1066,11 @@ const CampaignDetail = () => {
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
                       >
-                        <span className="text-2xl">{asset.icon}</span>
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <PlatformIcon platform={asset.platform} className="w-5 h-5" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-primary group-hover:underline truncate">{asset.title}</p>
+                          <p className="font-medium text-foreground group-hover:text-primary truncate">{asset.title}</p>
                           <p className="text-xs text-muted-foreground truncate">{asset.url}</p>
                         </div>
                         <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />

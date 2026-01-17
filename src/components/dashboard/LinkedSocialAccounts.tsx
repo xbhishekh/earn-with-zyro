@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
-  Instagram, 
-  Youtube, 
-  Twitter, 
   Plus, 
   ExternalLink, 
   CheckCircle, 
@@ -14,14 +11,17 @@ import {
   Check,
   AlertCircle,
   Send,
-  Facebook,
-  Linkedin,
-  Twitch,
-  Film,
-  Tv,
-  Music,
   Globe
 } from "lucide-react";
+import { 
+  PlatformIcon, 
+  InstagramIcon, 
+  YouTubeIcon, 
+  TikTokColorIcon, 
+  TwitterXIcon, 
+  FacebookIcon, 
+  SnapchatIcon 
+} from "@/components/ui/platform-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,24 +31,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-// TikTok icon component
-const TikTokIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-  </svg>
-);
-
-// Snapchat icon component
-const SnapchatIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.076-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.449-.165-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-.809-.329-1.224-.72-1.227-1.153-.015-.36.285-.69.72-.839.156-.074.346-.104.54-.104.12 0 .284.015.449.104.375.165.72.284 1.019.284.211 0 .359-.045.435-.09-.008-.165-.023-.329-.037-.51l-.002-.06c-.106-1.628-.232-3.654.297-4.847C7.86 1.068 11.216.793 12.206.793z"/>
-  </svg>
-);
-
-// Pinterest icon component
+// Pinterest icon component (not in main platform-icons)
 const PinterestIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+  <svg className={className} viewBox="0 0 24 24" fill="#E60023">
     <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
+  </svg>
+);
+
+// Twitch icon component (not in main platform-icons)
+const TwitchIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="#9146FF">
+    <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+  </svg>
+);
+
+// LinkedIn icon component (not in main platform-icons)
+const LinkedInIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="#0A66C2">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
   </svg>
 );
 
@@ -65,82 +65,59 @@ interface SocialAccount {
   created_at: string;
 }
 
-const platformConfig: Record<string, { icon: any; color: string; name: string; urlPattern: RegExp }> = {
+const platformConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; name: string; urlPattern: RegExp }> = {
   instagram: {
-    icon: Instagram,
-    color: "text-pink-500",
+    icon: InstagramIcon,
     name: "Instagram",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/,
   },
   tiktok: {
-    icon: TikTokIcon,
-    color: "text-foreground",
+    icon: TikTokColorIcon,
     name: "TikTok",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@([a-zA-Z0-9_.]+)/,
   },
   youtube: {
-    icon: Youtube,
-    color: "text-red-500",
+    icon: YouTubeIcon,
     name: "YouTube",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:@|channel\/|c\/)?([a-zA-Z0-9_-]+)/,
   },
   twitter: {
-    icon: Twitter,
-    color: "text-blue-400",
+    icon: TwitterXIcon,
     name: "X (Twitter)",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/([a-zA-Z0-9_]+)/,
   },
   facebook: {
-    icon: Facebook,
-    color: "text-blue-600",
+    icon: FacebookIcon,
     name: "Facebook",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?facebook\.com\/([a-zA-Z0-9_.]+)/,
   },
   linkedin: {
-    icon: Linkedin,
-    color: "text-blue-700",
+    icon: LinkedInIcon,
     name: "LinkedIn",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/,
   },
   snapchat: {
     icon: SnapchatIcon,
-    color: "text-yellow-400",
     name: "Snapchat",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?snapchat\.com\/add\/([a-zA-Z0-9_.]+)/,
   },
   pinterest: {
     icon: PinterestIcon,
-    color: "text-red-600",
     name: "Pinterest",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?pinterest\.com\/([a-zA-Z0-9_]+)/,
   },
   twitch: {
-    icon: Twitch,
-    color: "text-purple-500",
+    icon: TwitchIcon,
     name: "Twitch",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)/,
   },
   spotify: {
-    icon: Music,
-    color: "text-green-500",
+    icon: () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>,
     name: "Spotify",
     urlPattern: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/(?:user|artist)\/([a-zA-Z0-9]+)/,
   },
-  netflix: {
-    icon: Film,
-    color: "text-red-500",
-    name: "Netflix",
-    urlPattern: /(?:https?:\/\/)?(?:www\.)?netflix\.com\/([a-zA-Z0-9_-]+)/,
-  },
-  primevideo: {
-    icon: Tv,
-    color: "text-blue-400",
-    name: "Prime Video",
-    urlPattern: /(?:https?:\/\/)?(?:www\.)?primevideo\.com\/([a-zA-Z0-9_-]+)/,
-  },
   other: {
-    icon: Globe,
-    color: "text-muted-foreground",
+    icon: () => <Globe className="w-5 h-5 text-muted-foreground" />,
     name: "Other",
     urlPattern: /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9_.-]+\.[a-zA-Z]{2,})\/?/,
   },
@@ -359,7 +336,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${config?.color || ""}`}>
+                    <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center">
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
@@ -480,7 +457,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
                   {Object.entries(platformConfig).map(([key, config]) => (
                     <SelectItem key={key} value={key}>
                       <div className="flex items-center gap-2">
-                        <config.icon className={`w-4 h-4 ${config.color}`} />
+                        <config.icon className="w-4 h-4" />
                         {config.name}
                       </div>
                     </SelectItem>
