@@ -1231,7 +1231,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_verified: boolean | null
-          oauth_verified_at: string | null
           platform: string
           profile_url: string | null
           status: Database["public"]["Enums"]["social_account_status"] | null
@@ -1240,8 +1239,6 @@ export type Database = {
           username: string | null
           verification_code: string | null
           verified_at: string | null
-          whop_access_token: string | null
-          whop_user_id: string | null
         }
         Insert: {
           admin_code?: string | null
@@ -1249,7 +1246,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_verified?: boolean | null
-          oauth_verified_at?: string | null
           platform: string
           profile_url?: string | null
           status?: Database["public"]["Enums"]["social_account_status"] | null
@@ -1258,8 +1254,6 @@ export type Database = {
           username?: string | null
           verification_code?: string | null
           verified_at?: string | null
-          whop_access_token?: string | null
-          whop_user_id?: string | null
         }
         Update: {
           admin_code?: string | null
@@ -1267,7 +1261,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_verified?: boolean | null
-          oauth_verified_at?: string | null
           platform?: string
           profile_url?: string | null
           status?: Database["public"]["Enums"]["social_account_status"] | null
@@ -1276,8 +1269,6 @@ export type Database = {
           username?: string | null
           verification_code?: string | null
           verified_at?: string | null
-          whop_access_token?: string | null
-          whop_user_id?: string | null
         }
         Relationships: []
       }
@@ -1572,30 +1563,6 @@ export type Database = {
           },
         ]
       }
-      whop_oauth_states: {
-        Row: {
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          state: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          state: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          state?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       withdrawal_requests: {
         Row: {
           admin_notes: string | null
@@ -1653,7 +1620,6 @@ export type Database = {
         Args: { _manager_id: string; _target_role: string }
         Returns: boolean
       }
-      cleanup_expired_oauth_states: { Args: never; Returns: undefined }
       delete_broadcast_messages: {
         Args: { p_broadcast_id: string; p_content: string; p_title: string }
         Returns: number
