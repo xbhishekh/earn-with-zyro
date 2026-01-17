@@ -2,16 +2,16 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Arjun Mehta",
+    name: "Jake Mitchell",
     role: "Content Creator",
     quote: "Zyrozo has completely transformed how I sell my content. The platform is intuitive, payments are fast, and I've doubled my income in just two months!",
-    avatar: "AM",
+    avatar: "JM",
   },
   {
-    name: "Priya Sharma",
+    name: "Sarah Johnson",
     role: "Video Editor",
     quote: "Finding quality clips used to take hours. Now I browse Zyrozo's marketplace and get exactly what I need in minutes. The download speeds are incredible!",
-    avatar: "PS",
+    avatar: "SJ",
   },
 ];
 
