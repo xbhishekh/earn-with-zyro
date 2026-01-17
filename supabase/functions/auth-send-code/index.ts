@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.90.1";
-import { Resend } from "https://esm.sh/resend@4.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,11 +12,6 @@ type RequestBody = {
   isSignup?: boolean;
   redirectTo?: string;
 };
-
-// Generate a random 6-digit OTP
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 Deno.serve(async (req) => {
   // CORS
@@ -38,7 +33,8 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const resendKey = Deno.env.get("RESEND_API_KEY") as string;
+    const gmailUser = Deno.env.get("GMAIL_USER") as string;
+    const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD") as string;
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -48,8 +44,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!resendKey) {
-      console.error("Missing RESEND_API_KEY");
+    if (!gmailUser || !gmailAppPassword) {
+      console.error("Missing GMAIL_USER or GMAIL_APP_PASSWORD");
       return new Response(JSON.stringify({ error: { message: "Email service not configured" } }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -57,11 +53,6 @@ Deno.serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const resend = new Resend(resendKey);
-
-    // Generate our own 6-digit OTP
-    const otpCode = generateOtp();
-    console.log(`Generated OTP for ${email}: ${otpCode.substring(0, 2)}****`);
 
     // Check if user exists
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -73,17 +64,7 @@ Deno.serve(async (req) => {
     const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email);
     console.log(`User exists: ${userExists}, isSignup: ${body.isSignup}`);
 
-    // Store OTP in a simple way - we'll use Supabase's signInWithOtp which handles OTP storage internally
-    // But we need to use generateLink with type 'magiclink' to get the token, then send our own email
-    
-    // Use Supabase's built-in OTP mechanism but intercept the email
-    // The trick: Use signInWithOtp with shouldCreateUser option, but we need to prevent the default email
-    
-    // Actually, let's use a different approach:
-    // 1. Generate a magic link (which creates the OTP internally)
-    // 2. Extract the OTP from the response
-    // 3. Send our own email with just the OTP
-    
+    // Generate OTP using Supabase's built-in mechanism
     const verificationType = body.isSignup ? "signup" : "magiclink";
     
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
@@ -103,15 +84,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Log the full data structure to understand what we get
     console.log("generateLink response keys:", Object.keys(data));
-    console.log("properties:", JSON.stringify(data.properties));
     
     // The OTP should be in data.properties.email_otp
-    const supabaseOtp = (data.properties as any)?.email_otp as string | undefined;
-    
-    // Use Supabase's OTP if available, otherwise we can't verify
-    const finalOtp = supabaseOtp;
+    const finalOtp = (data.properties as any)?.email_otp as string | undefined;
     
     if (!finalOtp) {
       console.error("No email_otp returned from generateLink. Full response:", JSON.stringify(data));
@@ -121,45 +97,65 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`OTP from Supabase: ${finalOtp.length} digits`);
+    console.log(`OTP generated: ${finalOtp.length} digits`);
 
     const subject = body.isSignup
-      ? "Zyrozo signup verification code"
-      : "Zyrozo login verification code";
+      ? "Zyrozo - Signup Verification Code"
+      : "Zyrozo - Login Verification Code";
 
-    const html = `
+    const htmlContent = `
 <!doctype html>
 <html>
   <body style="margin:0;background:#0a0a0a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;">
     <div style="max-width:520px;margin:0 auto;padding:32px 18px;">
       <div style="background:#111;border:1px solid #222;border-radius:16px;padding:28px;">
-        <h1 style="margin:0 0 8px 0;font-size:22px;">Your verification code</h1>
-        <p style="margin:0 0 18px 0;color:#b0b0b0;font-size:14px;">Use this code to continue.</p>
+        <h1 style="margin:0 0 8px 0;font-size:22px;color:#fff;">Your Verification Code</h1>
+        <p style="margin:0 0 18px 0;color:#b0b0b0;font-size:14px;">Use this code to continue with your ${body.isSignup ? 'signup' : 'login'}.</p>
         <div style="background:#0a0a0a;border:2px solid #ff6b35;border-radius:12px;padding:18px;text-align:center;">
-          <div style="font-size:34px;letter-spacing:10px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">${finalOtp}</div>
+          <div style="font-size:34px;letter-spacing:10px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#fff;">${finalOtp}</div>
         </div>
-        <p style="margin:16px 0 0 0;color:#7a7a7a;font-size:12px;">If you didn't request this, ignore this email.</p>
+        <p style="margin:16px 0 0 0;color:#7a7a7a;font-size:12px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
       </div>
+      <p style="text-align:center;color:#555;font-size:11px;margin-top:20px;">© Zyrozo</p>
     </div>
   </body>
 </html>`;
 
-    const { error: sendError } = await resend.emails.send({
-      from: "Zyrozo <noreply@zyrozo.com>",
-      to: [email],
-      subject,
-      html,
+    const textContent = `Your Zyrozo verification code is: ${finalOtp}\n\nThis code expires in 10 minutes. If you didn't request this, please ignore this email.`;
+
+    // Send email using Gmail SMTP
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: gmailUser,
+          password: gmailAppPassword,
+        },
+      },
     });
 
-    if (sendError) {
-      console.error("resend error:", sendError.message);
-      return new Response(JSON.stringify({ error: { message: "Failed to send email" } }), {
+    try {
+      await client.send({
+        from: `Zyrozo <${gmailUser}>`,
+        to: email,
+        subject,
+        content: textContent,
+        html: htmlContent,
+      });
+      
+      await client.close();
+      console.log(`Email sent successfully to ${email} via Gmail SMTP`);
+    } catch (smtpError: unknown) {
+      await client.close();
+      const errMsg = smtpError instanceof Error ? smtpError.message : "SMTP error";
+      console.error("Gmail SMTP error:", errMsg);
+      return new Response(JSON.stringify({ error: { message: "Failed to send email. Check Gmail credentials." } }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    console.log(`Email sent successfully to ${email}`);
 
     // For OTP verification on the client, use `type: "email"`.
     return new Response(JSON.stringify({ otpType: "email", otpLength: finalOtp.length }), {
