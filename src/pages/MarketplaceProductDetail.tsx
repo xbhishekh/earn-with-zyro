@@ -5,6 +5,7 @@ import {
   ArrowLeft, Star, Users, Tag, Check, 
   Share2, Heart, Loader2, Wallet, Ticket, X
 } from "lucide-react";
+import { SEO, createProductSchema, createBreadcrumbSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -402,6 +403,11 @@ const MarketplaceProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
+        <SEO 
+          title="Product Not Found"
+          description="The product you're looking for doesn't exist or has been removed."
+          noindex={true}
+        />
         <Navbar />
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <h2 className="text-2xl font-bold mb-4">Product not found</h2>
@@ -413,10 +419,55 @@ const MarketplaceProductDetail = () => {
     );
   }
 
+  // Generate dynamic SEO data
+  const productUrl = `/marketplace/${product.slug || product.id}`;
+  const productDescription = product.short_description || product.description 
+    ? (product.short_description || product.description || '').substring(0, 155) + ((product.short_description || product.description || '').length > 155 ? '...' : '')
+    : `${product.title} by ${seller?.display_name || 'Zyrozo seller'} - ${product.price === 0 ? 'Free' : `$${product.price}`}. Join ${product.members_count.toLocaleString()} members on Zyrozo Marketplace.`;
+  
+  const seoTitle = product.price === 0 
+    ? `${product.title} - Free on Zyrozo Marketplace`
+    : `${product.title} - $${product.price} | Zyrozo Marketplace`;
+  
+  const seoKeywords = [
+    product.title,
+    product.category,
+    seller?.display_name,
+    'creator marketplace',
+    'digital product',
+    product.product_type
+  ].filter(Boolean).join(', ');
+
+  const productSchema = createProductSchema({
+    name: product.title,
+    description: productDescription,
+    price: product.price,
+    image: product.thumbnail_url || undefined,
+    seller: seller?.display_name || undefined,
+    rating: avgRating > 0 ? avgRating : undefined,
+    reviewCount: reviews.length > 0 ? reviews.length : undefined,
+    url: productUrl
+  });
+
+  const breadcrumbSchema = createBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Marketplace', url: '/marketplace' },
+    { name: product.title, url: productUrl }
+  ]);
+
   const allImages = [product.thumbnail_url, ...product.gallery_images].filter(Boolean) as string[];
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={seoTitle}
+        description={productDescription}
+        keywords={seoKeywords}
+        canonical={productUrl}
+        type="product"
+        image={product.thumbnail_url || undefined}
+        structuredData={[productSchema, breadcrumbSchema]}
+      />
       <Navbar />
       
       <main className="pt-20 pb-16">
