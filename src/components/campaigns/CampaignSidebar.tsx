@@ -192,37 +192,35 @@ export const CampaignSidebar = ({
               <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
             )}
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
             
-            {/* Motivational Text Overlay */}
-            <div className="absolute bottom-14 left-4 right-4">
+            {/* Campaign Name at Top - Like Whop */}
+            <div className="absolute top-3 left-3 right-3 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg overflow-hidden bg-black/30 backdrop-blur-sm shrink-0">
+                {campaign.thumbnail_url ? (
+                  <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">{campaign.name.charAt(0)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-display font-bold text-sm text-white truncate drop-shadow-lg">{campaign.name}</h2>
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
+                  <span className="text-xs text-white/80">{onlineCount} online</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Motivational Text Overlay at Bottom */}
+            <div className="absolute bottom-4 left-4 right-4">
               <p className="text-white font-display font-bold text-xl leading-tight drop-shadow-lg">
                 Make $$$<br />
                 <span className="text-white/90">doing what you love.</span>
               </p>
             </div>
-          </div>
-          
-          {/* Campaign Logo Icon */}
-          <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl border-2 border-background overflow-hidden bg-card shadow-lg">
-            {campaign.thumbnail_url ? (
-              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-lg">{campaign.name.charAt(0)}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="pt-8 px-4 pb-3">
-          <div className="flex items-center gap-2">
-            <h2 className="font-display font-bold text-sm truncate">{campaign.name}</h2>
-            <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-            <span className="text-xs text-muted-foreground">{onlineCount} online</span>
           </div>
         </div>
 
