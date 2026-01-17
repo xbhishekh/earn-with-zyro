@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, memo } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -175,12 +174,9 @@ const AdminAnalytics = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
-          <motion.div
+        {statCards.map((stat) => (
+          <div
             key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
             className="glass-card rounded-xl p-4"
           >
             <div className="flex items-center gap-3 mb-3">
@@ -190,17 +186,12 @@ const AdminAnalytics = () => {
             </div>
             <p className="text-sm text-muted-foreground">{stat.title}</p>
             <p className="font-display text-xl font-bold">{stat.value}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="glass-card rounded-xl p-6"
-        >
+        <div className="glass-card rounded-xl p-6">
           <h3 className="font-display text-lg font-bold mb-4">Weekly Overview</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={lineChartData}>
@@ -211,18 +202,13 @@ const AdminAnalytics = () => {
                 contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #333" }}
                 labelStyle={{ color: "#fff" }}
               />
-              <Line type="monotone" dataKey="submissions" stroke="#ea580c" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="submissions" stroke="#ea580c" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2} dot={false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card rounded-xl p-6"
-        >
+        <div className="glass-card rounded-xl p-6">
           <h3 className="font-display text-lg font-bold mb-4">Submission Status</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -236,6 +222,7 @@ const AdminAnalytics = () => {
                 paddingAngle={5}
                 dataKey="value"
                 label={({ name, value }) => `${name}: ${value}`}
+                isAnimationActive={false}
               >
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -246,15 +233,10 @@ const AdminAnalytics = () => {
               />
             </PieChart>
           </ResponsiveContainer>
-        </motion.div>
+        </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="glass-card rounded-xl p-6"
-      >
+      <div className="glass-card rounded-xl p-6">
         <h3 className="font-display text-lg font-bold mb-4">Daily Submissions</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={lineChartData}>
@@ -264,10 +246,10 @@ const AdminAnalytics = () => {
             <Tooltip
               contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #333" }}
             />
-            <Bar dataKey="submissions" fill="#ea580c" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="submissions" fill="#ea580c" radius={[4, 4, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </div>
     </div>
   );
 };
