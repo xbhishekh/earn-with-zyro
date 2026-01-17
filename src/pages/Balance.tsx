@@ -9,14 +9,19 @@ import {
   Send,
   Building2,
   Coins,
-  Loader2
+  Loader2,
+  ArrowDownLeft,
+  Minus,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +40,7 @@ interface Transaction {
   type: string;
   status: string;
   created_at: string;
+  release_date: string | null;
   notes: string | null;
 }
 
@@ -48,13 +54,14 @@ interface WithdrawalRequest {
 
 const Balance = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [balance, setBalance] = useState<BalanceData>({ available: 0, pending: 0, total: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   
   // Withdrawal form
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -166,6 +173,62 @@ const Balance = () => {
     }
   };
 
+  const getCreditType = (type: string): string => {
+    const types: Record<string, string> = {
+      "pending_payout": "Inner platform transfer",
+      "payout": "Inner platform transfer",
+      "withdrawal": "Withdrawal",
+      "deposit": "Deposit",
+      "affiliate_commission": "Affiliate commission",
+      "referral_bonus": "Referral bonus",
+      "product_sale": "Product sale",
+      "deduction": "Deduction",
+    };
+    return types[type] || "Transfer";
+  };
+
+  const getStatusBadge = (status: string, releaseDate: string | null) => {
+    if (status === "pending" && releaseDate) {
+      const release = new Date(releaseDate);
+      const now = new Date();
+      if (release > now) {
+        return (
+          <Badge variant="outline" className="text-warning border-warning/50 text-xs">
+            Pending
+          </Badge>
+        );
+      }
+    }
+    
+    const variants: Record<string, { className: string; label: string }> = {
+      "pending": { className: "text-warning border-warning/50", label: "Pending" },
+      "available": { className: "text-success border-success/50", label: "Completed" },
+      "paid": { className: "text-success border-success/50", label: "Completed" },
+      "completed": { className: "text-success border-success/50", label: "Completed" },
+      "rejected": { className: "text-destructive border-destructive/50", label: "Rejected" },
+    };
+    
+    const variant = variants[status] || variants["pending"];
+    return (
+      <Badge variant="outline" className={`${variant.className} text-xs`}>
+        {variant.label}
+      </Badge>
+    );
+  };
+
+  const getFilteredTransactions = () => {
+    switch (activeTab) {
+      case "withdrawals":
+        return transactions.filter(tx => tx.type === "withdrawal");
+      case "deposits":
+        return transactions.filter(tx => ["pending_payout", "payout", "deposit", "affiliate_commission", "referral_bonus", "product_sale"].includes(tx.type));
+      case "deductions":
+        return transactions.filter(tx => tx.type === "deduction");
+      default:
+        return transactions;
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -180,14 +243,7 @@ const Balance = () => {
     { title: "Total Earned", value: balance.total, icon: DollarSign, color: "text-primary", bgColor: "bg-primary/10" },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "text-warning";
-      case "available": case "completed": case "paid": return "text-success";
-      case "rejected": return "text-destructive";
-      default: return "text-muted-foreground";
-    }
-  };
+  const filteredTransactions = getFilteredTransactions();
 
   return (
     <MainLayout>
@@ -215,7 +271,7 @@ const Balance = () => {
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
               </div>
               <h3 className="text-sm text-muted-foreground mb-1">{card.title}</h3>
-              <p className="font-display text-2xl font-bold">${card.value.toLocaleString()}</p>
+              <p className="font-display text-2xl font-bold">${card.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </motion.div>
           ))}
         </div>
@@ -255,38 +311,110 @@ const Balance = () => {
           </motion.div>
         )}
 
-        {/* Transaction History */}
+        {/* Transaction History with Tabs */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-2xl p-6">
-          <h2 className="font-display text-xl font-bold mb-4">Transaction History</h2>
-          {transactions.length === 0 ? (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <h2 className="font-display text-xl font-bold">Transaction History</h2>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+              <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
+                <TabsTrigger value="withdrawals" className="text-xs sm:text-sm">Withdrawals</TabsTrigger>
+                <TabsTrigger value="deposits" className="text-xs sm:text-sm">Deposits</TabsTrigger>
+                <TabsTrigger value="deductions" className="text-xs sm:text-sm">Deductions</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {filteredTransactions.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No transactions yet</p>
           ) : (
-            <div className="space-y-3">
-              {transactions.slice(0, 10).map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    {tx.type === "withdrawal" ? (
-                      <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                        <Send className="w-5 h-5 text-destructive" />
+            <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <table className="w-full hidden md:table">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Net amount</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Credit type</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Release date</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Time and date on</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.slice(0, 20).map((tx) => (
+                    <tr key={tx.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                      <td className="py-4 px-4">
+                        <span className={`font-medium ${tx.type === "withdrawal" || tx.type === "deduction" ? "text-destructive" : "text-success"}`}>
+                          {tx.type === "withdrawal" || tx.type === "deduction" ? "-" : "+"}${Math.abs(Number(tx.amount)).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        {getStatusBadge(tx.status, tx.release_date)}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="text-sm">{getCreditType(tx.type)}</span>
+                      </td>
+                      <td className="py-4 px-4">
+                        {tx.release_date ? (
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                            {format(new Date(tx.release_date), "MMM dd, yyyy")}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm">
+                          <p>{format(new Date(tx.created_at), "MMM dd, yyyy")}</p>
+                          <p className="text-muted-foreground text-xs">{format(new Date(tx.created_at), "h:mm a")}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile Cards */}
+              <div className="space-y-3 md:hidden">
+                {filteredTransactions.slice(0, 20).map((tx) => (
+                  <div key={tx.id} className="p-4 bg-muted/20 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {tx.type === "withdrawal" || tx.type === "deduction" ? (
+                          <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                            {tx.type === "withdrawal" ? (
+                              <Send className="w-5 h-5 text-destructive" />
+                            ) : (
+                              <Minus className="w-5 h-5 text-destructive" />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                            <ArrowDownLeft className="w-5 h-5 text-success" />
+                          </div>
+                        )}
+                        <div>
+                          <p className={`font-medium ${tx.type === "withdrawal" || tx.type === "deduction" ? "text-destructive" : "text-success"}`}>
+                            {tx.type === "withdrawal" || tx.type === "deduction" ? "-" : "+"}${Math.abs(Number(tx.amount)).toFixed(2)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{getCreditType(tx.type)}</p>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-success" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium capitalize">{tx.type.replace("_", " ")}</p>
-                      <p className="text-sm text-muted-foreground">{format(new Date(tx.created_at), "dd MMM yyyy")}</p>
+                      {getStatusBadge(tx.status, tx.release_date)}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{format(new Date(tx.created_at), "MMM dd, yyyy • h:mm a")}</span>
+                      {tx.release_date && tx.status === "pending" && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          Available: {format(new Date(tx.release_date), "MMM dd")}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-medium ${tx.type === "withdrawal" ? "text-destructive" : "text-success"}`}>
-                      {tx.type === "withdrawal" ? "-" : "+"}${Math.abs(Number(tx.amount)).toLocaleString()}
-                    </p>
-                    <p className={`text-sm capitalize ${getStatusColor(tx.status || "pending")}`}>{tx.status}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </motion.div>
