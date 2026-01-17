@@ -1077,24 +1077,23 @@ const CampaignDetail = () => {
             )}
           </TabsContent>
         </Tabs>
-        </main>
-      </div>
-
-      {/* Fixed Bottom Bar - Whop Style */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-3 z-40">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-sm">{campaign.name}</h3>
-            <p className="text-xs text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
+        {/* Fixed Bottom Bar - Whop Style (inside main content area) */}
+        <div className="fixed bottom-0 right-0 lg:left-72 left-0 bg-card border-t border-border px-4 py-3 z-40">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">{campaign.name}</h3>
+              <p className="text-xs text-muted-foreground">${campaign.reward_per_1k_views} / 1K</p>
+            </div>
+            <Button 
+              onClick={() => setShowSubmitModal(true)} 
+              size="lg"
+              className="h-10 px-8 rounded-full font-semibold bg-primary hover:bg-primary/90"
+            >
+              Submit
+            </Button>
           </div>
-          <Button 
-            onClick={() => setShowSubmitModal(true)} 
-            size="lg"
-            className="h-10 px-8 rounded-full font-semibold bg-primary hover:bg-primary/90"
-          >
-            Submit
-          </Button>
         </div>
+        </main>
       </div>
 
       {/* Submit Modal - Whop Style with Video Upload */}
