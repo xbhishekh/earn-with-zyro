@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Star, Users, Tag, Check, ChevronDown, ChevronUp,
-  Share2, Heart, Loader2, ShoppingCart, Wallet, ExternalLink, Ticket, X
+  ArrowLeft, Star, Users, Tag, Check, 
+  Share2, Heart, Loader2, Wallet, Ticket, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -264,13 +264,19 @@ const MarketplaceProductDetail = () => {
     return product.price - getDiscountedPrice();
   };
 
-  const handlePurchase = async (paymentMethod: "balance" | "external") => {
+  const handlePurchase = async () => {
     if (!user || !product) return;
 
     const finalPrice = getDiscountedPrice();
 
-    if (paymentMethod === "balance" && userBalance < finalPrice) {
-      toast.error("Insufficient balance");
+    // Check balance for paid products
+    if (finalPrice > 0 && userBalance < finalPrice) {
+      toast.error("Insufficient balance. Please add funds to your Zyrozo Balance.", {
+        action: {
+          label: "Add Funds",
+          onClick: () => navigate("/balance")
+        }
+      });
       return;
     }
 
@@ -285,17 +291,17 @@ const MarketplaceProductDetail = () => {
           buyer_id: user.id,
           seller_id: product.seller_id,
           amount: finalPrice,
-          original_price: product.price,
+          original_price: product.price || 0,
           discount_code_id: appliedDiscount?.id || null,
           discount_amount: getDiscountAmount(),
-          payment_method: paymentMethod,
+          payment_method: "balance",
           status: "completed"
         });
 
       if (purchaseError) throw purchaseError;
 
-      // If paying with balance, deduct from balance
-      if (paymentMethod === "balance") {
+      // Deduct from balance if paid product
+      if (finalPrice > 0) {
         const { error: transactionError } = await supabase
           .from("balance_transactions")
           .insert({
@@ -309,11 +315,14 @@ const MarketplaceProductDetail = () => {
         if (transactionError) throw transactionError;
       }
 
-      toast.success("Purchase successful!");
+      toast.success(finalPrice === 0 ? "Successfully joined!" : "Purchase successful!");
       setHasPurchased(true);
       setShowPurchaseModal(false);
       setAppliedDiscount(null);
       setDiscountCode("");
+      
+      // Update local balance
+      setUserBalance(prev => prev - finalPrice);
     } catch (error: any) {
       console.error("Purchase error:", error);
       toast.error(error.message || "Purchase failed");
@@ -609,21 +618,26 @@ const MarketplaceProductDetail = () => {
                     ) : (
                       <Button 
                         className="w-full h-12 text-lg"
+                        disabled={purchasing}
                         onClick={() => {
                           if (!user) {
                             navigate("/auth");
                             return;
                           }
                           if (product.price === 0 || product.product_type === "free") {
-                            handlePurchase("balance");
+                            handlePurchase();
                           } else {
                             setShowPurchaseModal(true);
                           }
                         }}
                       >
-                        {product.price === 0 || product.product_type === "free"
-                          ? "Join for free"
-                          : "Get offer"}
+                        {purchasing ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : product.price === 0 || product.product_type === "free" ? (
+                          "Join for Free"
+                        ) : (
+                          `Buy for $${product.price.toLocaleString()}`
+                        )}
                       </Button>
                     )}
 
@@ -771,43 +785,49 @@ const MarketplaceProductDetail = () => {
               </div>
             )}
 
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-start gap-4"
-                onClick={() => handlePurchase("balance")}
-                disabled={purchasing || userBalance < getDiscountedPrice()}
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-primary" />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-medium">Pay with Balance</p>
-                  <p className="text-sm text-muted-foreground">
-                    Available: ${userBalance.toLocaleString()}
-                  </p>
-                </div>
-                {userBalance < getDiscountedPrice() && (
-                  <Badge variant="destructive">Insufficient</Badge>
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full h-14 justify-start gap-4"
-                onClick={() => handlePurchase("external")}
-                disabled={purchasing}
-              >
-                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <ShoppingCart className="w-5 h-5 text-green-500" />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-medium">Pay with UPI/Card</p>
-                  <p className="text-sm text-muted-foreground">Secure payment</p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              </Button>
+            {/* Balance Display */}
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-4">
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-primary" />
+                <span className="font-medium">Your Balance</span>
+              </div>
+              <span className="text-lg font-bold">${userBalance.toLocaleString()}</span>
             </div>
+
+            {/* Insufficient Balance Warning */}
+            {userBalance < getDiscountedPrice() && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg mb-4">
+                <p className="text-sm text-destructive font-medium mb-2">
+                  Insufficient balance. You need ${(getDiscountedPrice() - userBalance).toLocaleString()} more.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    setShowPurchaseModal(false);
+                    navigate("/balance");
+                  }}
+                >
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Add Funds to Balance
+                </Button>
+              </div>
+            )}
+
+            {/* Purchase Button */}
+            <Button
+              className="w-full h-14"
+              onClick={handlePurchase}
+              disabled={purchasing || userBalance < getDiscountedPrice()}
+            >
+              {purchasing ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : (
+                <Wallet className="w-5 h-5 mr-2" />
+              )}
+              {purchasing ? "Processing..." : `Pay $${getDiscountedPrice().toLocaleString()} with Balance`}
+            </Button>
           </div>
 
           {purchasing && (
