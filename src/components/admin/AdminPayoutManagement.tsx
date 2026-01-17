@@ -77,8 +77,9 @@ const AdminPayoutManagement = () => {
     } catch { toast.error("Failed"); }
   };
 
-  const totalPending = transactions.filter(t => t.status === "pending").reduce((a, t) => a + t.amount, 0);
-  const totalAvailable = transactions.filter(t => t.status === "available").reduce((a, t) => a + t.amount, 0);
+  // Calculate totals - use absolute values to handle negative deductions correctly
+  const totalPending = transactions.filter(t => t.status === "pending").reduce((a, t) => a + Math.abs(Number(t.amount)), 0);
+  const totalAvailable = transactions.filter(t => t.status === "available").reduce((a, t) => a + Math.abs(Number(t.amount)), 0);
 
   if (loading || accessLoading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 

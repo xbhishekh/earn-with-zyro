@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval } from "date-fns";
+import { calculateSellerEarnings } from "@/lib/balance-utils";
 
 interface AnalyticsData {
   totalViews: number;
@@ -100,10 +101,10 @@ const SellerAnalytics = () => {
       const totalMembers = products?.reduce((acc, p) => acc + (p.members_count || 0), 0) || 0;
       
       const currentSales = currentPurchases?.length || 0;
-      const currentEarnings = currentPurchases?.reduce((acc, p) => acc + Number(p.amount) * 0.9, 0) || 0;
+      const currentEarnings = currentPurchases?.reduce((acc, p) => acc + calculateSellerEarnings(Number(p.amount)), 0) || 0;
       
       const previousSales = previousPurchases?.length || 0;
-      const previousEarnings = previousPurchases?.reduce((acc, p) => acc + Number(p.amount) * 0.9, 0) || 0;
+      const previousEarnings = previousPurchases?.reduce((acc, p) => acc + calculateSellerEarnings(Number(p.amount)), 0) || 0;
 
       // Calculate change percentages
       const salesChange = previousSales > 0 ? ((currentSales - previousSales) / previousSales) * 100 : 0;

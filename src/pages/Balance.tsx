@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { calculateBalances } from "@/lib/balance-utils";
 
 interface BalanceData {
   available: number;
@@ -92,30 +93,9 @@ const Balance = () => {
 
       if (txnError) throw txnError;
 
-      // Calculate balances
-      let available = 0;
-      let pending = 0;
-      let total = 0;
-
-      txns?.forEach((tx) => {
-        const amount = Number(tx.amount);
-        // Available: status is 'available' or 'paid'
-        if (tx.status === "available" || tx.status === "paid") {
-          if (tx.type !== "withdrawal") {
-            available += amount;
-          } else {
-            available -= amount; // Subtract withdrawals
-          }
-        } else if (tx.status === "pending") {
-          pending += amount;
-        }
-        // Total earned (exclude withdrawals)
-        if (tx.type !== "withdrawal") {
-          total += amount;
-        }
-      });
-
-      setBalance({ available, pending, total });
+      // Calculate balances using centralized utility
+      const calculatedBalance = calculateBalances(txns || []);
+      setBalance(calculatedBalance);
       setTransactions(txns as Transaction[] || []);
 
       // Fetch withdrawal requests

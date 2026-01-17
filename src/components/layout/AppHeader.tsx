@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import NotificationsBell from '@/components/NotificationsBell';
 import { cn } from '@/lib/utils';
+import { calculateAvailableBalance } from '@/lib/balance-utils';
 
 interface Profile {
   avatar_url: string | null;
@@ -99,26 +100,16 @@ export const AppHeader = memo(() => {
         supabase
           .from('balance_transactions')
           .select('amount, type, status')
-          .eq('user_id', user.id)
-          .eq('status', 'available'), // Only fetch available transactions
+          .eq('user_id', user.id),
       ]);
 
       const profileData = profileRes.data || null;
       if (profileData) setProfile(profileData);
 
-      // Calculate available balance
+      // Calculate available balance using centralized utility
       let calculatedBalance = 0;
       if (balanceRes.data) {
-        calculatedBalance = balanceRes.data.reduce((acc, tx) => {
-          if (tx.type === 'earning' || tx.type === 'referral' || tx.type === 'payout' || tx.type === 'pending_payout' || tx.type === 'product_sale') {
-            return acc + tx.amount;
-          }
-          if (tx.type === 'withdrawal') {
-            return acc - tx.amount;
-          }
-          return acc;
-        }, 0);
-        calculatedBalance = Math.max(0, calculatedBalance);
+        calculatedBalance = calculateAvailableBalance(balanceRes.data);
         setBalance(calculatedBalance);
       }
 

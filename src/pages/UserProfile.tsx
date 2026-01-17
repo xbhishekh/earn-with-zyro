@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { format } from "date-fns";
 import PayUserModal from "@/components/profile/PayUserModal";
+import { calculateAvailableBalance } from "@/lib/balance-utils";
 
 interface UserProfileData {
   id: string;
@@ -114,12 +115,11 @@ const UserProfile = () => {
     try {
       const { data } = await supabase
         .from("balance_transactions")
-        .select("amount")
-        .eq("user_id", user.id)
-        .eq("status", "completed");
+        .select("amount, type, status")
+        .eq("user_id", user.id);
 
-      const total = (data || []).reduce((sum, tx) => sum + (tx.amount || 0), 0);
-      setAvailableBalance(Math.max(0, total));
+      const total = calculateAvailableBalance(data || []);
+      setAvailableBalance(total);
     } catch (error) {
       console.error("Error fetching balance:", error);
     }

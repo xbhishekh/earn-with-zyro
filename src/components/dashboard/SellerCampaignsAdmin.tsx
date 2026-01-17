@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { calculateEarnings as calcEarnings } from "@/lib/balance-utils";
 
 interface Campaign {
   id: string;
@@ -290,14 +291,7 @@ const SellerCampaignsAdmin = () => {
 
   const calculateEarnings = (views: number): number => {
     if (!selectedCampaign) return 0;
-    let earnings = (views / 1000) * selectedCampaign.reward_per_1k_views;
-    if (selectedCampaign.min_payout && earnings < selectedCampaign.min_payout) {
-      earnings = 0;
-    }
-    if (selectedCampaign.max_payout && earnings > selectedCampaign.max_payout) {
-      earnings = selectedCampaign.max_payout;
-    }
-    return earnings;
+    return calcEarnings(views, selectedCampaign.reward_per_1k_views, selectedCampaign.min_payout, selectedCampaign.max_payout);
   };
 
   const handleApproveOrUpdateSubmission = async () => {
