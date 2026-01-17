@@ -155,8 +155,9 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
   const { user, isAdmin, isSuperAdmin, isOwner, isFounder, role } = useAuth();
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
 
-  // Only admins can add/delete social accounts
-  const canManageAccounts = isAdmin || isSuperAdmin || isOwner || isFounder || role === "normal_admin";
+  // Users can add their own social accounts, but only admins can delete them
+  const canAddAccounts = isOwnProfile && !!user;
+  const canDeleteAccounts = isAdmin || isSuperAdmin || isOwner || isFounder || role === "normal_admin";
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("");
@@ -325,8 +326,8 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
           <h3 className="font-display text-lg font-bold">Linked Social Accounts</h3>
           <p className="text-sm text-muted-foreground">Connect your social media for verification</p>
         </div>
-        {isOwnProfile && canManageAccounts && (
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+        {canAddAccounts && (
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
             <Plus className="w-4 h-4 mr-2" />
             Add Account
           </Button>
@@ -335,12 +336,12 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
 
       {accounts.length === 0 ? (
         <div className="text-center py-8">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 text-muted-foreground" />
+        <div className="w-16 h-16 bg-gradient-to-br from-pink-500/20 to-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-8 h-8 text-pink-500" />
           </div>
           <p className="text-muted-foreground mb-4">No social accounts linked yet</p>
-          {isOwnProfile && canManageAccounts && (
-            <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+          {canAddAccounts && (
+            <Button variant="outline" onClick={() => setIsAddModalOpen(true)} className="border-pink-500/50 text-pink-600 hover:bg-pink-500/10">
               Link Your First Account
             </Button>
           )}
@@ -381,7 +382,7 @@ const LinkedSocialAccounts = ({ isOwnProfile = true, userId }: LinkedSocialAccou
                     )}
 
                     {/* Delete button - only for admins */}
-                    {isOwnProfile && canManageAccounts && (
+                    {canDeleteAccounts && (
                       <Button
                         variant="ghost"
                         size="icon"
