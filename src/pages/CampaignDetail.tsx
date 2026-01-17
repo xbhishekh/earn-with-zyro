@@ -27,9 +27,11 @@ import {
   Image as ImageIcon,
   Video,
   Share2,
-  Copy
+  Copy,
+  Menu
 } from "lucide-react";
-import { CampaignChatSidebar } from "@/components/campaigns/CampaignChatSidebar";
+import { CampaignSidebar } from "@/components/campaigns/CampaignSidebar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -115,6 +117,7 @@ const CampaignDetail = () => {
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // Form data
   const [videoUrl, setVideoUrl] = useState("");
@@ -467,6 +470,29 @@ const CampaignDetail = () => {
               <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
             </Link>
             <div className="flex items-center gap-2">
+              {/* Mobile Sidebar Toggle */}
+              <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="lg:hidden">
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80 p-0">
+                  <div className="p-4 overflow-y-auto h-full">
+                    <CampaignSidebar
+                      campaign={{
+                        id: campaign.id,
+                        name: campaign.name,
+                        slug: campaign.slug,
+                        thumbnail_url: campaign.thumbnail_url,
+                        rules_guidelines: campaign.rules_guidelines
+                      }}
+                      chatRoomId={chatRoomId}
+                      isMember={isMember}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/dashboard"><User className="w-4 h-4" /></Link>
               </Button>
@@ -478,29 +504,47 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-4xl pb-28">
-        {/* Back Button & Title + Share - Whop Style */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
-            <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const shareUrl = `https://zyrozo.com/c/${campaign.slug || campaign.id}`;
-              navigator.clipboard.writeText(shareUrl);
-              toast.success("Campaign link copied!");
+      {/* Two Column Layout - Whop Style */}
+      <div className="flex">
+        {/* Left Sidebar */}
+        <aside className="hidden lg:block w-72 shrink-0 p-4 border-r border-border">
+          <CampaignSidebar
+            campaign={{
+              id: campaign.id,
+              name: campaign.name,
+              slug: campaign.slug,
+              thumbnail_url: campaign.thumbnail_url,
+              rules_guidelines: campaign.rules_guidelines
             }}
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
-        </div>
+            chatRoomId={chatRoomId}
+            isMember={isMember}
+          />
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 px-4 py-6 max-w-4xl mx-auto pb-28">
+          {/* Back Button & Title + Share - Whop Style */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <button onClick={() => navigate("/campaigns")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+              <h1 className="font-display font-bold text-lg">{campaign.name}</h1>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const shareUrl = `https://zyrozo.com/c/${campaign.slug || campaign.id}`;
+                navigator.clipboard.writeText(shareUrl);
+                toast.success("Campaign link copied!");
+              }}
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+          </div>
 
         {/* Platforms Icons Row */}
         {campaign.platforms && campaign.platforms.length > 0 && (
@@ -715,15 +759,14 @@ const CampaignDetail = () => {
               </div>
             )}
 
-            {/* Campaign Chat */}
-            {chatRoomId && (
-              <CampaignChatSidebar
-                campaignId={campaign.id}
-                campaignName={campaign.name}
-                chatRoomId={chatRoomId}
-                isMember={true}
-              />
-            )}
+            {/* Mobile-only Chat/Announcements Card */}
+            <div className="lg:hidden">
+              <div className="glass-card rounded-xl p-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  View sidebar for Chat & Announcements (visible on desktop)
+                </p>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="submissions" className="mt-4">
@@ -771,7 +814,8 @@ const CampaignDetail = () => {
             )}
           </TabsContent>
         </Tabs>
-      </main>
+        </main>
+      </div>
 
       {/* Sticky Bottom Bar - Whop Style */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border">
