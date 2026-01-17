@@ -1241,12 +1241,48 @@ const CampaignDetail = () => {
               <Label className="text-sm">
                 Social Media Link <span className="text-destructive">*</span>
               </Label>
-              <Input 
-                value={socialLink} 
-                onChange={(e) => setSocialLink(e.target.value)} 
-                placeholder="https://www.tiktok.com/@username/video/1234567890" 
-                className="mt-1"
-              />
+              <div className="relative mt-1">
+                <Input 
+                  value={socialLink} 
+                  onChange={(e) => setSocialLink(e.target.value)} 
+                  placeholder="https://www.tiktok.com/@username/video/1234567890" 
+                  className={`pr-10 ${
+                    socialLink.trim() && detectPlatformFromUrl(socialLink)
+                      ? verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!)
+                        ? 'border-green-500 focus-visible:ring-green-500'
+                        : 'border-orange-500 focus-visible:ring-orange-500'
+                      : ''
+                  }`}
+                />
+                {socialLink.trim() && detectPlatformFromUrl(socialLink) && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!) ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-orange-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {socialLink.trim() && detectPlatformFromUrl(socialLink) && (
+                <div className={`flex items-center gap-2 mt-2 text-sm ${
+                  verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!)
+                    ? 'text-green-500'
+                    : 'text-orange-500'
+                }`}>
+                  {verifiedPlatforms.includes(detectPlatformFromUrl(socialLink)!) ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span><span className="capitalize">{detectPlatformFromUrl(socialLink)}</span> account verified</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span><span className="capitalize">{detectPlatformFromUrl(socialLink)}</span> account not verified</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
