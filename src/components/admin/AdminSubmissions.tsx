@@ -274,45 +274,52 @@ const AdminSubmissions = () => {
   const handleMarkPaid = async () => {
     if (!markPaidSubmission) return;
 
-    const campaign = getCampaign(markPaidSubmission.campaign_id);
-    if (!campaign) {
-      toast.error("Campaign not found");
-      return;
-    }
 
     setActionLoading(true);
     try {
-      const amount = markPaidSubmission.estimated_earnings;
-
-      // Check if there's already a pending transaction for this submission
-      const { data: existingTx } = await supabase
+      // First, try to move ALL pending transactions for this submission to available.
+      // (There can be multiple pending rows if views were updated multiple times.)
+      const { data: pendingTxs, error: pendingError } = await supabase
         .from("balance_transactions")
-        .select("id, status")
+        .select("id, amount")
         .eq("submission_id", markPaidSubmission.id)
-        .eq("status", "pending")
-        .single();
+        .eq("status", "pending");
 
-      if (existingTx) {
-        // Move existing pending to available
+      if (pendingError) throw pendingError;
+
+      const pendingTotal = (pendingTxs || []).reduce(
+        (sum, t: any) => sum + Number(t.amount || 0),
+        0
+      );
+
+      let amountToNotify = pendingTotal || Number(markPaidSubmission.estimated_earnings || 0);
+
+      if ((pendingTxs || []).length > 0) {
         const { error: updateError } = await supabase
           .from("balance_transactions")
-          .update({ 
+          .update({
             status: "available",
             processed_at: new Date().toISOString(),
             processed_by: user?.id,
           })
-          .eq("id", existingTx.id);
+          .eq("submission_id", markPaidSubmission.id)
+          .eq("status", "pending");
 
         if (updateError) throw updateError;
 
-        toast.success(`Moved $${amount.toLocaleString()} from pending to available balance`);
+        toast.success(
+          `Moved $${amountToNotify.toLocaleString()} from pending to available balance`
+        );
       } else {
-        // Create new available balance transaction directly
+        // No pending tx found: create new available transaction
+        const campaign = getCampaign(markPaidSubmission.campaign_id);
+        if (!campaign) throw new Error("Campaign not found");
+
         const { error: txError } = await supabase
           .from("balance_transactions")
           .insert({
             user_id: markPaidSubmission.user_id,
-            amount: amount,
+            amount: amountToNotify,
             type: "payout",
             status: "available",
             campaign_id: markPaidSubmission.campaign_id,
@@ -325,7 +332,7 @@ const AdminSubmissions = () => {
         if (txError) throw txError;
 
         // Update campaign budget only for new transactions
-        const newBudgetSpent = (campaign.budget_spent || 0) + amount;
+        const newBudgetSpent = (campaign.budget_spent || 0) + amountToNotify;
         const updateData: any = { budget_spent: newBudgetSpent };
 
         if (campaign.budget_total && newBudgetSpent >= campaign.budget_total) {
@@ -335,7 +342,9 @@ const AdminSubmissions = () => {
 
         await supabase.from("campaigns").update(updateData).eq("id", campaign.id);
 
-        toast.success(`Marked paid! $${amount.toLocaleString()} added to available balance`);
+        toast.success(
+          `Marked paid! $${amountToNotify.toLocaleString()} added to available balance`
+        );
       }
 
       const { error: subError } = await supabase
@@ -349,10 +358,10 @@ const AdminSubmissions = () => {
         user_id: markPaidSubmission.user_id,
         type: "payment_available",
         title: "Payment Available!",
-        message: `$${amount.toLocaleString()} is now available in your balance for withdrawal.`,
-        metadata: { 
-          amount, 
-          campaign_id: campaign.id,
+        message: `$${amountToNotify.toLocaleString()} is now available in your balance for withdrawal.`,
+        metadata: {
+          amount: amountToNotify,
+          campaign_id: markPaidSubmission.campaign_id,
           submission_id: markPaidSubmission.id,
         },
       });
