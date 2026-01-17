@@ -38,95 +38,103 @@ import { format } from 'date-fns';
 import { ClipDetailsModal } from '@/components/submissions/ClipDetailsModal';
 import { PlatformIcon as SharedPlatformIcon, detectPlatform as sharedDetectPlatform } from '@/components/ui/platform-icons';
 
-// Orange Chat Icon - Whop Style
+// Colorful Chat Icon - Gradient Style
 const ChatIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="chat-grad" x1="3" y1="3" x2="21" y2="21">
+        <stop stopColor="#06B6D4" />
+        <stop offset="1" stopColor="#3B82F6" />
+      </linearGradient>
+    </defs>
     <path
       d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
-      fill="#F97316"
-      stroke="#F97316"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="url(#chat-grad)"
     />
+    <circle cx="8.5" cy="11.5" r="1" fill="white" />
+    <circle cx="12" cy="11.5" r="1" fill="white" />
+    <circle cx="15.5" cy="11.5" r="1" fill="white" />
   </svg>
 );
 
-// Orange Megaphone Icon - Whop Style
+// Colorful Megaphone/Announcements Icon - Gradient Style
 const MegaphoneIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="mega-grad" x1="3" y1="2" x2="21" y2="22">
+        <stop stopColor="#F59E0B" />
+        <stop offset="1" stopColor="#EF4444" />
+      </linearGradient>
+    </defs>
     <path
       d="M3 11v2a1 1 0 0 0 1 1h2l6 6V2L6 8H4a1 1 0 0 0-1 1z"
-      fill="#F97316"
-      stroke="#F97316"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="url(#mega-grad)"
     />
     <path
       d="M16 8a4 4 0 0 1 0 8"
-      stroke="#F97316"
-      strokeWidth="2"
+      stroke="url(#mega-grad)"
+      strokeWidth="2.5"
       strokeLinecap="round"
-      strokeLinejoin="round"
     />
     <path
       d="M19 5a7 7 0 0 1 0 14"
-      stroke="#F97316"
+      stroke="url(#mega-grad)"
       strokeWidth="2"
       strokeLinecap="round"
-      strokeLinejoin="round"
+      opacity="0.6"
     />
   </svg>
 );
 
-// Orange Document/Rules Icon - Whop Style
+// Colorful Document/Rules Icon - Gradient Style
 const RulesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="rules-grad" x1="4" y1="2" x2="20" y2="22">
+        <stop stopColor="#8B5CF6" />
+        <stop offset="1" stopColor="#EC4899" />
+      </linearGradient>
+    </defs>
     <path
       d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-      fill="#F97316"
-      stroke="#F97316"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="url(#rules-grad)"
     />
     <path
       d="M14 2v6h6"
-      stroke="#FED7AA"
+      stroke="white"
       strokeWidth="1.5"
       strokeLinecap="round"
-      strokeLinejoin="round"
+      opacity="0.7"
     />
     <path
       d="M8 13h8M8 17h5"
-      stroke="#FED7AA"
+      stroke="white"
       strokeWidth="1.5"
       strokeLinecap="round"
     />
   </svg>
 );
 
-// Orange Video/Submissions Icon - Whop Style
+// Colorful Video/Submissions Icon - Gradient Style
 const SubmissionsIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="subs-grad" x1="2" y1="4" x2="22" y2="20">
+        <stop stopColor="#10B981" />
+        <stop offset="1" stopColor="#06B6D4" />
+      </linearGradient>
+    </defs>
     <rect
       x="2"
       y="4"
       width="20"
       height="16"
       rx="3"
-      fill="#F97316"
-      stroke="#F97316"
-      strokeWidth="1.5"
+      fill="url(#subs-grad)"
     />
     <path
       d="M10 8.5v7l6-3.5-6-3.5z"
-      fill="#FED7AA"
-      stroke="#FED7AA"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="white"
     />
   </svg>
 );
