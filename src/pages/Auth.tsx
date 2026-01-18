@@ -196,7 +196,7 @@ const Auth = () => {
         Check your email
       </h1>
       <p className="text-muted-foreground mb-4">
-        We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>
+        We sent an 8-digit code to <span className="text-foreground font-medium">{email}</span>
       </p>
       
       {/* Spam hint */}
@@ -213,11 +213,11 @@ const Auth = () => {
         ) : (
           <div className="flex justify-center">
             <InputOTP
-              maxLength={6}
+              maxLength={8}
               value={otp}
               onChange={(value) => {
                 setOtp(value);
-                if (value.length === 6) {
+                if (value.length === 8) {
                   handleVerifyOtp(value);
                 }
               }}
@@ -230,6 +230,8 @@ const Auth = () => {
                 <InputOTPSlot index={3} />
                 <InputOTPSlot index={4} />
                 <InputOTPSlot index={5} />
+                <InputOTPSlot index={6} />
+                <InputOTPSlot index={7} />
               </InputOTPGroup>
             </InputOTP>
           </div>
