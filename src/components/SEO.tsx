@@ -14,7 +14,7 @@ interface SEOProps {
 const SITE_NAME = "Zyrozo";
 const DEFAULT_TITLE = "Zyrozo - #1 Creator Rewards Platform | Earn Money Creating Content";
 const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on Zyrozo. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
-const DEFAULT_IMAGE = "https://zyrozo.com/favicon.jpeg";
+const DEFAULT_IMAGE = "https://zyrozo.com/og-image.png";
 const SITE_URL = "https://zyrozo.com";
 
 export const SEO = ({
@@ -85,7 +85,7 @@ export const organizationSchema = {
   name: "Zyrozo",
   alternateName: "Zyrozo Inc.",
   url: "https://zyrozo.com",
-  logo: "https://zyrozo.com/favicon.jpeg",
+  logo: "https://zyrozo.com/og-image.png",
   description: "Zyrozo is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
   foundingDate: "2022",
   sameAs: [
