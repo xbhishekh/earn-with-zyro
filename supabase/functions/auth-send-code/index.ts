@@ -73,8 +73,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // For new users, first create the account with a random password, then generate magiclink
+    // For new users, first check username availability, then create the account
     if (!userExists) {
+      const requestedUsername = ((body.metadata?.username as string) ?? email.split("@")[0]).toLowerCase();
+      
+      // Check if username is already taken
+      console.log(`Checking username availability: ${requestedUsername}`);
+      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("username", requestedUsername)
+        .maybeSingle();
+      
+      if (profileCheckError) {
+        console.error("Profile check error:", profileCheckError.message);
+      }
+      
+      if (existingProfile) {
+        console.error(`Username "${requestedUsername}" is already taken`);
+        return new Response(JSON.stringify({ error: { message: `Username "${requestedUsername}" is already taken. Please choose a different username.` } }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
       console.log("Creating new user account...");
       const randomPassword = crypto.randomUUID() + crypto.randomUUID();
       
@@ -87,6 +109,13 @@ Deno.serve(async (req) => {
       
       if (createError) {
         console.error("createUser error:", createError.message);
+        // Check for database errors related to username
+        if (createError.message.includes("Database error") || createError.message.includes("duplicate")) {
+          return new Response(JSON.stringify({ error: { message: "Username already taken. Please choose a different username." } }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         return new Response(JSON.stringify({ error: { message: createError.message } }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
