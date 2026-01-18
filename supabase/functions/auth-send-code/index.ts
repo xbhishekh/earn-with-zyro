@@ -73,12 +73,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use magiclink if user exists (regardless of isSignup), signup only for new users
-    const verificationType = userExists ? "magiclink" : "signup";
-    console.log(`Using verification type: ${verificationType}`);
+    // For new users, first create the account with a random password, then generate magiclink
+    if (!userExists) {
+      console.log("Creating new user account...");
+      const randomPassword = crypto.randomUUID() + crypto.randomUUID();
+      
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: randomPassword,
+        email_confirm: false,
+        user_metadata: body.metadata ?? {},
+      });
+      
+      if (createError) {
+        console.error("createUser error:", createError.message);
+        return new Response(JSON.stringify({ error: { message: createError.message } }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.log("New user created successfully:", newUser?.user?.id);
+    }
+
+    // Always use magiclink now (user exists or was just created)
+    console.log("Using verification type: magiclink");
     
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: verificationType as any,
+      type: "magiclink",
       email,
       options: {
         redirectTo: body.redirectTo,
