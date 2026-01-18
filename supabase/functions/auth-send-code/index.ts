@@ -107,7 +107,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Note: OTP length is controlled by Supabase auth settings
+    // Use only first 6 digits of the OTP
+    finalOtp = finalOtp.substring(0, 6);
 
     console.log(`OTP generated: ${finalOtp.length} digits`);
 
@@ -124,7 +125,7 @@ Deno.serve(async (req) => {
         <h1 style="margin:0 0 8px 0;font-size:22px;color:#fff;">Your Verification Code</h1>
         <p style="margin:0 0 18px 0;color:#b0b0b0;font-size:14px;">Use this code to continue with your ${body.isSignup ? 'signup' : 'login'}.</p>
         <div style="background:#0a0a0a;border:2px solid #ff6b35;border-radius:12px;padding:18px;text-align:center;">
-          <div style="font-size:34px;letter-spacing:10px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#fff;">${finalOtp}</div>
+          <div style="font-size:38px;letter-spacing:12px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#fff;">${finalOtp}</div>
         </div>
         <p style="margin:16px 0 0 0;color:#7a7a7a;font-size:12px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
       </div>
