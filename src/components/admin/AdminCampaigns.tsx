@@ -107,7 +107,7 @@ const initialFormState = {
   welcome_message: "",
 };
 
-const categories = ["gaming", "lifestyle", "tech", "food", "travel", "fashion", "education", "entertainment"];
+const categories = ["music", "personal-brand", "technology", "product", "entertainment", "logo", "slideshow", "other"];
 const platformOptions = ["YouTube", "Instagram", "TikTok", "Twitter", "Facebook"];
 
 const AdminCampaigns = () => {
