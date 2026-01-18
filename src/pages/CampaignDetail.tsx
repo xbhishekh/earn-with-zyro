@@ -559,7 +559,7 @@ const CampaignDetail = () => {
           description={campaignDescription}
           keywords={seoKeywords}
           canonical={campaignUrl}
-          image={campaign.thumbnail_url || undefined}
+          image={campaign.thumbnail_url || "https://zyrozo.com/og-image.png"}
           structuredData={[campaignSchema, breadcrumbSchema]}
         />
         <header className="glass-card border-b border-border sticky top-0 z-50">
@@ -761,7 +761,7 @@ const CampaignDetail = () => {
         description={campaignDescription}
         keywords={seoKeywords}
         canonical={campaignUrl}
-        image={campaign.thumbnail_url || undefined}
+        image={campaign.thumbnail_url || "https://zyrozo.com/og-image.png"}
         structuredData={[campaignSchema, breadcrumbSchema]}
       />
       {/* Header */}
