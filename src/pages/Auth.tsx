@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Mail, User, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, User, ArrowRight, Loader2, Check, X } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { consumeRedirectIntent, getRedirectIntent, sanitizeRedirectPath, setRedirectIntent } from "@/lib/redirect-intent";
+import { supabase } from "@/integrations/supabase/client";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Validation schemas
@@ -52,6 +53,67 @@ const Auth = () => {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [otp, setOtp] = useState("");
+
+  // Username availability check
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced username check
+  const checkUsernameAvailability = useCallback(async (usernameToCheck: string) => {
+    if (!usernameToCheck || usernameToCheck.length < 3) {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    setUsernameStatus("checking");
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", usernameToCheck.toLowerCase())
+        .maybeSingle();
+
+      if (error) {
+        console.error("Username check error:", error);
+        setUsernameStatus("idle");
+        return;
+      }
+
+      setUsernameStatus(data ? "taken" : "available");
+    } catch (err) {
+      console.error("Username check failed:", err);
+      setUsernameStatus("idle");
+    }
+  }, []);
+
+  // Handle username change with debounce
+  const handleUsernameChange = (value: string) => {
+    const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    setUsername(sanitized);
+    setUsernameStatus("idle");
+
+    // Clear existing timeout
+    if (usernameCheckTimeoutRef.current) {
+      clearTimeout(usernameCheckTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced check
+    if (sanitized.length >= 3) {
+      usernameCheckTimeoutRef.current = setTimeout(() => {
+        checkUsernameAvailability(sanitized);
+      }, 500);
+    }
+  };
+
+  // Cleanup username check timeout
+  useEffect(() => {
+    return () => {
+      if (usernameCheckTimeoutRef.current) {
+        clearTimeout(usernameCheckTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Persist redirect intent (supports refresh / oauth roundtrip)
   useEffect(() => {
@@ -335,10 +397,35 @@ const Auth = () => {
                   type="text"
                   placeholder="yourname"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  className="pl-10 h-12 bg-card border-border"
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  className={`pl-10 pr-10 h-12 bg-card border-border ${
+                    usernameStatus === "taken" ? "border-destructive focus-visible:ring-destructive" : ""
+                  } ${
+                    usernameStatus === "available" ? "border-green-500 focus-visible:ring-green-500" : ""
+                  }`}
                 />
+                {/* Username availability indicator */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameStatus === "checking" && (
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  )}
+                  {usernameStatus === "available" && (
+                    <Check className="w-5 h-5 text-green-500" />
+                  )}
+                  {usernameStatus === "taken" && (
+                    <X className="w-5 h-5 text-destructive" />
+                  )}
+                </div>
               </div>
+              {usernameStatus === "taken" && (
+                <p className="text-destructive text-sm">Username is already taken</p>
+              )}
+              {usernameStatus === "available" && (
+                <p className="text-green-500 text-sm">Username is available!</p>
+              )}
+              {username.length > 0 && username.length < 3 && (
+                <p className="text-muted-foreground text-sm">Username must be at least 3 characters</p>
+              )}
             </div>
             
             <div className="space-y-2">
