@@ -52,7 +52,7 @@ interface Campaign {
   waitlistStatus?: string | null;
 }
 
-const categories = ["All", "Music", "Personal Brand", "Technology", "Product", "Entertainment", "Logo", "Slideshow", "Other"];
+const categories = ["All", "Music", "Personal Brand", "Technology", "Product", "Entertainment", "Logo", "Slideshow", "Fitness & Health", "Other"];
 
 const Campaigns = () => {
   const { user } = useAuth();
