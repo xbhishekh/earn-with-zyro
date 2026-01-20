@@ -371,19 +371,26 @@ const MarketplaceProductDetail = () => {
   };
 
   const renderStars = (rating: number, size: "sm" | "lg" = "sm") => {
-    const starSize = size === "lg" ? "w-5 h-5" : "w-4 h-4";
+    const starSize = size === "lg" ? "w-6 h-6" : "w-5 h-5";
     return (
       <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${starSize} ${
-              star <= Math.round(rating)
-                ? "text-yellow-500 fill-yellow-500"
-                : "text-muted-foreground"
-            }`}
-          />
-        ))}
+        {[1, 2, 3, 4, 5].map((star) => {
+          const isFilled = star <= Math.floor(rating);
+          const isPartial = !isFilled && star === Math.ceil(rating) && rating % 1 > 0;
+          
+          return (
+            <Star
+              key={star}
+              className={`${starSize} transition-all ${
+                isFilled
+                  ? "text-amber-400 fill-amber-400 drop-shadow-sm"
+                  : isPartial
+                  ? "text-amber-400 fill-amber-400/50"
+                  : "text-gray-300 dark:text-gray-600"
+              }`}
+            />
+          );
+        })}
       </div>
     );
   };
@@ -457,7 +464,12 @@ const MarketplaceProductDetail = () => {
   const allImages = [product.thumbnail_url, ...product.gallery_images].filter(Boolean) as string[];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/50 via-background to-purple-50/50 dark:from-orange-950/20 dark:via-background dark:to-purple-950/20 relative overflow-hidden">
+      {/* Decorative Blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-400/20 to-pink-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-blue-500/20 rounded-full blur-3xl translate-x-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-gradient-to-br from-emerald-400/15 to-teal-500/15 rounded-full blur-3xl pointer-events-none" />
+      
       <SEO
         title={seoTitle}
         description={productDescription}
@@ -469,7 +481,7 @@ const MarketplaceProductDetail = () => {
       />
       <Navbar />
       
-      <main className="pt-20 pb-16">
+      <main className="pt-20 pb-16 relative z-10">
         <div className="container mx-auto px-4">
           {/* Back Button */}
           <motion.div
@@ -533,27 +545,21 @@ const MarketplaceProductDetail = () => {
                 )}
 
                 {/* Stats Bar */}
-                <div className="flex items-center gap-4 mt-4 p-4 bg-muted rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">
-                      {formatPrice(product.price, product.product_type, product.subscription_interval)}
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {product.members_count.toLocaleString()} members
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
+                <div className="flex flex-wrap items-center gap-3 mt-4 p-4 bg-gradient-to-r from-white/80 via-orange-50/50 to-purple-50/50 dark:from-gray-800/80 dark:via-orange-950/30 dark:to-purple-950/30 backdrop-blur-sm rounded-xl border border-white/50 dark:border-gray-700/50 shadow-lg">
+                  <Badge className="bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 px-3 py-1.5 text-sm font-bold shadow-md">
+                    <Tag className="w-4 h-4 mr-1.5" />
+                    {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                  </Badge>
+                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 px-3 py-1.5 text-sm font-medium shadow-md">
+                    <Users className="w-4 h-4 mr-1.5" />
+                    {product.members_count.toLocaleString()} members
+                  </Badge>
+                  <div className="flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 rounded-full px-3 py-1.5 shadow-sm">
+                    <Avatar className="w-6 h-6 ring-2 ring-white dark:ring-gray-700 shadow-sm">
                       <AvatarImage src={seller?.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">{seller?.display_name?.[0] || "S"}</AvatarFallback>
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-emerald-400 to-teal-500 text-white">{seller?.display_name?.[0] || "S"}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">By {seller?.display_name || seller?.username}</span>
+                    <span className="text-sm font-medium">By {seller?.display_name || seller?.username}</span>
                   </div>
                 </div>
               </motion.div>
@@ -579,14 +585,19 @@ const MarketplaceProductDetail = () => {
                   transition={{ delay: 0.15 }}
                   className="mb-8"
                 >
-                  <h2 className="text-xl font-bold mb-4">What's included</h2>
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md">
+                      <Check className="w-4 h-4 text-white" />
+                    </span>
+                    What's included
+                  </h2>
+                  <div className="grid sm:grid-cols-2 gap-3 p-5 bg-gradient-to-br from-white/70 to-emerald-50/50 dark:from-gray-800/70 dark:to-emerald-950/30 rounded-2xl border border-white/50 dark:border-gray-700/50 shadow-lg">
                     {product.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-green-500" />
+                      <div key={idx} className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/30 transition-colors">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                          <Check className="w-3.5 h-3.5 text-white" />
                         </div>
-                        <span>{feature}</span>
+                        <span className="font-medium">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -601,31 +612,41 @@ const MarketplaceProductDetail = () => {
                 className="mb-8"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                    <span className="text-xl font-bold">
-                      {avgRating.toFixed(1)} ({reviews.length} reviews)
-                    </span>
+                  <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-900/30 dark:to-orange-900/30 rounded-2xl shadow-lg border border-amber-200/50 dark:border-amber-700/30">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+                      <Star className="w-8 h-8 text-white fill-white drop-shadow-sm" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                          {avgRating.toFixed(1)}
+                        </span>
+                        {renderStars(avgRating, "lg")}
+                      </div>
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                      </span>
+                    </div>
                   </div>
                   {reviews.length > 4 && (
-                    <Button variant="ghost" size="sm">View all</Button>
+                    <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white/80">View all</Button>
                   )}
                 </div>
 
                 {reviews.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {reviews.slice(0, 4).map((review) => (
-                      <Card key={review.id}>
+                      <Card key={review.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-white/50 dark:border-gray-700/50 shadow-lg hover:shadow-xl transition-shadow">
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3 mb-3">
-                            <Avatar className="w-10 h-10">
+                            <Avatar className="w-10 h-10 ring-2 ring-white dark:ring-gray-700 shadow-sm">
                               <AvatarImage src={review.reviewer?.avatar_url || undefined} />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white">
                                 {review.reviewer?.display_name?.[0] || "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <p className="font-medium">
+                              <p className="font-semibold">
                                 {review.reviewer?.display_name || review.reviewer?.username || "User"}
                               </p>
                               {renderStars(review.rating)}
@@ -641,7 +662,11 @@ const MarketplaceProductDetail = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No reviews yet</p>
+                  <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl text-center border border-gray-200/50 dark:border-gray-700/50">
+                    <Star className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-muted-foreground font-medium">No reviews yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">Be the first to leave a review!</p>
+                  </div>
                 )}
               </motion.div>
             </div>
@@ -653,31 +678,40 @@ const MarketplaceProductDetail = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="sticky top-24"
               >
-                <Card className="overflow-hidden">
+                <Card className="overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-white/50 dark:border-gray-700/50 shadow-2xl">
                   {product.thumbnail_url && (
-                    <img
-                      src={product.thumbnail_url}
-                      alt={product.title}
-                      className="w-full aspect-video object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src={product.thumbnail_url}
+                        alt={product.title}
+                        className="w-full aspect-video object-cover"
+                      />
+                      {product.is_featured && (
+                        <Badge className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-lg">
+                          ⭐ Featured
+                        </Badge>
+                      )}
+                    </div>
                   )}
                   <CardContent className="p-6">
-                    {/* Rating */}
-                    {reviews.length > 0 && (
-                      <div className="flex items-center gap-2 mb-2">
-                        {renderStars(avgRating, "lg")}
-                        <span className="font-medium">{avgRating.toFixed(1)}</span>
-                        <span className="text-muted-foreground">({reviews.length})</span>
-                      </div>
-                    )}
+                    {/* Rating - Always show */}
+                    <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl">
+                      {renderStars(avgRating, "lg")}
+                      <span className="font-bold text-lg bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                        {avgRating.toFixed(1)}
+                      </span>
+                      <span className="text-muted-foreground">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+                    </div>
 
                     <h3 className="font-bold text-lg mb-3">{product.short_description || product.category}</h3>
 
                     {/* Price */}
-                    <div className="text-2xl font-bold mb-4">
-                      {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                    <div className="mb-5 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-700/30">
+                      <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                        {formatPrice(product.price, product.product_type, product.subscription_interval)}
+                      </div>
                       {product.product_type === "subscription" && (
-                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                        <span className="text-sm font-normal text-muted-foreground">
                           +1 option
                         </span>
                       )}
@@ -685,19 +719,19 @@ const MarketplaceProductDetail = () => {
 
                     {/* CTA Button */}
                     {hasPurchased ? (
-                      <Button className="w-full h-12 text-lg" disabled>
+                      <Button className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg" disabled>
                         <Check className="w-5 h-5 mr-2" />
                         Purchased
                       </Button>
                     ) : product.seller_id === user?.id ? (
                       <Link to={`/marketplace/edit/${product.id}`}>
-                        <Button className="w-full h-12 text-lg" variant="outline">
+                        <Button className="w-full h-14 text-lg border-2 border-primary hover:bg-primary hover:text-white transition-all" variant="outline">
                           Edit Product
                         </Button>
                       </Link>
                     ) : (
                       <Button 
-                        className="w-full h-12 text-lg"
+                        className="w-full h-14 text-lg bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 hover:from-orange-600 hover:via-pink-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all"
                         disabled={purchasing}
                         onClick={() => {
                           if (!user) {
@@ -726,8 +760,8 @@ const MarketplaceProductDetail = () => {
                       <div className="mt-6 border-t pt-6">
                         <Accordion type="single" collapsible>
                           {product.faqs.map((faq, idx) => (
-                            <AccordionItem key={idx} value={`faq-${idx}`}>
-                              <AccordionTrigger className="text-left text-sm">
+                            <AccordionItem key={idx} value={`faq-${idx}`} className="border-muted/50">
+                              <AccordionTrigger className="text-left text-sm hover:text-primary">
                                 {faq.question}
                               </AccordionTrigger>
                               <AccordionContent className="text-sm text-muted-foreground">
