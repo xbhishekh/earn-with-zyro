@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Star, Users, Tag, Check, 
-  Share2, Heart, Loader2, Wallet, Ticket, X
+  Share2, Heart, Loader2, Wallet, Ticket, X, MessageSquare, Send
 } from "lucide-react";
 import { SEO, createProductSchema, createBreadcrumbSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Navbar } from "@/components/landing/Navbar";
@@ -90,6 +91,13 @@ const MarketplaceProductDetail = () => {
   const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [discountError, setDiscountError] = useState("");
+  
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -130,11 +138,12 @@ const MarketplaceProductDetail = () => {
     setProduct({ ...productData, faqs: parsedFaqs });
 
     // Fetch seller, reviews, and check purchase status in parallel
-    const [sellerResult, reviewsResult, purchaseResult, balanceResult] = await Promise.all([
+    const [sellerResult, reviewsResult, purchaseResult, balanceResult, userReviewResult] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", productData.seller_id).single(),
       supabase.from("product_reviews").select("*").eq("product_id", productData.id).order("created_at", { ascending: false }),
       user ? supabase.from("product_purchases").select("id").eq("product_id", productData.id).eq("buyer_id", user.id).single() : Promise.resolve({ data: null }),
-      user ? supabase.from("balance_transactions").select("amount, type, status").eq("user_id", user.id) : Promise.resolve({ data: [] })
+      user ? supabase.from("balance_transactions").select("amount, type, status").eq("user_id", user.id) : Promise.resolve({ data: [] }),
+      user ? supabase.from("product_reviews").select("id").eq("product_id", productData.id).eq("reviewer_id", user.id).single() : Promise.resolve({ data: null, error: null })
     ]);
 
     if (sellerResult.data) {
@@ -170,6 +179,11 @@ const MarketplaceProductDetail = () => {
 
     if (purchaseResult.data) {
       setHasPurchased(true);
+    }
+    
+    // Check if user has already reviewed
+    if (userReviewResult.data) {
+      setHasReviewed(true);
     }
 
     // Calculate available balance using centralized utility
@@ -264,6 +278,36 @@ const MarketplaceProductDetail = () => {
     return product.price - getDiscountedPrice();
   };
 
+  const handleSubmitReview = async () => {
+    if (!user || !product) return;
+    
+    setSubmittingReview(true);
+    try {
+      const { error } = await supabase.from("product_reviews").insert({
+        product_id: product.id,
+        reviewer_id: user.id,
+        rating: reviewRating,
+        review_text: reviewText.trim() || null,
+        is_verified_purchase: hasPurchased
+      });
+
+      if (error) throw error;
+
+      toast.success("Review submitted successfully!");
+      setHasReviewed(true);
+      setShowReviewForm(false);
+      setReviewText("");
+      setReviewRating(5);
+      
+      // Refresh reviews
+      fetchProductDetails();
+    } catch (error: any) {
+      console.error("Review error:", error);
+      toast.error(error.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
   const handlePurchase = async () => {
     if (!user || !product) return;
 
@@ -611,49 +655,117 @@ const MarketplaceProductDetail = () => {
                 transition={{ delay: 0.2 }}
                 className="mb-8"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-900/30 dark:to-orange-900/30 rounded-2xl shadow-lg border border-amber-200/50 dark:border-amber-700/30">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                      <Star className="w-8 h-8 text-white fill-white drop-shadow-sm" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                          {avgRating.toFixed(1)}
-                        </span>
-                        {renderStars(avgRating, "lg")}
-                      </div>
-                      <span className="text-sm text-muted-foreground font-medium">
-                        {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                {/* Compact Rating Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-100/80 dark:bg-amber-900/30 rounded-xl">
+                      <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                      <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                        {avgRating.toFixed(1)}
+                      </span>
+                      {renderStars(avgRating, "sm")}
+                      <span className="text-sm text-muted-foreground ml-1">
+                        ({reviews.length})
                       </span>
                     </div>
                   </div>
-                  {reviews.length > 4 && (
-                    <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white/80">View all</Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {hasPurchased && !hasReviewed && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => setShowReviewForm(!showReviewForm)}
+                        className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1.5" />
+                        Write Review
+                      </Button>
+                    )}
+                    {reviews.length > 4 && (
+                      <Button variant="outline" size="sm">View all</Button>
+                    )}
+                  </div>
                 </div>
 
+                {/* Review Form */}
+                {showReviewForm && (
+                  <Card className="mb-4 bg-gradient-to-br from-orange-50/80 to-amber-50/80 dark:from-orange-900/20 dark:to-amber-900/20 border-orange-200/50 dark:border-orange-700/30">
+                    <CardContent className="p-4">
+                      <h4 className="font-semibold mb-3">Write a Review</h4>
+                      
+                      {/* Star Rating */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm text-muted-foreground">Your Rating:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRating(star)}
+                              className="p-0.5 hover:scale-110 transition-transform"
+                            >
+                              <Star
+                                className={`w-6 h-6 transition-colors ${
+                                  star <= reviewRating
+                                    ? "text-amber-400 fill-amber-400"
+                                    : "text-gray-300 hover:text-amber-300"
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Review Text */}
+                      <Textarea
+                        placeholder="Share your experience with this product..."
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        className="mb-3 bg-white/80 dark:bg-gray-800/80"
+                        rows={3}
+                      />
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSubmitReview}
+                          disabled={submittingReview}
+                          className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white"
+                        >
+                          {submittingReview ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4 mr-2" />
+                          )}
+                          Submit Review
+                        </Button>
+                        <Button variant="ghost" onClick={() => setShowReviewForm(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {reviews.length > 0 ? (
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-3">
                     {reviews.slice(0, 4).map((review) => (
-                      <Card key={review.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-white/50 dark:border-gray-700/50 shadow-lg hover:shadow-xl transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Avatar className="w-10 h-10 ring-2 ring-white dark:ring-gray-700 shadow-sm">
+                      <Card key={review.id} className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-white/50 dark:border-gray-700/50 shadow hover:shadow-md transition-shadow">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Avatar className="w-8 h-8 ring-1 ring-white dark:ring-gray-700">
                               <AvatarImage src={review.reviewer?.avatar_url || undefined} />
-                              <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white">
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-purple-400 to-pink-500 text-white">
                                 {review.reviewer?.display_name?.[0] || "U"}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <p className="font-semibold">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">
                                 {review.reviewer?.display_name || review.reviewer?.username || "User"}
                               </p>
-                              {renderStars(review.rating)}
+                              {renderStars(review.rating, "sm")}
                             </div>
                           </div>
                           {review.review_text && (
-                            <p className="text-sm text-muted-foreground line-clamp-3">
+                            <p className="text-sm text-muted-foreground line-clamp-2">
                               {review.review_text}
                             </p>
                           )}
@@ -662,10 +774,19 @@ const MarketplaceProductDetail = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl text-center border border-gray-200/50 dark:border-gray-700/50">
-                    <Star className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p className="text-muted-foreground font-medium">No reviews yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">Be the first to leave a review!</p>
+                  <div className="p-6 bg-muted/50 rounded-xl text-center">
+                    <Star className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No reviews yet</p>
+                    {hasPurchased && !hasReviewed && (
+                      <Button 
+                        size="sm" 
+                        variant="link" 
+                        onClick={() => setShowReviewForm(true)}
+                        className="mt-1"
+                      >
+                        Be the first to review!
+                      </Button>
+                    )}
                   </div>
                 )}
               </motion.div>
