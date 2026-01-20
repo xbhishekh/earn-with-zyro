@@ -64,24 +64,30 @@ const Marketplace = () => {
   }, [selectedCategory, searchParams]);
 
   const fetchFeaturedProducts = async () => {
-    // Single query with joined seller profile
-    const { data: productsData } = await supabase
+    // Fetch products first (without join since no FK relationship)
+    const { data: productsData, error } = await supabase
       .from("marketplace_products")
-      .select(`
-        *,
-        profiles:seller_id (display_name, username, avatar_url)
-      `)
+      .select("*")
       .eq("is_active", true)
       .eq("is_featured", true)
       .order("members_count", { ascending: false })
       .limit(6);
 
-    if (!productsData || productsData.length === 0) return;
+    if (error || !productsData || productsData.length === 0) return;
+
+    // Fetch seller profiles separately
+    const sellerIds = [...new Set(productsData.map(p => p.seller_id))];
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, username, avatar_url")
+      .in("user_id", sellerIds);
+
+    const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
 
     // Show featured products immediately
     const initialFeatured: Product[] = productsData.map(product => ({
       ...product,
-      seller: (product.profiles as any) || undefined,
+      seller: profilesMap.get(product.seller_id) || undefined,
       avg_rating: 0,
       review_count: 0
     }));
@@ -115,13 +121,10 @@ const Marketplace = () => {
   const fetchProducts = async () => {
     setLoading(true);
     
-    // Single query with joined seller profile
+    // Fetch products first (without join since no FK relationship)
     let query = supabase
       .from("marketplace_products")
-      .select(`
-        *,
-        profiles:seller_id (display_name, username, avatar_url)
-      `)
+      .select("*")
       .eq("is_active", true)
       .order("is_featured", { ascending: false })
       .order("members_count", { ascending: false });
@@ -143,19 +146,34 @@ const Marketplace = () => {
       return;
     }
 
+    if (!productsData || productsData.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch seller profiles separately
+    const sellerIds = [...new Set(productsData.map(p => p.seller_id))];
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, username, avatar_url")
+      .in("user_id", sellerIds);
+
+    const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+
     // Show products immediately (fast first paint)
-    const initialProducts: Product[] = productsData?.map(product => ({
+    const initialProducts: Product[] = productsData.map(product => ({
       ...product,
-      seller: (product.profiles as any) || undefined,
+      seller: profilesMap.get(product.seller_id) || undefined,
       avg_rating: 0,
       review_count: 0
-    })) || [];
+    }));
 
     setProducts(initialProducts);
     setLoading(false);
 
     // Load ratings in background
-    const productIds = productsData?.map(p => p.id) || [];
+    const productIds = productsData.map(p => p.id);
     if (productIds.length === 0) return;
 
     const { data: reviewsData } = await supabase
