@@ -840,10 +840,12 @@ const MarketplaceProductDetail = () => {
 
                     {/* CTA Button */}
                     {hasPurchased ? (
-                      <Button className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg" disabled>
-                        <Check className="w-5 h-5 mr-2" />
-                        Purchased
-                      </Button>
+                      <Link to={`/member/${product.slug || product.id}`}>
+                        <Button className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg">
+                          <Check className="w-5 h-5 mr-2" />
+                          Access Content
+                        </Button>
+                      </Link>
                     ) : product.seller_id === user?.id ? (
                       <Link to={`/marketplace/edit/${product.id}`}>
                         <Button className="w-full h-14 text-lg border-2 border-primary hover:bg-primary hover:text-white transition-all" variant="outline">

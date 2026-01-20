@@ -35,6 +35,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const MarketplaceProductDetail = lazy(() => import("./pages/MarketplaceProductDetail"));
 const MarketplaceCreate = lazy(() => import("./pages/MarketplaceCreate"));
+const MemberPortal = lazy(() => import("./pages/MemberPortal"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Profile = lazy(() => import("./pages/Profile"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
@@ -98,6 +99,7 @@ const App = () => (
                   <Route path="/marketplace/create" element={<RouteErrorBoundary routeName="Create Product"><MarketplaceCreate /></RouteErrorBoundary>} />
                   <Route path="/marketplace/edit/:id" element={<RouteErrorBoundary routeName="Edit Product"><MarketplaceCreate /></RouteErrorBoundary>} />
                   <Route path="/marketplace/:id" element={<RouteErrorBoundary routeName="Product"><MarketplaceProductDetail /></RouteErrorBoundary>} />
+                  <Route path="/member/:productId" element={<RouteErrorBoundary routeName="Member Portal"><MemberPortal /></RouteErrorBoundary>} />
                   <Route path="/gallery" element={<RouteErrorBoundary routeName="Gallery"><Gallery /></RouteErrorBoundary>} />
                   <Route path="/admin" element={<RouteErrorBoundary routeName="Admin"><Admin /></RouteErrorBoundary>} />
                   <Route path="/profile" element={<RouteErrorBoundary routeName="Profile"><Profile /></RouteErrorBoundary>} />
