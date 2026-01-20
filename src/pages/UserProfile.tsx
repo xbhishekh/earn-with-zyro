@@ -267,32 +267,43 @@ const UserProfile = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card border border-border rounded-2xl p-6"
+            className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10 border border-primary/20"
           >
-            <h2 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Products
+            {/* Decorative gradient blobs */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-accent/20 to-transparent rounded-full blur-2xl" />
+            
+            <h2 className="font-display text-lg font-bold mb-4 flex items-center gap-2 relative z-10">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
+                <Package className="w-5 h-5 text-white" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Products
+              </span>
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
               {products.map((product) => (
                 <Link
                   key={product.id}
                   to={`/marketplace/${product.slug || product.id}`}
-                  className="bg-muted/50 rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-colors"
+                  className="group bg-card/80 backdrop-blur-sm rounded-xl border border-border overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
                 >
                   {product.thumbnail_url ? (
-                    <img
-                      src={product.thumbnail_url}
-                      alt={product.title}
-                      className="w-full aspect-video object-cover"
-                    />
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={product.thumbnail_url}
+                        alt={product.title}
+                        className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   ) : (
-                    <div className="w-full aspect-video bg-muted flex items-center justify-center">
-                      <Package className="w-8 h-8 text-muted-foreground" />
+                    <div className="w-full aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-primary/50" />
                     </div>
                   )}
                   <div className="p-3">
-                    <h3 className="font-medium truncate">{product.title}</h3>
+                    <h3 className="font-medium truncate group-hover:text-primary transition-colors">{product.title}</h3>
                     <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1">
@@ -304,7 +315,7 @@ const UserProfile = () => {
                           {product.views_count}
                         </span>
                       </div>
-                      <span className="font-medium text-primary">
+                      <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                         {product.price === 0 ? "Free" : `$${product.price}`}
                       </span>
                     </div>
