@@ -412,17 +412,29 @@ const Marketplace = () => {
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-20">
-              <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-bold mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-6">
-                Be the first to list a product in this category!
-              </p>
-              {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
-                <Link to="/marketplace/create">
-                  <Button>Create your first product</Button>
-                </Link>
-              )}
+            <div className="relative text-center py-20 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5 border border-primary/20">
+              {/* Decorative gradient blobs */}
+              <div className="absolute top-0 left-1/4 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-gradient-to-tr from-accent/20 to-transparent rounded-full blur-3xl" />
+              
+              <div className="relative z-10">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <Package className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  No products found
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Be the first to list a product in this category!
+                </p>
+                {(isAdmin || isSuperAdmin || isOwner || role === "normal_admin" || role === "founder") && (
+                  <Link to="/marketplace/create">
+                    <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                      Create your first product
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -430,36 +442,50 @@ const Marketplace = () => {
                 <div key={product.id}>
                   <Link
                     to={`/marketplace/${product.slug || product.id}`}
-                    className="block bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all group"
+                    className="block rounded-2xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group bg-gradient-to-br from-card via-card to-primary/5"
                   >
                     {/* Thumbnail */}
-                    <div className="relative aspect-video overflow-hidden bg-muted">
+                    <div className="relative aspect-video overflow-hidden">
                       {product.thumbnail_url ? (
                         <img
                           src={product.thumbnail_url}
                           alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-12 h-12 text-muted-foreground" />
+                        <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                          <Package className="w-12 h-12 text-primary/50" />
                         </div>
                       )}
                       
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
                       {/* Price Badge */}
                       <Badge 
-                        className={`absolute bottom-3 right-3 ${
+                        className={`absolute bottom-3 right-3 shadow-lg ${
                           product.product_type === "free" || product.price === 0
-                            ? "bg-green-500 hover:bg-green-600"
-                            : "bg-primary hover:bg-primary/90"
+                            ? "bg-gradient-to-r from-green-500 to-emerald-500 border-0"
+                            : "bg-gradient-to-r from-primary to-accent border-0"
                         }`}
                       >
                         {formatPrice(product.price, product.product_type, product.subscription_interval)}
                       </Badge>
+                      
+                      {/* Featured indicator */}
+                      {product.is_featured && (
+                        <Badge className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 border-0 shadow-lg">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
+                    <div className="p-4 relative">
+                      {/* Subtle gradient accent */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
                       <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:text-primary transition-colors">
                         {product.title}
                       </h3>
@@ -471,10 +497,10 @@ const Marketplace = () => {
                       )}
 
                       {/* Seller Info */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <Avatar className="w-6 h-6">
+                      <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-muted/50 group-hover:bg-primary/5 transition-colors">
+                        <Avatar className="w-6 h-6 ring-2 ring-primary/20">
                           <AvatarImage src={product.seller?.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-primary/20 to-accent/20">
                             {product.seller?.display_name?.[0] || product.seller?.username?.[0] || "S"}
                           </AvatarFallback>
                         </Avatar>
@@ -488,7 +514,7 @@ const Marketplace = () => {
                         {product.review_count && product.review_count > 0 ? (
                           <div className="flex items-center gap-1">
                             {renderStars(product.avg_rating || 0)}
-                            <span className="text-sm font-medium ml-1">
+                            <span className="text-sm font-medium ml-1 bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
                               {(product.avg_rating || 0).toFixed(1)}
                             </span>
                             <span className="text-sm text-muted-foreground">
@@ -496,8 +522,13 @@ const Marketplace = () => {
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-muted-foreground">No reviews yet</span>
+                          <span className="text-sm text-muted-foreground italic">No reviews yet</span>
                         )}
+                        
+                        <div className="flex items-center gap-1 ml-auto text-sm text-muted-foreground">
+                          <Users className="w-4 h-4" />
+                          <span>{product.members_count || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </Link>

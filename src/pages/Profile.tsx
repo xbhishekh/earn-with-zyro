@@ -251,7 +251,19 @@ const Profile = () => {
     setUploading(true);
     try {
       const fileExt = file.name.split(".").pop();
-      const filePath = `${user!.id}/avatar.${fileExt}`;
+      // Add timestamp to force unique filename and bypass cache
+      const timestamp = Date.now();
+      const filePath = `${user!.id}/avatar_${timestamp}.${fileExt}`;
+
+      // Delete old avatar first to avoid storage buildup
+      const { data: existingFiles } = await supabase.storage
+        .from("avatars")
+        .list(user!.id);
+      
+      if (existingFiles && existingFiles.length > 0) {
+        const filesToDelete = existingFiles.map(f => `${user!.id}/${f.name}`);
+        await supabase.storage.from("avatars").remove(filesToDelete);
+      }
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -260,21 +272,28 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache-busting parameter
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
+      
+      const urlWithCacheBust = `${publicUrl}?t=${timestamp}`;
 
       // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: urlWithCacheBust })
         .eq("user_id", user!.id);
 
       if (updateError) throw updateError;
 
-      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      setProfile(prev => prev ? { ...prev, avatar_url: urlWithCacheBust } : null);
       toast.success("Avatar updated successfully!");
+      
+      // Reset the file input to allow uploading the same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast.error("Failed to upload avatar");
