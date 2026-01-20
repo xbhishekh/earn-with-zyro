@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Upload, Plus, Trash2, Loader2, Image as ImageIcon,
-  BookOpen, Crown, Wrench, MessageSquare, FileText, Users, Package
+  BookOpen, Crown, Wrench, MessageSquare, FileText, Users, Package, Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/landing/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import ProductContentManager from "@/components/marketplace/ProductContentManager";
 
 const CATEGORIES = [
   { id: "courses", label: "Courses", icon: BookOpen },
@@ -301,6 +303,24 @@ const MarketplaceCreate = () => {
           </motion.div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Content Management for Editing */}
+            {isEditing && (
+              <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-orange-500/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-primary" />
+                    Member Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Add videos, lessons, files, and more for members who purchase this product.
+                  </p>
+                  <ProductContentManager productId={id!} />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Basic Info */}
             <Card>
               <CardHeader>

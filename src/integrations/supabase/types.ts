@@ -657,6 +657,35 @@ export type Database = {
         }
         Relationships: []
       }
+      content_access_logs: {
+        Row: {
+          accessed_at: string | null
+          content_item_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string | null
+          content_item_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string | null
+          content_item_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_access_logs_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "product_content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_codes: {
         Row: {
           code: string
@@ -1007,6 +1036,110 @@ export type Database = {
             columns: ["submission_id"]
             isOneToOne: false
             referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_content_items: {
+        Row: {
+          content_data: Json | null
+          content_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_free_preview: boolean | null
+          is_published: boolean | null
+          module_id: string | null
+          product_id: string
+          sort_order: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_data?: Json | null
+          content_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free_preview?: boolean | null
+          is_published?: boolean | null
+          module_id?: string | null
+          product_id: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_data?: Json | null
+          content_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free_preview?: boolean | null
+          is_published?: boolean | null
+          module_id?: string | null
+          product_id?: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_content_items_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "product_content_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_content_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_content_modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          product_id: string
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          product_id: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          product_id?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_content_modules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
             referencedColumns: ["id"]
           },
         ]
