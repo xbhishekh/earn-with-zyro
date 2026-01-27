@@ -445,20 +445,6 @@ const Auth = () => {
           </>
         )}
 
-        {/* Remember Me */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="remember-me"
-            checked={rememberMe}
-            onCheckedChange={(checked) => setRememberMe(checked === true)}
-          />
-          <label
-            htmlFor="remember-me"
-            className="text-sm text-muted-foreground cursor-pointer select-none"
-          >
-            Remember me for 30 days
-          </label>
-        </div>
 
         <Button
           type="submit"

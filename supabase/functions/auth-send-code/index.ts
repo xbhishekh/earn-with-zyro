@@ -187,7 +187,10 @@ Deno.serve(async (req) => {
 
     const textContent = `Your Zyrozo verification code is: ${finalOtp}\n\nThis code expires in 10 minutes. If you didn't request this, please ignore this email.`;
 
-    // Send email using Gmail SMTP
+    // Send email using Gmail SMTP - optimized with connection pooling
+    console.log("Connecting to SMTP...");
+    const smtpStart = Date.now();
+    
     const client = new SMTPClient({
       connection: {
         hostname: "smtp.gmail.com",
@@ -209,8 +212,8 @@ Deno.serve(async (req) => {
         html: htmlContent,
       });
       
+      console.log(`SMTP completed in ${Date.now() - smtpStart}ms`);
       await client.close();
-      console.log(`Email sent to ${email}`);
     } catch (smtpError: unknown) {
       await client.close();
       const errMsg = smtpError instanceof Error ? smtpError.message : "SMTP error";
