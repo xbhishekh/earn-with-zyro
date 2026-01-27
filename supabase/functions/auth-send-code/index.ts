@@ -54,40 +54,44 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if user exists
-    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    // OPTIMIZED: Try to generate magiclink first - if user doesn't exist, we'll get an error
+    // This avoids the slow listUsers() call
+    let linkData: any = null;
+    let linkError: any = null;
     
-    if (listError) {
-      console.error("listUsers error:", listError.message);
-    }
-
-    const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email);
-    console.log(`User exists: ${userExists}, isSignup: ${body.isSignup}`);
-
-    // If user exists but isSignup=true, switch to magiclink (login flow)
-    // If user doesn't exist and isSignup=false, return error
-    if (!userExists && !body.isSignup) {
+    // First attempt: try to generate magiclink (only works if user exists)
+    const linkResult = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: {
+        redirectTo: body.redirectTo,
+        data: body.metadata ?? {},
+      },
+    });
+    
+    linkData = linkResult.data;
+    linkError = linkResult.error;
+    
+    // If user doesn't exist and this is a login attempt, return error
+    if (linkError && !body.isSignup) {
+      console.log(`Login failed - user not found: ${email}`);
       return new Response(JSON.stringify({ error: { message: "No account found with this email. Please sign up first." } }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // For new users, first check username availability, then create the account
-    if (!userExists) {
+    
+    // If user doesn't exist and this is signup, create the account first
+    if (linkError && body.isSignup) {
       const requestedUsername = ((body.metadata?.username as string) ?? email.split("@")[0]).toLowerCase();
       
       // Check if username is already taken
       console.log(`Checking username availability: ${requestedUsername}`);
-      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+      const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
         .select("id")
         .eq("username", requestedUsername)
         .maybeSingle();
-      
-      if (profileCheckError) {
-        console.error("Profile check error:", profileCheckError.message);
-      }
       
       if (existingProfile) {
         console.error(`Username "${requestedUsername}" is already taken`);
@@ -109,7 +113,6 @@ Deno.serve(async (req) => {
       
       if (createError) {
         console.error("createUser error:", createError.message);
-        // Check for database errors related to username
         if (createError.message.includes("Database error") || createError.message.includes("duplicate")) {
           return new Response(JSON.stringify({ error: { message: "Username already taken. Please choose a different username." } }), {
             status: 400,
@@ -122,42 +125,41 @@ Deno.serve(async (req) => {
         });
       }
       console.log("New user created successfully:", newUser?.user?.id);
+      
+      // Now generate the magiclink for the new user
+      const newLinkResult = await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: body.redirectTo,
+          data: body.metadata ?? {},
+        },
+      });
+      
+      linkData = newLinkResult.data;
+      linkError = newLinkResult.error;
     }
 
-    // Always use magiclink now (user exists or was just created)
-    console.log("Using verification type: magiclink");
-    
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: {
-        redirectTo: body.redirectTo,
-        data: body.metadata ?? {},
-      },
-    });
-
-    if (error || !data) {
-      console.error("generateLink error:", error?.message);
-      return new Response(JSON.stringify({ error: { message: error?.message ?? "Failed to generate code" } }), {
+    if (linkError || !linkData) {
+      console.error("generateLink error:", linkError?.message);
+      return new Response(JSON.stringify({ error: { message: linkError?.message ?? "Failed to generate code" } }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("generateLink response keys:", Object.keys(data));
+    console.log("generateLink success");
     
     // The OTP should be in data.properties.email_otp
-    let finalOtp = (data.properties as any)?.email_otp as string | undefined;
+    const finalOtp = (linkData.properties as any)?.email_otp as string | undefined;
     
     if (!finalOtp) {
-      console.error("No email_otp returned from generateLink. Full response:", JSON.stringify(data));
+      console.error("No email_otp returned from generateLink");
       return new Response(JSON.stringify({ error: { message: "Failed to generate verification code" } }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Note: OTP length is controlled by Supabase auth settings (default 6 digits)
 
     console.log(`OTP generated: ${finalOtp.length} digits`);
 
@@ -208,7 +210,7 @@ Deno.serve(async (req) => {
       });
       
       await client.close();
-      console.log(`Email sent successfully to ${email} via Gmail SMTP`);
+      console.log(`Email sent to ${email}`);
     } catch (smtpError: unknown) {
       await client.close();
       const errMsg = smtpError instanceof Error ? smtpError.message : "SMTP error";
@@ -219,7 +221,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // For OTP verification on the client, use `type: "email"`.
     return new Response(JSON.stringify({ otpType: "email", otpLength: finalOtp.length }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
