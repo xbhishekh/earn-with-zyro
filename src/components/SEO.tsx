@@ -85,7 +85,8 @@ export const organizationSchema = {
   name: "Zyrozo",
   alternateName: "Zyrozo Inc.",
   url: "https://zyrozo.com",
-  logo: "https://zyrozo.com/og-image.png",
+  // Use a square, logo-specific asset (Google prefers a dedicated logo over OG banners)
+  logo: "https://zyrozo.com/favicon-512.png",
   description: "Zyrozo is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
   foundingDate: "2022",
   sameAs: [
