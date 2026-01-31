@@ -83,10 +83,15 @@ export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Zyrozo",
-  alternateName: "Zyrozo Inc.",
+  alternateName: "Zyrozo Media",
   url: "https://zyrozo.com",
-  // Use a square, logo-specific asset (Google prefers a dedicated logo over OG banners)
-  logo: "https://zyrozo.com/favicon-512.png",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://zyrozo.com/favicon-512.png",
+    width: 512,
+    height: 512
+  },
+  image: "https://zyrozo.com/og-image.png",
   description: "Zyrozo is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
   foundingDate: "2022",
   sameAs: [
