@@ -176,14 +176,6 @@ const Dashboard = () => {
     navigate("/");
   }, [signOut, navigate]);
 
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const statCards = useMemo(() => [
     {
       title: "Total Earnings",
@@ -214,6 +206,14 @@ const Dashboard = () => {
       bgColor: "bg-secondary/10",
     },
   ], [stats]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <MainLayout>
@@ -409,17 +409,23 @@ const Dashboard = () => {
 
               {/* Buyers Tab */}
               <TabsContent value="buyers">
-                <SellerBuyersManager />
+                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                  <SellerBuyersManager />
+                </Suspense>
               </TabsContent>
 
               {/* Analytics Tab */}
               <TabsContent value="analytics">
-                <SellerAnalytics />
+                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                  <SellerAnalytics />
+                </Suspense>
               </TabsContent>
 
               {/* Discounts Tab */}
               <TabsContent value="discounts">
-                <DiscountCodesManager />
+                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                  <DiscountCodesManager />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
