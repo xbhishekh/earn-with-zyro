@@ -231,3 +231,43 @@
 .skeleton-shimmer {
   animation: shimmer 1.5s infinite;
 }
+
+/* Auth page gradient & animations */
+.auth-gradient-bg {
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(350, 80%, 55%) 30%, 
+    hsl(var(--secondary)) 70%, 
+    hsl(270, 80%, 50%) 100%
+  );
+  background-size: 300% 300%;
+  animation: auth-gradient-shift 12s ease infinite;
+}
+
+@keyframes auth-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.auth-float-1 {
+  animation: auth-float-a 8s ease-in-out infinite;
+}
+.auth-float-2 {
+  animation: auth-float-b 10s ease-in-out infinite;
+}
+.auth-float-3 {
+  animation: auth-float-c 7s ease-in-out infinite;
+}
+
+@keyframes auth-float-a {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -25px); }
+}
+@keyframes auth-float-b {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-25px, 20px); }
+}
+@keyframes auth-float-c {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(15px, 15px); }
+}
