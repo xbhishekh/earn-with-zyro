@@ -1,13 +1,12 @@
-import { forwardRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
 
-const Toaster = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => {
+const Toaster = () => {
   const { toasts } = useToast();
 
   return (
     <ToastProvider>
-      <div ref={ref} {...props}>
+      <div>
         {toasts.map(function ({ id, title, description, action, ...toastProps }) {
           return (
             <Toast key={id} {...toastProps}>
@@ -24,8 +23,6 @@ const Toaster = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>
       <ToastViewport />
     </ToastProvider>
   );
-});
-
-Toaster.displayName = "Toaster";
+};
 
 export { Toaster };

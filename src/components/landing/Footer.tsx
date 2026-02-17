@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.jpeg";
 
@@ -8,7 +9,7 @@ const footerLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
-export const Footer = () => {
+export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
   return (
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-10">
@@ -46,4 +47,6 @@ export const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
