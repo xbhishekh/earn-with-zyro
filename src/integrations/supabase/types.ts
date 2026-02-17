@@ -1757,6 +1757,7 @@ export type Database = {
         Args: { p_broadcast_id: string; p_content: string; p_title: string }
         Returns: number
       }
+      get_own_payment_details: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
