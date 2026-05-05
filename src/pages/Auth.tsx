@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Mail, User, ArrowRight, Loader2, Check, X, Sparkles, Zap, TrendingUp } from "lucide-react";
+import { Mail, User, ArrowRight, Loader2, Check, X, Sparkles, Zap, TrendingUp, Shield, Star } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,21 +146,21 @@ const Auth = () => {
   }
 
   const renderOtpForm = () => (
-    <>
-      <div className="mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4">
+    <div className="space-y-6">
+      <div>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-5">
           <Mail className="w-3.5 h-3.5" />
           Code Sent
         </div>
         <h1 className="font-display text-3xl font-bold mb-2 text-foreground">
           Check your email
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           We sent an 8-digit code to <span className="text-foreground font-medium">{email}</span>
         </p>
       </div>
 
-      <div className="bg-accent/50 border border-border/50 rounded-2xl p-4 mb-6 text-sm text-muted-foreground backdrop-blur-sm">
+      <div className="bg-muted/60 border border-border/40 rounded-xl p-4 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">💡 Tip:</span> Check your spam/junk folder if you don't see the email within a minute.
       </div>
 
@@ -187,7 +187,7 @@ const Auth = () => {
           </div>
         )}
 
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-3">
           <button onClick={() => { setStep("email"); setOtp(""); setResendTimer(0); if (timerRef.current) clearInterval(timerRef.current); }} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
             ← Back to email
           </button>
@@ -209,33 +209,35 @@ const Auth = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 
   const renderEmailForm = () => (
-    <>
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-semibold mb-5 border border-primary/15">
           <Sparkles className="w-3.5 h-3.5" />
           {isSignup ? "Get Started Free" : "Welcome Back"}
         </div>
-        <h1 className="font-display text-4xl font-bold mb-2 text-foreground tracking-tight">
-          {isSignup ? "Create Your Account" : "Welcome Back"}
+        <h1 className="font-display text-[2.5rem] leading-tight font-extrabold mb-3 text-foreground tracking-tight">
+          {isSignup ? "Create Your\nAccount" : "Welcome\nBack"}
         </h1>
-        <p className="text-muted-foreground text-base">
+        <p className="text-muted-foreground text-[15px] leading-relaxed">
           {isSignup ? "Join thousands of creators earning on Zyrozo" : "Sign in to continue to your dashboard"}
         </p>
       </div>
 
-      <form onSubmit={handleSendOtp} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-semibold text-foreground">Email</Label>
+      {/* Form */}
+      <form onSubmit={handleSendOtp} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider">Email</Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors duration-200" />
             <Input
               id="email" type="email" placeholder="you@example.com" value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-11 h-13 bg-card/50 border-border/60 rounded-xl text-base focus:border-primary/50 focus:bg-card transition-all"
+              className="pl-12 h-[52px] bg-muted/30 border-2 border-border/50 rounded-xl text-[15px] placeholder:text-muted-foreground/40 focus:border-primary focus:bg-background focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)] transition-all duration-200"
               required autoFocus
             />
           </div>
@@ -243,65 +245,66 @@ const Auth = () => {
 
         {isSignup && (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-semibold text-foreground">Username</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider">Username</Label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors duration-200" />
                 <Input
                   id="username" type="text" placeholder="yourname" value={username}
                   onChange={(e) => handleUsernameChange(e.target.value)}
-                  className={`pl-11 pr-11 h-13 bg-card/50 border-border/60 rounded-xl text-base transition-all ${
-                    usernameStatus === "taken" ? "border-destructive focus-visible:ring-destructive" : ""
-                  } ${usernameStatus === "available" ? "border-green-500 focus-visible:ring-green-500" : ""}`}
+                  className={`pl-12 pr-12 h-[52px] bg-muted/30 border-2 rounded-xl text-[15px] placeholder:text-muted-foreground/40 transition-all duration-200 ${
+                    usernameStatus === "taken" ? "border-destructive focus:shadow-[0_0_0_4px_hsl(var(--destructive)/0.08)]" : ""
+                  } ${usernameStatus === "available" ? "border-green-500 focus:shadow-[0_0_0_4px_hsl(142_76%_36%/0.08)]" : ""
+                  } ${usernameStatus === "idle" || usernameStatus === "checking" ? "border-border/50 focus:border-primary focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)]" : ""}`}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {usernameStatus === "checking" && <Loader2 className="w-4.5 h-4.5 animate-spin text-muted-foreground" />}
-                  {usernameStatus === "available" && <Check className="w-4.5 h-4.5 text-green-500" />}
-                  {usernameStatus === "taken" && <X className="w-4.5 h-4.5 text-destructive" />}
+                  {usernameStatus === "checking" && <Loader2 className="w-[18px] h-[18px] animate-spin text-muted-foreground" />}
+                  {usernameStatus === "available" && <Check className="w-[18px] h-[18px] text-green-500" />}
+                  {usernameStatus === "taken" && <X className="w-[18px] h-[18px] text-destructive" />}
                 </div>
               </div>
-              {usernameStatus === "taken" && <p className="text-destructive text-xs">Username is already taken</p>}
-              {usernameStatus === "available" && <p className="text-green-500 text-xs">Username is available!</p>}
-              {username.length > 0 && username.length < 3 && <p className="text-muted-foreground text-xs">Username must be at least 3 characters</p>}
+              {usernameStatus === "taken" && <p className="text-destructive text-xs font-medium">Username is already taken</p>}
+              {usernameStatus === "available" && <p className="text-green-500 text-xs font-medium">Username is available!</p>}
+              {username.length > 0 && username.length < 3 && <p className="text-muted-foreground text-xs">Minimum 3 characters</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayName" className="text-sm font-semibold text-foreground">Display Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="displayName" className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider">Display Name <span className="text-muted-foreground font-normal normal-case tracking-normal">(optional)</span></Label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors duration-200" />
                 <Input
                   id="displayName" type="text" placeholder="Your Name" value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-11 h-13 bg-card/50 border-border/60 rounded-xl text-base transition-all"
+                  className="pl-12 h-[52px] bg-muted/30 border-2 border-border/50 rounded-xl text-[15px] placeholder:text-muted-foreground/40 focus:border-primary focus:bg-background focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)] transition-all duration-200"
                 />
               </div>
             </div>
           </>
         )}
 
-        <Button type="submit" variant="hero" size="lg" className="w-full h-13 rounded-xl text-base font-semibold mt-2" disabled={isLoading}>
+        <Button type="submit" variant="hero" size="lg" className="w-full h-[52px] rounded-xl text-[15px] font-bold mt-1 shadow-xl shadow-primary/20" disabled={isLoading}>
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
             <>
               {isSignup ? "Create Account" : "Send Code"}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-1.5" />
             </>
           )}
         </Button>
       </form>
 
       {/* Divider */}
-      <div className="relative my-6">
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border/40" />
+          <div className="w-full border-t border-border/30" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase tracking-widest">
-          <span className="bg-background px-4 text-muted-foreground/70 font-medium">Or continue with</span>
+        <div className="relative flex justify-center text-[11px] uppercase tracking-[0.2em]">
+          <span className="bg-background px-4 text-muted-foreground/50 font-semibold">Or continue with</span>
         </div>
       </div>
 
       {/* Google */}
       <Button
         type="button" variant="outline" size="lg"
-        className="w-full h-13 rounded-xl text-base font-medium border-border/60 hover:bg-accent/50 transition-all"
+        className="w-full h-[52px] rounded-xl text-[15px] font-medium border-2 border-border/50 hover:border-border hover:bg-muted/40 transition-all duration-200"
         onClick={async () => {
           setIsLoading(true);
           if (redirectTo) setRedirectIntent(redirectTo);
@@ -311,7 +314,7 @@ const Auth = () => {
         }}
         disabled={isLoading}
       >
-        <svg className="w-5 h-5 mr-2.5" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -321,95 +324,115 @@ const Auth = () => {
       </Button>
 
       {/* Toggle */}
-      <p className="text-center text-muted-foreground mt-8 text-sm">
+      <p className="text-center text-muted-foreground text-sm">
         {isSignup ? (
           <>Already have an account?{" "}<button onClick={() => setIsSignup(false)} className="text-primary hover:underline font-semibold">Log in</button></>
         ) : (
           <>Don't have an account?{" "}<button onClick={() => setIsSignup(true)} className="text-primary hover:underline font-semibold">Sign up</button></>
         )}
       </p>
-    </>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:p-16">
-        <div className="w-full max-w-[440px]">
-          {/* Logo */}
-          <Link to="/" className="inline-flex items-center gap-2.5 mb-10 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
-              <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-display font-bold text-xl gradient-text">
-              Zyrozo
-            </span>
-          </Link>
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-14 xl:p-20">
+        {/* Logo top */}
+        <Link to="/" className="inline-flex items-center gap-2.5 group shrink-0">
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-border/30 group-hover:shadow-md transition-shadow">
+            <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-display font-bold text-xl gradient-text">
+            Zyrozo
+          </span>
+        </Link>
 
+        {/* Form center */}
+        <div className="w-full max-w-[420px] mx-auto lg:mx-0">
           {step === "email" && renderEmailForm()}
           {step === "otp" && renderOtpForm()}
         </div>
+
+        {/* Footer */}
+        <p className="text-muted-foreground/40 text-xs">
+          © {new Date().getFullYear()} Zyrozo. All rights reserved.
+        </p>
       </div>
 
-      {/* Right Side - Premium Branding Panel */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden">
-        {/* Animated gradient background */}
+      {/* Right Side - Premium Panel */}
+      <div className="hidden lg:flex w-[45%] xl:w-[48%] relative overflow-hidden m-3 rounded-3xl">
+        {/* Gradient background */}
         <div className="absolute inset-0 auth-gradient-bg" />
         
-        {/* Mesh / noise overlay */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-          backgroundSize: '32px 32px',
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.06]" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
         }} />
 
         {/* Floating orbs */}
-        <div className="absolute top-[10%] left-[15%] w-64 h-64 bg-white/10 rounded-full blur-3xl auth-float-1" />
-        <div className="absolute bottom-[15%] right-[10%] w-80 h-80 bg-white/8 rounded-full blur-3xl auth-float-2" />
-        <div className="absolute top-[50%] right-[30%] w-40 h-40 bg-white/12 rounded-full blur-2xl auth-float-3" />
+        <div className="absolute top-[8%] left-[12%] w-72 h-72 bg-white/8 rounded-full blur-3xl auth-float-1" />
+        <div className="absolute bottom-[10%] right-[8%] w-96 h-96 bg-white/6 rounded-full blur-3xl auth-float-2" />
+        <div className="absolute top-[45%] right-[25%] w-48 h-48 bg-white/10 rounded-full blur-2xl auth-float-3" />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-          {/* Logo icon */}
-          <div className="w-20 h-20 bg-white/15 rounded-3xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-2xl mb-8 p-3">
+        <div className="relative z-10 flex flex-col items-center justify-center w-full p-10 xl:p-16">
+          {/* Logo */}
+          <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl mb-10 p-2.5">
             <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
           </div>
           
-          <h2 className="font-display text-4xl font-bold text-white mb-4 text-center tracking-tight">
-            Start Earning Today
+          <h2 className="font-display text-[2.75rem] font-extrabold text-white mb-4 text-center leading-tight tracking-tight">
+            Start Earning<br />Today
           </h2>
-          <p className="text-white/70 max-w-sm mx-auto text-lg text-center leading-relaxed mb-12">
+          <p className="text-white/60 max-w-sm mx-auto text-base text-center leading-relaxed mb-12">
             Join 5,000+ creators who are already monetizing their content with Zyrozo
           </p>
 
-          {/* Stats */}
-          <div className="flex gap-6">
-            <div className="text-center px-6 py-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-              <div className="font-display text-3xl font-bold text-white">$50K+</div>
-              <div className="text-white/60 text-sm mt-1">Paid Out</div>
-            </div>
-            <div className="text-center px-6 py-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-              <div className="font-display text-3xl font-bold text-white">100+</div>
-              <div className="text-white/60 text-sm mt-1">Campaigns</div>
-            </div>
-            <div className="text-center px-6 py-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-              <div className="font-display text-3xl font-bold text-white">5K+</div>
-              <div className="text-white/60 text-sm mt-1">Creators</div>
-            </div>
+          {/* Stats row */}
+          <div className="flex gap-4 mb-10">
+            {[
+              { value: "$50K+", label: "Paid Out" },
+              { value: "100+", label: "Campaigns" },
+              { value: "5K+", label: "Creators" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center px-5 py-4 bg-white/[0.07] rounded-2xl backdrop-blur-sm border border-white/[0.08] min-w-[100px]">
+                <div className="font-display text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-white/50 text-xs mt-1 font-medium">{stat.label}</div>
+              </div>
+            ))}
           </div>
 
           {/* Feature pills */}
-          <div className="flex flex-wrap gap-3 mt-10 justify-center max-w-md">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10 text-white/80 text-sm">
-              <Zap className="w-4 h-4 text-yellow-300" />
-              Instant Payouts
+          <div className="flex flex-wrap gap-2.5 justify-center max-w-md">
+            {[
+              { icon: <Zap className="w-3.5 h-3.5 text-yellow-300" />, label: "Instant Payouts" },
+              { icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />, label: "Real-time Analytics" },
+              { icon: <Shield className="w-3.5 h-3.5 text-blue-300" />, label: "Secure Payments" },
+              { icon: <Star className="w-3.5 h-3.5 text-amber-300" />, label: "Top Brands" },
+            ].map((pill) => (
+              <div key={pill.label} className="flex items-center gap-2 px-4 py-2 bg-white/[0.07] rounded-full backdrop-blur-sm border border-white/[0.08] text-white/70 text-[13px] font-medium">
+                {pill.icon}
+                {pill.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Testimonial card */}
+          <div className="mt-12 bg-white/[0.07] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-5 max-w-sm w-full">
+            <div className="flex gap-1 mb-3">
+              {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10 text-white/80 text-sm">
-              <TrendingUp className="w-4 h-4 text-green-300" />
-              Real-time Analytics
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10 text-white/80 text-sm">
-              <Sparkles className="w-4 h-4 text-purple-300" />
-              Top Brands
+            <p className="text-white/70 text-sm leading-relaxed mb-3">
+              "Zyrozo helped me earn my first ₹50K within 2 weeks. The platform is incredibly easy to use!"
+            </p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">R</div>
+              <div>
+                <p className="text-white/90 text-sm font-semibold">Rahul K.</p>
+                <p className="text-white/40 text-xs">Content Creator</p>
+              </div>
             </div>
           </div>
         </div>
