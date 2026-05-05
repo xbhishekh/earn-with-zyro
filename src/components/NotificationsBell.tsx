@@ -65,9 +65,10 @@ const NotificationsBell = memo(() => {
 
     fetchNotifications();
 
-    // Real-time subscription
+    // Real-time subscription - use unique channel name to avoid reuse issues
+    const channelName = `notifications-${user.id}-${Date.now()}`;
     const channel = supabase
-      .channel('notifications-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -80,7 +81,6 @@ const NotificationsBell = memo(() => {
           const newNotification = payload.new as Notification;
           setNotifications(prev => {
             const updated = [newNotification, ...prev];
-            // Update cache
             notificationsCache.set(user.id, { data: updated, timestamp: Date.now() });
             return updated;
           });
