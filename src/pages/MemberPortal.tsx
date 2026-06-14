@@ -340,7 +340,7 @@ const MemberPortal = () => {
       default:
         return (
           <div className="prose prose-sm max-w-none p-6 rounded-lg border bg-card">
-            <div dangerouslySetInnerHTML={{ __html: data?.text_content || selectedItem.description || "" }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeText(data?.text_content || selectedItem.description || "") }} />
           </div>
         );
     }
