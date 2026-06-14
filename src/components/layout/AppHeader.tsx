@@ -19,7 +19,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import NotificationsBell from '@/components/NotificationsBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { PrefetchLink } from '@/components/PrefetchLink';
 import { prefetchRoute } from '@/lib/prefetch';
 import { cn } from '@/lib/utils';
 import { calculateAvailableBalance } from '@/lib/balance-utils';
