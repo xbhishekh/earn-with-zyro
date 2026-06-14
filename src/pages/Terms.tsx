@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
 
 const termsContent = `
 # Terms of Service
