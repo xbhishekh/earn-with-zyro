@@ -272,7 +272,7 @@ const MemberPortal = () => {
           return (
             <div 
               className="aspect-video w-full rounded-lg overflow-hidden bg-black"
-              dangerouslySetInnerHTML={{ __html: data.embed_code }}
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbed(data.embed_code) }}
             />
           );
         }
@@ -295,7 +295,7 @@ const MemberPortal = () => {
         return (
           <div 
             className="w-full min-h-[400px] rounded-lg overflow-hidden border"
-            dangerouslySetInnerHTML={{ __html: data?.embed_code || "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeEmbed(data?.embed_code || "") }}
           />
         );
 
