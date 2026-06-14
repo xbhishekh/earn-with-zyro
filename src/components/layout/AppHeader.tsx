@@ -19,6 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import NotificationsBell from '@/components/NotificationsBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { PrefetchLink } from '@/components/PrefetchLink';
+import { prefetchRoute } from '@/lib/prefetch';
 import { cn } from '@/lib/utils';
 import { calculateAvailableBalance } from '@/lib/balance-utils';
 
@@ -217,6 +219,10 @@ export const AppHeader = memo(() => {
               <img 
                 src={logo} 
                 alt="Zyrozo" 
+                width={36}
+                height={36}
+                decoding="async"
+                fetchPriority="high"
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
               <span className="hidden sm:block font-display font-bold text-lg gradient-text">
@@ -230,6 +236,8 @@ export const AppHeader = memo(() => {
                 <Link
                   key={item.label}
                   to={item.href}
+                  onMouseEnter={() => prefetchRoute(item.href)}
+                  onFocus={() => prefetchRoute(item.href)}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                     isActive(item.href)
