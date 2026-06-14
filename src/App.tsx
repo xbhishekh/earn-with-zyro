@@ -1,4 +1,4 @@
-import { lazy, Suspense, memo } from "react";
+import { lazy, Suspense, memo, useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { BackToTop } from "@/components/BackToTop";
+import { warmCommonRoutes } from "@/lib/prefetch";
 
 // Lazy load non-critical UI components to reduce initial bundle
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
@@ -18,9 +19,11 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import NetworkStatusToast from "@/components/NetworkStatusToast";
 
-// Eager load critical pages - homepage and auth for fastest initial load
+// Eager load only the homepage — fastest LCP for landing
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+
+// Lazy load everything else
+const Auth = lazy(() => import("./pages/Auth"));
 
 // Lazy load non-critical pages for better initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -56,18 +59,30 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = "PageLoader";
 
-// Optimized QueryClient with aggressive caching for performance
+// Optimized QueryClient — sane defaults for scale
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
-      gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
-      retry: 1, // Only retry once on failure
-      refetchOnWindowFocus: false, // Don't refetch when window regains focus
-      refetchOnReconnect: false, // Don't refetch on reconnect
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: "always",
+      networkMode: "online",
+    },
+    mutations: {
+      retry: 0,
+      networkMode: "online",
     },
   },
 });
+
+const RoutePrewarmer = () => {
+  useEffect(() => {
+    warmCommonRoutes();
+  }, []);
+  return null;
+};
 
 const App = () => (
   <ErrorBoundary>
@@ -84,6 +99,7 @@ const App = () => (
               <ScrollProgress />
               <CommandPalette />
               <BackToTop />
+              <RoutePrewarmer />
             <Suspense fallback={<PageLoader />}>
               <SuspensionGuard>
                 <Routes>

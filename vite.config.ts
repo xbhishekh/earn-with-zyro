@@ -19,44 +19,49 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Optimize chunk splitting for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks - rarely change, cached long-term
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip', '@radix-ui/react-popover', '@radix-ui/react-select'],
-          'query-vendor': ['@tanstack/react-query'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge', 'zod'],
-          'animation-vendor': ['framer-motion'],
+        // Smart chunk strategy — split by library family for long-term caching
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("react-router")) return "react-router";
+          if (id.includes("react-dom") || id.match(/[\\/]react[\\/]/)) return "react-vendor";
+          if (id.includes("@radix-ui")) return "radix-ui";
+          if (id.includes("@tanstack")) return "query-vendor";
+          if (id.includes("@supabase")) return "supabase-vendor";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts-vendor";
+          if (id.includes("framer-motion")) return "animation-vendor";
+          if (id.includes("lucide-react")) return "icons-vendor";
+          if (id.includes("date-fns")) return "date-vendor";
+          if (id.includes("cmdk")) return "cmdk-vendor";
+          if (id.includes("react-helmet")) return "helmet-vendor";
+          if (
+            id.includes("clsx") ||
+            id.includes("tailwind-merge") ||
+            id.includes("class-variance-authority") ||
+            id.includes("zod")
+          )
+            return "utils-vendor";
         },
       },
     },
-    // Reduce chunk size warnings threshold
     chunkSizeWarningLimit: 600,
-    // Enable minification
-    minify: 'esbuild',
-    // Target modern browsers for smaller bundles
-    target: 'es2020',
-    // Enable source maps for production debugging
-    sourcemap: mode === 'development',
-    // CSS code splitting for faster initial load
+    minify: "esbuild",
+    target: "es2020",
+    sourcemap: mode === "development",
     cssCodeSplit: true,
-    // Inline assets smaller than 4kb
     assetsInlineLimit: 4096,
+    reportCompressedSize: false,
   },
-  // Optimize dependency pre-bundling
   optimizeDeps: {
     include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@supabase/supabase-js',
-      '@tanstack/react-query',
-      'sonner',
-      'recharts',
-      'lodash',
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@supabase/supabase-js",
+      "@tanstack/react-query",
+      "sonner",
     ],
+    exclude: ["recharts", "framer-motion"],
   },
 }));
