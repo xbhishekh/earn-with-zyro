@@ -29,7 +29,17 @@ import {
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
 import { toast } from "sonner";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
+  email: z.string().trim().email("Invalid email").max(255, "Email too long"),
+  inquiry_type: z.string().min(1, "Select an inquiry type"),
+  subject: z.string().trim().max(200, "Subject too long").optional(),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(5000, "Message too long"),
+});
 
 const contactMethods = [
   {
@@ -87,18 +97,38 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.type || !formData.message) {
-      toast.error("Please fill in all required fields");
+
+    const parsed = contactSchema.safeParse({
+      name: formData.name,
+      email: formData.email,
+      inquiry_type: formData.type,
+      subject: formData.subject || undefined,
+      message: formData.message,
+    });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check the form");
       return;
     }
 
     setSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
+    const { error } = await supabase.from("contact_messages").insert({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      inquiry_type: parsed.data.inquiry_type,
+      subject: parsed.data.subject ?? null,
+      message: parsed.data.message,
+    });
+
     setSubmitting(false);
+
+    if (error) {
+      console.error("Contact submit error:", error);
+      toast.error("Could not send message. Please email us directly.");
+      return;
+    }
+
     setSubmitted(true);
     toast.success("Message sent successfully! We'll get back to you soon.");
   };

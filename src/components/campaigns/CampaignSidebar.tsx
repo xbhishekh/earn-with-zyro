@@ -250,22 +250,27 @@ export const CampaignSidebar = ({
   useEffect(() => {
     if (!user || !isMember) return;
 
+    let cancelled = false;
     const channel = supabase.channel(`campaign-presence-${campaign.id}`, {
       config: { presence: { key: user.id } }
     });
 
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        setOnlineCount(Object.keys(state).length);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ online_at: new Date().toISOString() });
-        }
-      });
+    channel.on('presence', { event: 'sync' }, () => {
+      if (cancelled) return;
+      const state = channel.presenceState();
+      setOnlineCount(Object.keys(state).length);
+    });
+
+    channel.subscribe((status) => {
+      if (cancelled) return;
+      if (status === 'SUBSCRIBED') {
+        // Fire-and-forget track call (don't pass async to subscribe)
+        channel.track({ online_at: new Date().toISOString() }).catch(() => {});
+      }
+    });
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [campaign.id, user, isMember]);

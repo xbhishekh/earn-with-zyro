@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
 
 const termsContent = `
 # Terms of Service
@@ -80,6 +81,23 @@ For questions about these Terms, contact us at legal@zyrozo.com
 `;
 
 const Terms = () => {
+  const [content, setContent] = useState<string>(termsContent);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("legal_pages")
+        .select("content")
+        .eq("page_type", "terms")
+        .maybeSingle();
+      if (!cancelled && data?.content && data.content.trim()) {
+        setContent(data.content);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <SEO
@@ -88,17 +106,13 @@ const Terms = () => {
         canonical="/terms"
       />
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl mx-auto"
-          >
+          <div className="max-w-3xl mx-auto animate-fade-in">
             <div className="glass-card rounded-2xl p-8 md:p-12">
               <div className="prose prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-muted-foreground prose-li:text-muted-foreground prose-strong:text-foreground max-w-none">
-                {termsContent.split('\n').map((line, index) => {
+                {content.split('\n').map((line, index) => {
                   if (line.startsWith('# ')) {
                     return (
                       <h1 key={index} className="font-display text-3xl font-bold gradient-text mb-2">
@@ -134,7 +148,7 @@ const Terms = () => {
                 })}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </main>
 

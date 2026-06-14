@@ -77,12 +77,13 @@ const Balance = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchBalanceData();
-    }
+    if (!user) return;
+    let cancelled = false;
+    fetchBalanceData(() => cancelled);
+    return () => { cancelled = true; };
   }, [user]);
 
-  const fetchBalanceData = async () => {
+  const fetchBalanceData = async (isCancelled?: () => boolean) => {
     try {
       // Fetch balance transactions
       const { data: txns, error: txnError } = await supabase
@@ -92,6 +93,7 @@ const Balance = () => {
         .order("created_at", { ascending: false });
 
       if (txnError) throw txnError;
+      if (isCancelled?.()) return;
 
       // Calculate balances using centralized utility
       const calculatedBalance = calculateBalances(txns || []);
@@ -105,12 +107,13 @@ const Balance = () => {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
 
+      if (isCancelled?.()) return;
       setWithdrawals(withdrawalData as WithdrawalRequest[] || []);
     } catch (error) {
       console.error("Error fetching balance:", error);
-      toast.error("Failed to load balance data");
+      if (!isCancelled?.()) toast.error("Failed to load balance data");
     } finally {
-      setLoading(false);
+      if (!isCancelled?.()) setLoading(false);
     }
   };
 
