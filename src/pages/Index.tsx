@@ -49,9 +49,11 @@ const Index = () => {
       <MainLayout>
         {seoContent}
         <HeroSection />
+        <Marquee />
         <Features />
         <HowItWorks />
         <Testimonials />
+        <CTASection />
         <Footer />
       </MainLayout>
     );
@@ -64,9 +66,11 @@ const Index = () => {
       <Navbar />
       <main className="pt-16 md:pt-20">
         <HeroSection />
+        <Marquee />
         <Features />
         <HowItWorks />
         <Testimonials />
+        <CTASection />
         <Footer />
       </main>
     </div>
