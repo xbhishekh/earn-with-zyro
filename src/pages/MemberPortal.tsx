@@ -16,6 +16,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
+import DOMPurify from "dompurify";
+
+const sanitizeEmbed = (html: string) =>
+  DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["iframe", "div", "span", "p", "br", "a", "img"],
+    ALLOWED_ATTR: [
+      "src", "width", "height", "frameborder", "allow", "allowfullscreen",
+      "title", "class", "style", "href", "target", "rel", "alt", "loading",
+    ],
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+  });
+
+const sanitizeText = (html: string) =>
+  DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "u", "s", "h1", "h2", "h3", "h4",
+      "ul", "ol", "li", "a", "blockquote", "code", "pre", "span", "div",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+  });
 
 interface ContentModule {
   id: string;
@@ -252,7 +272,7 @@ const MemberPortal = () => {
           return (
             <div 
               className="aspect-video w-full rounded-lg overflow-hidden bg-black"
-              dangerouslySetInnerHTML={{ __html: data.embed_code }}
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbed(data.embed_code) }}
             />
           );
         }
@@ -275,7 +295,7 @@ const MemberPortal = () => {
         return (
           <div 
             className="w-full min-h-[400px] rounded-lg overflow-hidden border"
-            dangerouslySetInnerHTML={{ __html: data?.embed_code || "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeEmbed(data?.embed_code || "") }}
           />
         );
 
@@ -320,7 +340,7 @@ const MemberPortal = () => {
       default:
         return (
           <div className="prose prose-sm max-w-none p-6 rounded-lg border bg-card">
-            <div dangerouslySetInnerHTML={{ __html: data?.text_content || selectedItem.description || "" }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeText(data?.text_content || selectedItem.description || "") }} />
           </div>
         );
     }
