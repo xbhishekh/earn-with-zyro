@@ -3,6 +3,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { CommandPalette } from "@/components/CommandPalette";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { BackToTop } from "@/components/BackToTop";
 
 // Lazy load non-critical UI components to reduce initial bundle
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
@@ -68,14 +72,18 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <Suspense fallback={null}>
-              <Toaster />
-              <Sonner />
-            </Suspense>
-            <NetworkStatusToast />
+      <ThemeProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <Suspense fallback={null}>
+                <Toaster />
+                <Sonner />
+              </Suspense>
+              <NetworkStatusToast />
+              <ScrollProgress />
+              <CommandPalette />
+              <BackToTop />
             <Suspense fallback={<PageLoader />}>
               <SuspensionGuard>
                 <Routes>
