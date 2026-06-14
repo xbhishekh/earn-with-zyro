@@ -16,6 +16,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
+import DOMPurify from "dompurify";
+
+const sanitizeEmbed = (html: string) =>
+  DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["iframe", "div", "span", "p", "br", "a", "img"],
+    ALLOWED_ATTR: [
+      "src", "width", "height", "frameborder", "allow", "allowfullscreen",
+      "title", "class", "style", "href", "target", "rel", "alt", "loading",
+    ],
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+  });
+
+const sanitizeText = (html: string) =>
+  DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "u", "s", "h1", "h2", "h3", "h4",
+      "ul", "ol", "li", "a", "blockquote", "code", "pre", "span", "div",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+  });
 
 interface ContentModule {
   id: string;
