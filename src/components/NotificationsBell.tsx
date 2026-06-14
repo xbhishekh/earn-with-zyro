@@ -60,38 +60,37 @@ const NotificationsBell = memo(() => {
   }, [user]);
 
   useEffect(() => {
-    if (!user || hasFetched.current) return;
-    hasFetched.current = true;
+    if (!user) return;
 
+    let cancelled = false;
     fetchNotifications();
 
-    // Real-time subscription - use unique channel name to avoid reuse issues
-    const channelName = `notifications-${user.id}-${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => {
-            const updated = [newNotification, ...prev];
-            notificationsCache.set(user.id, { data: updated, timestamp: Date.now() });
-            return updated;
-          });
-          setUnreadCount(prev => prev + 1);
-        }
-      )
-      .subscribe();
+    // Build the channel + listeners BEFORE subscribing, and tear down on cleanup.
+    const channel = supabase.channel(`notifications:${user.id}:${Math.random().toString(36).slice(2)}`);
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload) => {
+        if (cancelled) return;
+        const newNotification = payload.new as Notification;
+        setNotifications(prev => {
+          const updated = [newNotification, ...prev];
+          notificationsCache.set(user.id, { data: updated, timestamp: Date.now() });
+          return updated;
+        });
+        setUnreadCount(prev => prev + 1);
+      }
+    );
+    channel.subscribe();
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
-      hasFetched.current = false;
     };
   }, [user, fetchNotifications]);
 
