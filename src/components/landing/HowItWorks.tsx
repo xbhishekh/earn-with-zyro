@@ -1,68 +1,67 @@
-import { Search, Heart, ShoppingBag } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 
 const steps = [
   {
-    icon: Search,
-    step: "Step 1",
-    title: "Explore Clips",
-    description: "Browse our vast collection of high-quality digital clips from talented creators.",
+    no: "I.",
+    title: "Pick a campaign",
+    description: "Browse a curated rotation of brand briefs. Filter by payout rate, niche, or platform. Apply in one click.",
+    meta: "Avg. brief: 90 seconds to read",
   },
   {
-    icon: Heart,
-    step: "Step 2",
-    title: "Choose What You Like",
-    description: "Find the perfect content that matches your needs with our smart filters.",
+    no: "II.",
+    title: "Make the clip",
+    description: "Use the brand's assets — or your own footage. Stay on-brief, stay original. The editorial guidelines tell you exactly what works.",
+    meta: "Drop clips from TikTok, Reels, Shorts, X",
   },
   {
-    icon: ShoppingBag,
-    step: "Step 3",
-    title: "Buy or Sell Instantly",
-    description: "Complete your purchase in seconds or list your own content to start earning.",
+    no: "III.",
+    title: "Get paid for views",
+    description: "Submit the link. We track the views, calculate the payout, and credit your balance. Withdraw whenever.",
+    meta: "Released after 72-hour view verification",
   },
 ];
 
 export const HowItWorks = () => {
   return (
-    <section className="py-20 md:py-24 relative bg-background">
+    <section className="py-24 md:py-32 bg-secondary/30 border-t border-border">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-            How It <span className="gradient-text">Works</span>
+        <div className="max-w-3xl mb-16">
+          <span className="editorial-eyebrow mb-6 block">Chapter II · The Process</span>
+          <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
+            Three steps, <span className="display-italic text-muted-foreground">no theatrics.</span>
           </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Get started in three simple steps
-          </p>
         </div>
 
-        {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {steps.map((item, index) => (
-            <div key={item.title} className="relative group">
-              {/* Connector Line */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-16 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary/30 to-secondary/30" />
-              )}
-
-              <div className="relative text-center">
-                {/* Step Badge */}
-                <div className="inline-flex items-center justify-center px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4">
-                  {item.step}
-                </div>
-
-                {/* Icon */}
-                <div className="w-20 h-20 mx-auto gradient-bg rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                  <item.icon className="w-10 h-10 text-white" />
-                </div>
-
-                {/* Content */}
-                <h3 className="font-display text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground max-w-xs mx-auto">
-                  {item.description}
+        <div className="divide-y divide-border border-y border-border">
+          {steps.map((s) => (
+            <div
+              key={s.title}
+              className="group grid grid-cols-12 gap-6 py-10 md:py-14 px-2 md:px-4 hover:bg-background/60 transition-colors duration-500"
+            >
+              <div className="col-span-2 md:col-span-1">
+                <span className="display-serif display-italic text-3xl md:text-4xl text-muted-foreground">{s.no}</span>
+              </div>
+              <div className="col-span-10 md:col-span-6">
+                <h3 className="display-serif text-3xl md:text-5xl text-foreground mb-3 leading-tight">
+                  {s.title}
+                </h3>
+                <p className="text-muted-foreground text-base leading-relaxed max-w-xl">
+                  {s.description}
                 </p>
+              </div>
+              <div className="col-span-12 md:col-span-5 md:text-right flex md:justify-end items-start">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{s.meta}</span>
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <Link to="/campaigns" className="btn-ink group">
+            See live campaigns
+            <ArrowUpRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
         </div>
       </div>
     </section>
