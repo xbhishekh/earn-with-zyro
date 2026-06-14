@@ -1,7 +1,9 @@
 import { HeroSection } from "@/components/landing/HeroSection";
+import { Marquee } from "@/components/landing/Marquee";
 import { Features } from "@/components/landing/Features";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Testimonials } from "@/components/landing/Testimonials";
+import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -47,9 +49,11 @@ const Index = () => {
       <MainLayout>
         {seoContent}
         <HeroSection />
+        <Marquee />
         <Features />
         <HowItWorks />
         <Testimonials />
+        <CTASection />
         <Footer />
       </MainLayout>
     );
@@ -62,9 +66,11 @@ const Index = () => {
       <Navbar />
       <main className="pt-16 md:pt-20">
         <HeroSection />
+        <Marquee />
         <Features />
         <HowItWorks />
         <Testimonials />
+        <CTASection />
         <Footer />
       </main>
     </div>

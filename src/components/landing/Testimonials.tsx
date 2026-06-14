@@ -1,67 +1,68 @@
-import { Star, Quote } from "lucide-react";
+import { Quote } from "lucide-react";
 
 const testimonials = [
   {
     name: "Jake Mitchell",
-    role: "Content Creator",
-    quote: "Zyrozo has completely transformed how I sell my content. The platform is intuitive, payments are fast, and I've doubled my income in just two months!",
+    role: "Clip editor · 1.2M views",
+    quote: "Zyrozo doubled my monthly income in two months. The dashboard is the cleanest thing I've used — it just respects your time.",
     avatar: "JM",
+    payout: "$2,840",
   },
   {
     name: "Sarah Johnson",
-    role: "Video Editor",
-    quote: "Finding quality clips used to take hours. Now I browse Zyrozo's marketplace and get exactly what I need in minutes. The download speeds are incredible!",
+    role: "TikTok creator · 4.6M views",
+    quote: "I was tired of pitching brands. Here the campaigns come pre-vetted. Pick one, ship a clip, see the money land.",
     avatar: "SJ",
+    payout: "$5,120",
+  },
+  {
+    name: "Aman Verma",
+    role: "Reels creator · 2.1M views",
+    quote: "Payouts are actually on time. Support replies. The whole thing feels designed by someone who's been on the creator side.",
+    avatar: "AV",
+    payout: "$3,460",
   },
 ];
 
 export const Testimonials = () => {
   return (
-    <section className="py-20 md:py-24 bg-muted/30">
+    <section className="py-24 md:py-32 bg-background border-t border-border">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-            What Our <span className="gradient-text">Users Say</span>
+        <div className="max-w-3xl mb-16">
+          <span className="editorial-eyebrow mb-6 block">Chapter III · The Receipts</span>
+          <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
+            What creators are <span className="display-italic text-muted-foreground">actually</span> saying.
           </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Trusted by thousands of creators worldwide
-          </p>
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
-          {testimonials.map((testimonial) => (
-            <div
-              key={testimonial.name}
-              className="bg-card border border-border rounded-2xl p-8 relative"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {testimonials.map((t, i) => (
+            <figure
+              key={t.name}
+              className={`group relative bg-secondary/40 border border-border p-8 md:p-10 transition-all duration-500 hover:bg-background hover:shadow-[var(--shadow-lift)] hover:-translate-y-1 ${i === 1 ? "md:translate-y-6" : ""}`}
             >
-              {/* Quote Icon */}
-              <Quote className="absolute top-6 right-6 w-8 h-8 text-primary/20" />
+              <Quote className="absolute top-6 right-6 w-6 h-6 text-foreground/15" strokeWidth={1.5} />
 
-              {/* Stars */}
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-primary text-primary" />
-                ))}
-              </div>
+              <blockquote className="display-serif text-2xl md:text-[26px] text-foreground leading-snug mb-8">
+                "{t.quote}"
+              </blockquote>
 
-              {/* Quote */}
-              <p className="text-foreground mb-6 leading-relaxed">
-                "{testimonial.quote}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">
-                  {testimonial.avatar}
+              <figcaption className="flex items-center justify-between pt-6 border-t border-border/80">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold tracking-wider">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.name}</p>
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{t.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                <div className="text-right">
+                  <p className="display-serif text-xl text-foreground">{t.payout}</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">last 30d</p>
                 </div>
-              </div>
-            </div>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>

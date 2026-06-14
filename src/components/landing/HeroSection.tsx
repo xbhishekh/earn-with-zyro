@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, Star } from "lucide-react";
 
 export const HeroSection = () => {
   return (
@@ -13,7 +13,7 @@ export const HeroSection = () => {
         <div className="max-w-5xl mx-auto">
           {/* Eyebrow */}
           <div className="flex justify-center mb-10 animate-fade-in">
-            <span className="editorial-eyebrow">Creator Rewards · Est. 2026</span>
+            <span className="editorial-eyebrow">A Creator Rewards Quarterly · Vol. 01</span>
           </div>
 
           {/* Display headline */}
@@ -30,7 +30,7 @@ export const HeroSection = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-20 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8 animate-fade-in">
             <Link to="/auth?mode=signup" className="btn-ink group">
               Start earning
               <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
@@ -39,6 +39,25 @@ export const HeroSection = () => {
               <Play className="w-4 h-4 mr-2" />
               Browse campaigns
             </Link>
+          </div>
+
+          {/* Social proof row */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fade-in">
+            <div className="flex -space-x-2">
+              {["JM", "SJ", "AV", "RP"].map((a) => (
+                <div key={a} className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-medium border-2 border-background">
+                  {a}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-foreground text-foreground" />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">Loved by 5,000+ creators</span>
+            </div>
           </div>
 
           {/* Stats — editorial divided row */}

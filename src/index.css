@@ -283,6 +283,11 @@
   100% { transform: translateX(100%); }
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
 .skeleton-shimmer {
   animation: shimmer 1.5s infinite;
 }
