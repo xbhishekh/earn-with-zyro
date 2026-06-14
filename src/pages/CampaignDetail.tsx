@@ -247,9 +247,11 @@ const CampaignDetail = () => {
       navigate(`/auth?redirectTo=${encodeURIComponent(target)}`, { replace: true });
       return;
     }
+    let cancelled = false;
     if ((id || slug) && user) {
       fetchCampaignData();
     }
+    return () => { cancelled = true; };
   }, [id, slug, user, authLoading, navigate, fetchCampaignData]);
 
   const openWaitlist = () => {

@@ -139,7 +139,7 @@ const MarketplaceProductDetail = () => {
 
     // Fetch seller, reviews, and check purchase status in parallel
     const [sellerResult, reviewsResult, purchaseResult, balanceResult, userReviewResult] = await Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", productData.seller_id).single(),
+      supabase.from("profiles").select("user_id, username, display_name, avatar_url, bio, is_verified, cover_image_url").eq("user_id", productData.seller_id).single(),
       supabase.from("product_reviews").select("*").eq("product_id", productData.id).order("created_at", { ascending: false }),
       user ? supabase.from("product_purchases").select("id").eq("product_id", productData.id).eq("buyer_id", user.id).single() : Promise.resolve({ data: null }),
       user ? supabase.from("balance_transactions").select("amount, type, status").eq("user_id", user.id) : Promise.resolve({ data: [] }),

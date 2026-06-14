@@ -262,9 +262,11 @@ const Careers = () => {
                           </span>
                         </div>
                       </div>
-                      <Button variant="outline" className="shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                        Apply Now
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                      <Button variant="outline" className="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                        <a href={`mailto:careers@zyrozo.com?subject=${encodeURIComponent("Application: " + position.title)}&body=${encodeURIComponent("Hi Zyrozo team,\n\nI'd like to apply for the " + position.title + " position.\n\nMy background:\n\nResume / LinkedIn:\n\nThanks!")}`}>
+                          Apply Now
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </a>
                       </Button>
                     </div>
                   </CardContent>
