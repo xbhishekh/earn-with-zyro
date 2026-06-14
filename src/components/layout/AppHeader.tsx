@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import NotificationsBell from '@/components/NotificationsBell';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { calculateAvailableBalance } from '@/lib/balance-utils';
 
@@ -245,16 +246,24 @@ export const AppHeader = memo(() => {
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Search Button - Desktop */}
+            {/* Search Button - Desktop with ⌘K hint */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden md:flex w-56 lg:w-64 h-9 px-4 bg-muted hover:bg-muted/80 rounded-full items-center gap-2 transition-colors shrink-0"
+              className="hidden md:flex w-56 lg:w-64 h-9 px-3 bg-muted hover:bg-muted/80 rounded-full items-center gap-2 transition-colors shrink-0 group"
             >
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="text-sm text-muted-foreground truncate flex-1 text-left">
                 Search...
               </span>
+              <kbd className="hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
             </button>
+
+            {/* Theme toggle - Desktop */}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 shrink-0">
