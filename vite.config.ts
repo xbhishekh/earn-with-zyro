@@ -60,8 +60,10 @@ export default defineConfig(({ mode }) => ({
       "react-router-dom",
       "@supabase/supabase-js",
       "@tanstack/react-query",
+      "recharts",
+      "lodash/get",
       "sonner",
     ],
-    exclude: ["recharts", "framer-motion"],
+    exclude: ["framer-motion"],
   },
 }));
