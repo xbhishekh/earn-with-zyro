@@ -88,10 +88,10 @@ const Terms = () => {
     (async () => {
       const { data } = await supabase
         .from("legal_pages")
-        .select("content, is_published")
+        .select("content")
         .eq("page_type", "terms")
         .maybeSingle();
-      if (!cancelled && data?.is_published && data.content && data.content.trim()) {
+      if (!cancelled && data?.content && data.content.trim()) {
         setContent(data.content);
       }
     })();
