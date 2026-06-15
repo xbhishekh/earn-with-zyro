@@ -104,6 +104,8 @@ const App = () => (
               <SuspensionGuard>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/index" element={<Index />} />
+                  <Route path="/home" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/dashboard" element={<RouteErrorBoundary routeName="Dashboard"><Dashboard /></RouteErrorBoundary>} />
                   <Route path="/campaigns" element={<RouteErrorBoundary routeName="Campaigns"><Campaigns /></RouteErrorBoundary>} />
