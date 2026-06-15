@@ -1,17 +1,16 @@
-import { lazy, Suspense, memo, useEffect } from "react";
+import { lazy, Suspense, memo, useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { CommandPalette } from "@/components/CommandPalette";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { BackToTop } from "@/components/BackToTop";
-import { warmCommonRoutes } from "@/lib/prefetch";
 
-// Lazy load non-critical UI components to reduce initial bundle
+// Lazy load non-critical UI so the homepage paints first instead of waiting on widgets.
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
 // Import critical components directly
 import SuspensionGuard from "@/components/SuspensionGuard";
@@ -77,11 +76,31 @@ const queryClient = new QueryClient({
   },
 });
 
-const RoutePrewarmer = () => {
+const DeferredChrome = () => {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    warmCommonRoutes();
+    if (typeof window === "undefined") return;
+
+    const showDeferredUi = () => setReady(true);
+    const idle = window.requestIdleCallback?.(showDeferredUi, { timeout: 2500 });
+    const timer = window.setTimeout(showDeferredUi, 2500);
+
+    return () => {
+      window.clearTimeout(timer);
+      if (idle) window.cancelIdleCallback?.(idle);
+    };
   }, []);
-  return null;
+
+  if (!ready) return null;
+
+  return (
+    <Suspense fallback={null}>
+      <Toaster />
+      <Sonner />
+      <CommandPalette />
+    </Suspense>
+  );
 };
 
 const App = () => (
@@ -91,15 +110,10 @@ const App = () => (
         <TooltipProvider>
           <BrowserRouter>
             <AuthProvider>
-              <Suspense fallback={null}>
-                <Toaster />
-                <Sonner />
-              </Suspense>
               <NetworkStatusToast />
               <ScrollProgress />
-              <CommandPalette />
               <BackToTop />
-              <RoutePrewarmer />
+              <DeferredChrome />
             <Suspense fallback={<PageLoader />}>
               <SuspensionGuard>
                 <Routes>
