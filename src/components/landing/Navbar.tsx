@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, Shield, Wallet, LogOut, User, LayoutDashboard } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

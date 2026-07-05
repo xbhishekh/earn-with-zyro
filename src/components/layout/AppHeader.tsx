@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, Shield, LogOut, Wallet, Crown
 } from 'lucide-react';
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/cliperus-mark.png";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
