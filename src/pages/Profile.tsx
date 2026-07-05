@@ -165,14 +165,16 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, username, display_name, bio, avatar_url, cover_image_url, location, is_verified, show_total_earned, show_location, show_owned_products, show_joined_products")
         .eq("user_id", user!.id)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        setProfile(data as ProfileData);
+        // Fetch payment_details via secure RPC (column-level restricted on profiles)
+        const { data: paymentDetails } = await supabase.rpc("get_own_payment_details", { p_user_id: user!.id });
+        setProfile({ ...(data as any), payment_details: (paymentDetails as any) ?? null } as ProfileData);
         setDisplayName(data.display_name || "");
         setUsername(data.username || "");
         setBio(data.bio || "");

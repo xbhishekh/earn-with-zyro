@@ -96,7 +96,7 @@ const AdminUsers = () => {
       if (hasFullAccess) {
         const { data } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, user_id, username, display_name, bio, avatar_url, cover_image_url, location, is_verified, show_total_earned, referred_by, show_location, show_owned_products, show_joined_products, created_at, updated_at")
           .order("created_at", { ascending: false })
           .range(page * pageSize, (page + 1) * pageSize - 1);
         nextProfiles = data || [];
@@ -105,7 +105,7 @@ const AdminUsers = () => {
         if (myCampaignMemberUserIds.length > 0) {
           const { data } = await supabase
             .from("profiles")
-            .select("*")
+            .select("id, user_id, username, display_name, bio, avatar_url, cover_image_url, location, is_verified, show_total_earned, referred_by, show_location, show_owned_products, show_joined_products, created_at, updated_at")
             .in("user_id", myCampaignMemberUserIds)
             .order("created_at", { ascending: false })
             .range(page * pageSize, (page + 1) * pageSize - 1);
