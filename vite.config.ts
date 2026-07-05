@@ -29,7 +29,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("@radix-ui")) return "radix-ui";
           if (id.includes("@tanstack")) return "query-vendor";
           if (id.includes("@supabase")) return "supabase-vendor";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts-vendor";
+          // Keep Recharts/D3 with the route chunk that imports it. Splitting these
+          // internals into a shared manual chunk can create production-only TDZ
+          // crashes in the published app (blank page before React mounts).
           if (id.includes("framer-motion")) return "animation-vendor";
           if (id.includes("lucide-react")) return "icons-vendor";
           if (id.includes("date-fns")) return "date-vendor";
