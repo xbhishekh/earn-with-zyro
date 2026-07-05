@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Mail, User, ArrowRight, Loader2, Check, X, Sparkles, Zap, TrendingUp, Shield, Star } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

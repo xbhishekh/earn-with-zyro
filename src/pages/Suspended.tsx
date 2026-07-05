@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Ban, MessageCircle, LogOut, Mail } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";

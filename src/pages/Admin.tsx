@@ -26,7 +26,7 @@ import {
   Gauge,
   Flag,
 } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
