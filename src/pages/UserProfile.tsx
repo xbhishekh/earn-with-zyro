@@ -80,7 +80,7 @@ const UserProfile = () => {
       // First try to find by username
       let { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, username, display_name, bio, avatar_url, cover_image_url, location, is_verified, show_total_earned, show_location, show_owned_products, show_joined_products, created_at, updated_at")
         .eq("username", username)
         .maybeSingle();
 
@@ -88,7 +88,7 @@ const UserProfile = () => {
       if (!data && username) {
         const { data: dataById, error: errorById } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, user_id, username, display_name, bio, avatar_url, cover_image_url, location, is_verified, show_total_earned, show_location, show_owned_products, show_joined_products, created_at, updated_at")
           .eq("user_id", username)
           .maybeSingle();
         
