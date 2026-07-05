@@ -19,34 +19,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        // Smart chunk strategy — split by library family for long-term caching
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("react-router")) return "react-router";
-          if (id.includes("react-dom") || id.match(/[\\/]react[\\/]/)) return "react-vendor";
-          if (id.includes("@radix-ui")) return "radix-ui";
-          if (id.includes("@tanstack")) return "query-vendor";
-          if (id.includes("@supabase")) return "supabase-vendor";
-          // Keep Recharts/D3 with the route chunk that imports it. Splitting these
-          // internals into a shared manual chunk can create production-only TDZ
-          // crashes in the published app (blank page before React mounts).
-          if (id.includes("framer-motion")) return "animation-vendor";
-          if (id.includes("lucide-react")) return "icons-vendor";
-          if (id.includes("date-fns")) return "date-vendor";
-          if (id.includes("cmdk")) return "cmdk-vendor";
-          if (id.includes("react-helmet")) return "helmet-vendor";
-          if (
-            id.includes("clsx") ||
-            id.includes("tailwind-merge") ||
-            id.includes("class-variance-authority") ||
-            id.includes("zod")
-          )
-            return "utils-vendor";
-        },
-      },
-    },
+    // Avoid custom vendor chunk splitting: forced manual chunks caused
+    // production-only TDZ crashes before React could mount, leaving the site blank.
     chunkSizeWarningLimit: 600,
     minify: "esbuild",
     target: "es2020",
