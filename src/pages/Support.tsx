@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { SEO, createFAQSchema } from "@/components/SEO";
 
 interface FAQ {
   id: string;
@@ -107,6 +108,12 @@ const Support = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Help Centre & FAQs"
+        description="Find answers to frequently asked questions about Cliperus campaigns, payouts, and the creator marketplace."
+        canonical="/support"
+        structuredData={faqs.length > 0 ? createFAQSchema(faqs.map(f => ({ question: f.question, answer: f.answer }))) : undefined}
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
