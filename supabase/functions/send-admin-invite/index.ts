@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Invitation - Zyrozo</title>
+  <title>Admin Invitation - Cliperus</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
                 <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #ff6b35, #f7c59f); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                   <span style="font-size: 24px;">⚡</span>
                 </div>
-                <span style="font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #ff6b35, #f7c59f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Zyrozo</span>
+                <span style="font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #ff6b35, #f7c59f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Cliperus</span>
               </div>
             </td>
           </tr>
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
                 Admin Invitation
               </h1>
               <p style="margin: 0 0 32px 0; font-size: 15px; color: #888888; text-align: center; line-height: 1.6;">
-                You've been invited to join Zyrozo as a <strong style="color: #ff6b35;">${roleLabel}</strong>
+                You've been invited to join Cliperus as a <strong style="color: #ff6b35;">${roleLabel}</strong>
               </p>
               
               <!-- Invite Code Box -->
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
                   How to get started:
                 </p>
                 <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #aaaaaa; line-height: 1.8;">
-                  <li>Go to Zyrozo and click "Sign Up"</li>
+                  <li>Go to Cliperus and click "Sign Up"</li>
                   <li>Create your account using this email address</li>
                   <li>Your admin role will be automatically assigned!</li>
                 </ol>
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
                 If you didn't expect this invitation, you can safely ignore this email.
               </p>
               <p style="margin: 0; font-size: 12px; color: #444444;">
-                © ${new Date().getFullYear()} Zyrozo. All rights reserved.
+                © ${new Date().getFullYear()} Cliperus. All rights reserved.
               </p>
             </td>
           </tr>
@@ -178,9 +178,9 @@ Deno.serve(async (req) => {
     `;
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Zyrozo <onboarding@resend.dev>",
+      from: "Cliperus <onboarding@resend.dev>",
       to: [email],
-      subject: `🎉 You're Invited to Join Zyrozo as ${roleLabel}`,
+      subject: `🎉 You're Invited to Join Cliperus as ${roleLabel}`,
       html: html,
     });
 

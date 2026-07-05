@@ -52,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email notification to admin
     const emailResponse = await resend.emails.send({
-      from: "Zyrozo <notifications@resend.dev>",
+      from: "Cliperus <notifications@resend.dev>",
       to: [adminEmail],
       subject: `🎬 New Video Submission: ${campaignName}`,
       html: `
@@ -76,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <div class="logo">⚡ Zyrozo</div>
+                <div class="logo">⚡ Cliperus</div>
                 <div class="title">New Video Submission!</div>
               </div>
               
@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div class="footer">
-                <p>This is an automated notification from Zyrozo.</p>
+                <p>This is an automated notification from Cliperus.</p>
                 <p>You're receiving this because you're an admin.</p>
               </div>
             </div>

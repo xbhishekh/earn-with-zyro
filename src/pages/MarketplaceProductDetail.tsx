@@ -315,7 +315,7 @@ const MarketplaceProductDetail = () => {
 
     // Check balance for paid products
     if (finalPrice > 0 && userBalance < finalPrice) {
-      toast.error("Insufficient balance. Please add funds to your Zyrozo Balance.", {
+      toast.error("Insufficient balance. Please add funds to your Cliperus Balance.", {
         action: {
           label: "Add Funds",
           onClick: () => navigate("/balance")
@@ -473,11 +473,11 @@ const MarketplaceProductDetail = () => {
   const productUrl = `/marketplace/${product.slug || product.id}`;
   const productDescription = product.short_description || product.description 
     ? (product.short_description || product.description || '').substring(0, 155) + ((product.short_description || product.description || '').length > 155 ? '...' : '')
-    : `${product.title} by ${seller?.display_name || 'Zyrozo seller'} - ${product.price === 0 ? 'Free' : `$${product.price}`}. Join ${product.members_count.toLocaleString()} members on Zyrozo Marketplace.`;
+    : `${product.title} by ${seller?.display_name || 'Cliperus seller'} - ${product.price === 0 ? 'Free' : `$${product.price}`}. Join ${product.members_count.toLocaleString()} members on Cliperus Marketplace.`;
   
   const seoTitle = product.price === 0 
-    ? `${product.title} - Free on Zyrozo Marketplace`
-    : `${product.title} - $${product.price} | Zyrozo Marketplace`;
+    ? `${product.title} - Free on Cliperus Marketplace`
+    : `${product.title} - $${product.price} | Cliperus Marketplace`;
   
   const seoKeywords = [
     product.title,

@@ -9,7 +9,7 @@ const privacyContent = `
 
 **Last Updated: January 15, 2026**
 
-At Zyrozo, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information.
+At Cliperus, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information.
 
 ## 1. Information We Collect
 
@@ -80,7 +80,7 @@ We retain your data as long as your account is active. After account deletion, w
 
 ## 8. Children's Privacy
 
-Zyrozo is not intended for users under 18. We do not knowingly collect data from minors.
+Cliperus is not intended for users under 18. We do not knowingly collect data from minors.
 
 ## 9. International Transfers
 
@@ -93,14 +93,14 @@ We may update this Privacy Policy periodically. We will notify you of significan
 ## 11. Contact Us
 
 For privacy-related questions or requests:
-- Email: privacy@zyrozo.com
+- Email: privacy@cliperus.com
 - Address: 123 Creator Lane, Suite 100, San Francisco, CA 94105, USA
 
 ## 12. Data Protection Officer
 
 For data protection inquiries:
 - Name: Data Protection Team
-- Email: privacy@zyrozo.com
+- Email: privacy@cliperus.com
 `;
 
 const Privacy = () => {
@@ -125,7 +125,7 @@ const Privacy = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Privacy Policy"
-        description="Zyrozo Privacy Policy - Learn how we collect, use, and protect your personal information. Your privacy is important to us."
+        description="Cliperus Privacy Policy - Learn how we collect, use, and protect your personal information. Your privacy is important to us."
         canonical="/privacy"
       />
       <Navbar />

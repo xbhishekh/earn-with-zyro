@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Zyrozo <onboarding@resend.dev>",
+        from: "Cliperus <onboarding@resend.dev>",
         to: [sellerEmail],
         subject: "🎉 Your product has been featured!",
         html: `
@@ -79,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="padding: 30px;">
                 <p style="color: #374151; font-size: 16px; line-height: 1.6;">Hi ${sellerName},</p>
                 <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-                  Great news! Our team has selected your product <strong>"${productTitle}"</strong> to be featured on the Zyrozo marketplace.
+                  Great news! Our team has selected your product <strong>"${productTitle}"</strong> to be featured on the Cliperus marketplace.
                 </p>
                 <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
                   <p style="margin: 0; color: #166534; font-weight: 600;">What this means for you:</p>
@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
               </div>
               <div style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                <p style="color: #6b7280; font-size: 14px; margin: 0;">Thank you for being part of Zyrozo!</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">Thank you for being part of Cliperus!</p>
               </div>
             </div>
           </body>

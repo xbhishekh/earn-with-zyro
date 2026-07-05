@@ -367,7 +367,7 @@ const SellerCampaignsAdmin = () => {
           metadata: { amount: earnings, views, campaign_id: selectedCampaign.id },
         });
 
-        // Send Team Zyrozo DM with payout notification (Whop-style)
+        // Send Team Cliperus DM with payout notification (Whop-style)
         // Format: @campaign_admin paid @user $X.XX for getting views on your content. 💸
         const releaseDate = new Date();
         releaseDate.setDate(releaseDate.getDate() + 3); // 72 hours / 3 days
