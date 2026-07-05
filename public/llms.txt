@@ -1,0 +1,23 @@
+# Cliperus
+
+> Cliperus is a creator rewards platform where content creators earn real money for views on TikTok, YouTube, and Instagram — through clipping campaigns, an affiliate program, and a creator marketplace.
+
+Cliperus connects brands with creators. Creators discover paid campaigns, submit clips of their work, and get paid per 1,000 verified views. A marketplace lets creators buy and sell digital products (courses, templates, communities, coaching), and an affiliate program rewards referrals.
+
+## Pages
+
+- [Home](/): Overview of the platform, featured campaigns, and how creators earn.
+- [Campaigns](/campaigns): Browse brand-sponsored clipping campaigns open for submissions.
+- [Marketplace](/marketplace): Discover courses, templates, memberships, and digital products from creators.
+- [Gallery](/gallery): Public showcase of creator submissions and top-performing content.
+- [Affiliate](/affiliate): Referral program details, commission structure, and share links.
+- [Pricing](/pricing): Plans, fees, and payout terms.
+- [About](/about): Company mission and story.
+- [Careers](/careers): Open roles at Cliperus.
+- [Contact](/contact): Support and business contact channels.
+- [Support](/support): Help centre and frequently asked questions.
+
+## Optional
+
+- [Terms of Service](/terms)
+- [Privacy Policy](/privacy)
