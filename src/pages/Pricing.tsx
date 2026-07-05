@@ -118,7 +118,7 @@ const Pricing = () => {
                   }`}>
                     <plan.icon className={`w-7 h-7 ${plan.popular ? "text-white" : "text-muted-foreground"}`} />
                   </div>
-                  <h3 className="font-display text-2xl font-bold mb-2">{plan.name}</h3>
+                  <h2 className="font-display text-2xl font-bold mb-2">{plan.name}</h2>
                   <p className="text-muted-foreground text-sm">{plan.description}</p>
                 </div>
 
