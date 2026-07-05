@@ -86,7 +86,7 @@ const ALLOWED_FILE_TYPES = [
   "text/plain",
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const TEAM_ZYROZO_USER_ID = "00000000-0000-0000-0000-000000000001";
+const TEAM_CLIPERUS_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 const Messages = () => {
   const { user, loading: authLoading, isAdmin, isSuperAdmin, isOwner, isFounder } = useAuth();
@@ -340,11 +340,11 @@ const Messages = () => {
       const profileMap = new Map<string, Profile>();
       profiles?.forEach(p => profileMap.set(p.user_id, p));
       
-      if (!profileMap.has(TEAM_ZYROZO_USER_ID) && otherUserIds.includes(TEAM_ZYROZO_USER_ID)) {
-        profileMap.set(TEAM_ZYROZO_USER_ID, {
-          user_id: TEAM_ZYROZO_USER_ID,
-          username: "zyrozo_team",
-          display_name: "Team Zyrozo",
+      if (!profileMap.has(TEAM_CLIPERUS_USER_ID) && otherUserIds.includes(TEAM_CLIPERUS_USER_ID)) {
+        profileMap.set(TEAM_CLIPERUS_USER_ID, {
+          user_id: TEAM_CLIPERUS_USER_ID,
+          username: "cliperus_team",
+          display_name: "Team Cliperus",
           avatar_url: "/favicon.jpeg",
           is_verified: true,
         });
@@ -822,7 +822,7 @@ const Messages = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const isTeamZyrozo = selectedConversation?.other_user?.user_id === TEAM_ZYROZO_USER_ID;
+  const isTeamCliperus = selectedConversation?.other_user?.user_id === TEAM_CLIPERUS_USER_ID;
 
   return (
     <MainLayout showMobileNav={false} className="h-[calc(100dvh-56px)] md:h-[calc(100dvh-64px)] overflow-hidden">
@@ -909,7 +909,7 @@ const Messages = () => {
           ) : (
             <div>
               {allConversations.map((convo) => {
-                const isTeamZyrozo = convo.other_user.user_id === TEAM_ZYROZO_USER_ID;
+                const isTeamCliperus = convo.other_user.user_id === TEAM_CLIPERUS_USER_ID;
                 const isSelected = selectedConversation?.room_id === convo.room_id;
                 
                 return (
@@ -930,7 +930,7 @@ const Messages = () => {
                         <AvatarImage src={convo.other_user.avatar_url || undefined} />
                         <AvatarFallback className={cn(
                           "text-white font-medium",
-                          isTeamZyrozo ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
+                          isTeamCliperus ? "bg-primary" : "bg-gradient-to-br from-gray-400 to-gray-600"
                         )}>
                           {(convo.other_user.display_name || convo.other_user.username || "?").charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -945,7 +945,7 @@ const Messages = () => {
                             )}>
                               {convo.other_user.display_name || convo.other_user.username}
                             </span>
-                            {(isTeamZyrozo || convo.other_user.is_verified) && (
+                            {(isTeamCliperus || convo.other_user.is_verified) && (
                               <BadgeCheck className="w-4 h-4 text-primary shrink-0" />
                             )}
                           </div>
@@ -1000,7 +1000,7 @@ const Messages = () => {
                 </Button>
                 
                 {/* Clickable user profile area */}
-                {!isTeamZyrozo ? (
+                {!isTeamCliperus ? (
                   <Link 
                     to={`/u/${selectedConversation.other_user.username || selectedConversation.other_user.user_id}`}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -1039,7 +1039,7 @@ const Messages = () => {
               </div>
               
               {/* Header Actions */}
-              {!isTeamZyrozo && (
+              {!isTeamCliperus && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -1094,7 +1094,7 @@ const Messages = () => {
                         {/* Messages */}
                         {group.messages.map((message, index) => {
                           const isOwn = message.user_id === user?.id;
-                          const isSysMsg = message.user_id === TEAM_ZYROZO_USER_ID;
+                          const isSysMsg = message.user_id === TEAM_CLIPERUS_USER_ID;
                           const showAvatar = !isOwn && (
                             index === 0 || group.messages[index - 1]?.user_id !== message.user_id
                           );
@@ -1292,15 +1292,15 @@ const Messages = () => {
 
             {/* Bottom Section - Fixed at bottom */}
             <div className="shrink-0 mt-auto">
-            {isTeamZyrozo ? (
+            {isTeamCliperus ? (
               <div className="px-4 py-3 border-t border-border bg-background">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
                     <BadgeCheck className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-foreground text-sm">This is the official Zyrozo notification channel</p>
-                    <p className="text-xs text-muted-foreground">Zyrozo will always use verified accounts to communicate with you</p>
+                    <p className="font-medium text-foreground text-sm">This is the official Cliperus notification channel</p>
+                    <p className="text-xs text-muted-foreground">Cliperus will always use verified accounts to communicate with you</p>
                   </div>
                 </div>
               </div>

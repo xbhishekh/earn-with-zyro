@@ -97,7 +97,7 @@ const Gallery = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Creator Gallery - Top Performing Content"
-        description="Explore approved content from Zyrozo's talented creators. See viral clips, trending videos, and get inspired by top-performing content across campaigns."
+        description="Explore approved content from Cliperus's talented creators. See viral clips, trending videos, and get inspired by top-performing content across campaigns."
         keywords="creator gallery, viral content, trending videos, UGC showcase, content examples"
         canonical="/gallery"
       />

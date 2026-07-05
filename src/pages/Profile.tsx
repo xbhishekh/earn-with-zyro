@@ -883,7 +883,7 @@ const Profile = () => {
                 <div className="pt-4 border-t border-border">
                   <h4 className="font-medium mb-3">Other ways to reach us</h4>
                   <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>📧 Email: support@zyrozo.com</p>
+                    <p>📧 Email: support@cliperus.com</p>
                     <p>💬 Response time: Usually within 24 hours</p>
                   </div>
                 </div>

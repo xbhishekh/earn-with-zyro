@@ -124,7 +124,7 @@ const AffiliateCenter = () => {
 
   const copyLink = (code: string, campaignSlug?: string | null) => {
     // Use the public website domain for sharing (not the preview/app origin)
-    const baseUrl = "https://zyrozo.com";
+    const baseUrl = "https://cliperus.com";
     const link = campaignSlug ? `${baseUrl}/c/${campaignSlug}?ref=${code}` : `${baseUrl}/?ref=${code}`;
     navigator.clipboard.writeText(link);
     toast.success("Link copied to clipboard!");
@@ -293,7 +293,7 @@ const AffiliateCenter = () => {
                   {link.campaign?.slug && (
                     <Button variant="ghost" size="icon" asChild>
                       <a 
-                        href={`https://zyrozo.com/c/${link.campaign.slug}?ref=${link.code}`}
+                        href={`https://cliperus.com/c/${link.campaign.slug}?ref=${link.code}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

@@ -1,5 +1,5 @@
-# Zyrozo Robots.txt
-# https://zyrozo.com
+# Cliperus Robots.txt
+# https://cliperus.com
 
 User-agent: *
 Allow: /
@@ -40,7 +40,7 @@ Disallow: /*?mode=
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://zyrozo.com/sitemap.xml
+Sitemap: https://cliperus.com/sitemap.xml
 
 # Specific bot instructions
 User-agent: Googlebot

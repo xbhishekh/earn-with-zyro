@@ -413,7 +413,7 @@ const AdminCampaigns = () => {
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">URL Slug</label>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">zyrozo.com/</span>
+                <span className="text-sm text-muted-foreground">cliperus.com/</span>
                 <Input
                   placeholder={formData.name ? generateSlug(formData.name) : "campaign-slug"}
                   value={formData.slug}

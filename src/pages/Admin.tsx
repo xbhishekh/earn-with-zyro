@@ -165,10 +165,10 @@ const Admin = () => {
         {/* Logo */}
         <div className="p-4 border-b border-border">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="Zyrozo" className="w-10 h-10 rounded-xl flex-shrink-0 object-cover" />
+            <img src={logo} alt="Cliperus" className="w-10 h-10 rounded-xl flex-shrink-0 object-cover" />
             {sidebarOpen && (
               <div>
-                <span className="font-display font-bold text-lg gradient-text">Zyrozo</span>
+                <span className="font-display font-bold text-lg gradient-text">Cliperus</span>
                 <p className="text-xs text-muted-foreground">Admin Panel</p>
               </div>
             )}
@@ -228,7 +228,7 @@ const Admin = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border">
         <div className="flex items-center justify-between px-4 h-14">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Zyrozo" className="w-8 h-8 rounded-lg object-cover" />
+            <img src={logo} alt="Cliperus" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-display font-bold gradient-text">Admin</span>
           </Link>
           <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

@@ -817,12 +817,12 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                                   className="font-semibold text-sm text-foreground hover:underline flex items-center gap-1"
                                 >
                                   {msg.profiles?.username || 'Unknown'}
-                                  {/* Verified checkmark for Team Zyrozo */}
+                                  {/* Verified checkmark for Team Cliperus */}
                                   {msg.user_id === '00000000-0000-0000-0000-000000000001' && (
                                     <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
                                   )}
                                 </Link>
-                                {/* System Message Badge for Team Zyrozo */}
+                                {/* System Message Badge for Team Cliperus */}
                                 {msg.user_id === '00000000-0000-0000-0000-000000000001' && (
                                   <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gradient-to-r from-orange-500 to-purple-500 text-white rounded-full uppercase tracking-wide">
                                     System

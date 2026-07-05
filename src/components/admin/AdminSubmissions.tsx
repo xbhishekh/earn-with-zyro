@@ -214,7 +214,7 @@ const AdminSubmissions = () => {
           },
         });
 
-        // Send Team Zyrozo DM with payout notification (Whop-style)
+        // Send Team Cliperus DM with payout notification (Whop-style)
         // Format: @campaign_admin paid @user $X.XX for getting views on your content. 💸
         const username = getUsername(selectedSubmission.user_id);
         const adminUsername = getUsername(user?.id || "");

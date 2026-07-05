@@ -7,7 +7,7 @@ const features = [
   {
     icon: Share2,
     title: "Share Your Link",
-    description: "Get a unique referral link: zyrozo.com/?ref=yourname",
+    description: "Get a unique referral link: cliperus.com/?ref=yourname",
   },
   {
     icon: Users,
@@ -53,7 +53,7 @@ export const AffiliateCTA = () => {
               Earn While You <span className="gradient-text">Share</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Invite creators to Zyrozo and earn passive income from their success. 
+              Invite creators to Cliperus and earn passive income from their success. 
               Join thousands of affiliates earning every month!
             </p>
           </motion.div>

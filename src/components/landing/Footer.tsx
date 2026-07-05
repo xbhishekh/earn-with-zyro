@@ -18,11 +18,11 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
           <Link to="/" className="flex items-center gap-2">
             <img 
               src={logo} 
-              alt="Zyrozo" 
+              alt="Cliperus" 
               className="w-9 h-9 rounded-xl object-contain"
             />
             <span className="font-display font-bold text-lg gradient-text">
-              Zyrozo
+              Cliperus
             </span>
           </Link>
 
@@ -41,7 +41,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
 
           {/* Copyright */}
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Zyrozo
+            © {new Date().getFullYear()} Cliperus
           </p>
         </div>
       </div>

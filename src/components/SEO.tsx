@@ -11,11 +11,11 @@ interface SEOProps {
   structuredData?: object | object[];
 }
 
-const SITE_NAME = "Zyrozo";
-const DEFAULT_TITLE = "Zyrozo - #1 Creator Rewards Platform | Earn Money Creating Content";
-const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on Zyrozo. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
-const DEFAULT_IMAGE = "https://zyrozo.com/og-image.png";
-const SITE_URL = "https://zyrozo.com";
+const SITE_NAME = "Cliperus";
+const DEFAULT_TITLE = "Cliperus - #1 Creator Rewards Platform | Earn Money Creating Content";
+const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on Cliperus. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
+const DEFAULT_IMAGE = "https://cliperus.com/og-image.png";
+const SITE_URL = "https://cliperus.com";
 
 export const SEO = ({
   title,
@@ -62,8 +62,8 @@ export const SEO = ({
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@Zyrozo" />
-      <meta name="twitter:creator" content="@Zyrozo" />
+      <meta name="twitter:site" content="@Cliperus" />
+      <meta name="twitter:creator" content="@Cliperus" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
@@ -82,27 +82,27 @@ export const SEO = ({
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Zyrozo",
-  alternateName: "Zyrozo Media",
-  url: "https://zyrozo.com",
+  name: "Cliperus",
+  alternateName: "Cliperus Media",
+  url: "https://cliperus.com",
   logo: {
     "@type": "ImageObject",
-    url: "https://zyrozo.com/favicon-512.png",
+    url: "https://cliperus.com/favicon-512.png",
     width: 512,
     height: 512
   },
-  image: "https://zyrozo.com/og-image.png",
-  description: "Zyrozo is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
+  image: "https://cliperus.com/og-image.png",
+  description: "Cliperus is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
   foundingDate: "2022",
   sameAs: [
-    "https://twitter.com/zyrozo",
-    "https://instagram.com/zyrozo",
-    "https://youtube.com/@zyrozo",
-    "https://tiktok.com/@zyrozo"
+    "https://twitter.com/cliperus",
+    "https://instagram.com/cliperus",
+    "https://youtube.com/@cliperus",
+    "https://tiktok.com/@cliperus"
   ],
   contactPoint: {
     "@type": "ContactPoint",
-    email: "hello@zyrozo.com",
+    email: "hello@cliperus.com",
     contactType: "customer service",
     availableLanguage: ["English"]
   },
@@ -119,15 +119,15 @@ export const organizationSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Zyrozo",
-  alternateName: "Zyrozo Creator Platform",
-  url: "https://zyrozo.com",
+  name: "Cliperus",
+  alternateName: "Cliperus Creator Platform",
+  url: "https://cliperus.com",
   description: "The #1 creator rewards platform. Earn money for your content.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://zyrozo.com/campaigns?q={search_term_string}"
+      urlTemplate: "https://cliperus.com/campaigns?q={search_term_string}"
     },
     "query-input": "required name=search_term_string"
   }
@@ -151,7 +151,7 @@ export const createProductSchema = (product: {
   url: `${SITE_URL}${product.url}`,
   brand: {
     "@type": "Brand",
-    name: product.seller || "Zyrozo"
+    name: product.seller || "Cliperus"
   },
   offers: {
     "@type": "Offer",
@@ -160,7 +160,7 @@ export const createProductSchema = (product: {
     availability: "https://schema.org/InStock",
     seller: {
       "@type": "Organization",
-      name: product.seller || "Zyrozo"
+      name: product.seller || "Cliperus"
     }
   },
   ...(product.rating && product.reviewCount && {
@@ -188,7 +188,7 @@ export const createCampaignSchema = (campaign: {
   url: `${SITE_URL}${campaign.url}`,
   provider: {
     "@type": "Organization",
-    name: campaign.creator || "Zyrozo"
+    name: campaign.creator || "Cliperus"
   },
   offers: {
     "@type": "Offer",

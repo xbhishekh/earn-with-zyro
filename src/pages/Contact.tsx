@@ -46,16 +46,16 @@ const contactMethods = [
     icon: Mail,
     title: "Email Us",
     description: "For general inquiries",
-    value: "hello@zyrozo.com",
-    action: "mailto:hello@zyrozo.com",
+    value: "hello@cliperus.com",
+    action: "mailto:hello@cliperus.com",
     color: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
   },
   {
     icon: Headphones,
     title: "Support",
     description: "For account & technical help",
-    value: "support@zyrozo.com",
-    action: "mailto:support@zyrozo.com",
+    value: "support@cliperus.com",
+    action: "mailto:support@cliperus.com",
     color: "from-green-500/20 to-green-600/20 border-green-500/30",
   },
   {
@@ -69,9 +69,9 @@ const contactMethods = [
 ];
 
 const socialLinks = [
-  { icon: Twitter, label: "Twitter", href: "https://twitter.com/zyrozo" },
-  { icon: Instagram, label: "Instagram", href: "https://instagram.com/zyrozo" },
-  { icon: Youtube, label: "YouTube", href: "https://youtube.com/@zyrozo" },
+  { icon: Twitter, label: "Twitter", href: "https://twitter.com/cliperus" },
+  { icon: Instagram, label: "Instagram", href: "https://instagram.com/cliperus" },
+  { icon: Youtube, label: "YouTube", href: "https://youtube.com/@cliperus" },
 ];
 
 const inquiryTypes = [
@@ -136,9 +136,9 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Contact Us - Get in Touch with Zyrozo"
-        description="Have questions about Zyrozo? Contact our team for support, partnerships, or general inquiries. We typically respond within 24-48 hours."
-        keywords="contact Zyrozo, creator support, partnership inquiry, customer service"
+        title="Contact Us - Get in Touch with Cliperus"
+        description="Have questions about Cliperus? Contact our team for support, partnerships, or general inquiries. We typically respond within 24-48 hours."
+        keywords="contact Cliperus, creator support, partnership inquiry, customer service"
         canonical="/contact"
       />
       <Navbar />
@@ -324,7 +324,7 @@ const Contact = () => {
                       <div>
                         <p className="font-medium">Address</p>
                         <p className="text-sm text-muted-foreground">
-                          Zyrozo Inc.<br />
+                          Cliperus Inc.<br />
                           123 Creator Lane, Suite 100<br />
                           San Francisco, CA 94105<br />
                           USA

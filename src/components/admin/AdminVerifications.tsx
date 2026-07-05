@@ -120,7 +120,7 @@ const AdminVerifications = () => {
   };
 
   const generateCode = (): string => {
-    return `ZYROZO_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    return `CLIPERUS_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   };
 
   const handleSendCode = async () => {

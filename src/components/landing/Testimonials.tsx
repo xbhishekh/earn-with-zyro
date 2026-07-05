@@ -4,7 +4,7 @@ const testimonials = [
   {
     name: "Jake Mitchell",
     role: "Clip editor · 1.2M views",
-    quote: "Zyrozo doubled my monthly income in two months. The dashboard is the cleanest thing I've used — it just respects your time.",
+    quote: "Cliperus doubled my monthly income in two months. The dashboard is the cleanest thing I've used — it just respects your time.",
     avatar: "JM",
     payout: "$2,840",
   },

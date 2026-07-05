@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SITE_URL = "https://zyrozo.com";
+const SITE_URL = "https://cliperus.com";
 
 // Static pages with their priorities and change frequencies
 const staticPages = [

@@ -39,9 +39,9 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="About Zyrozo - Empowering Creators to Earn More"
-        description="Learn about Zyrozo's mission to democratize creator monetization. We've paid $500K+ to 5,000+ creators. Discover our values, story, and how we help creators succeed."
-        keywords="about Zyrozo, creator platform, content creator earnings, UGC monetization, creator economy"
+        title="About Cliperus - Empowering Creators to Earn More"
+        description="Learn about Cliperus's mission to democratize creator monetization. We've paid $500K+ to 5,000+ creators. Discover our values, story, and how we help creators succeed."
+        keywords="about Cliperus, creator platform, content creator earnings, UGC monetization, creator economy"
         canonical="/about"
         structuredData={organizationSchema}
       />
@@ -60,7 +60,7 @@ const About = () => {
               <span className="gradient-text">Earn More</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Zyrozo is a leading creator rewards platform, connecting talented 
+              Cliperus is a leading creator rewards platform, connecting talented 
               content creators with top brands for mutually rewarding partnerships.
             </p>
           </motion.div>
@@ -101,7 +101,7 @@ const About = () => {
               <h2 className="font-display text-3xl font-bold mb-4">Our Mission</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 We're on a mission to democratize creator monetization. Too many talented 
-                creators struggle to turn their passion into sustainable income. Zyrozo 
+                creators struggle to turn their passion into sustainable income. Cliperus 
                 bridges the gap between brands looking for authentic content and creators 
                 ready to deliver it. Our platform ensures fair compensation, transparent 
                 tracking, and instant payments—so creators can focus on what they do best: creating.
@@ -157,7 +157,7 @@ const About = () => {
             </h2>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
               Start your creator journey today and join thousands of creators 
-              already earning with Zyrozo.
+              already earning with Cliperus.
             </p>
             <Button variant="hero" size="xl" asChild>
               <Link to="/auth?mode=signup">Create Free Account</Link>

@@ -17,7 +17,7 @@ const emailSchema = z.string().email("Please enter a valid email address");
 
 type AuthStep = "email" | "otp";
 
-const REMEMBER_ME_KEY = "zyrozo_remember_me";
+const REMEMBER_ME_KEY = "cliperus_remember_me";
 const RESEND_COOLDOWN = 30;
 
 const Auth = () => {
@@ -224,7 +224,7 @@ const Auth = () => {
           {isSignup ? "Create Your\nAccount" : "Welcome\nBack"}
         </h1>
         <p className="text-muted-foreground text-[15px] leading-relaxed">
-          {isSignup ? "Join thousands of creators earning on Zyrozo" : "Sign in to continue to your dashboard"}
+          {isSignup ? "Join thousands of creators earning on Cliperus" : "Sign in to continue to your dashboard"}
         </p>
       </div>
 
@@ -341,10 +341,10 @@ const Auth = () => {
         {/* Logo top */}
         <Link to="/" className="inline-flex items-center gap-2.5 group shrink-0">
           <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-border/30 group-hover:shadow-md transition-shadow">
-            <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
+            <img src={logo} alt="Cliperus" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-bold text-xl gradient-text">
-            Zyrozo
+            Cliperus
           </span>
         </Link>
 
@@ -356,7 +356,7 @@ const Auth = () => {
 
         {/* Footer */}
         <p className="text-muted-foreground/40 text-xs">
-          © {new Date().getFullYear()} Zyrozo. All rights reserved.
+          © {new Date().getFullYear()} Cliperus. All rights reserved.
         </p>
       </div>
 
@@ -380,14 +380,14 @@ const Auth = () => {
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-10 xl:p-16">
           {/* Logo */}
           <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl mb-10 p-2.5">
-            <img src={logo} alt="Zyrozo" className="w-full h-full object-contain" />
+            <img src={logo} alt="Cliperus" className="w-full h-full object-contain" />
           </div>
           
           <h2 className="font-display text-[2.75rem] font-extrabold text-white mb-4 text-center leading-tight tracking-tight">
             Start Earning<br />Today
           </h2>
           <p className="text-white/60 max-w-sm mx-auto text-base text-center leading-relaxed mb-12">
-            Join 5,000+ creators who are already monetizing their content with Zyrozo
+            Join 5,000+ creators who are already monetizing their content with Cliperus
           </p>
 
           {/* Stats row */}
@@ -425,7 +425,7 @@ const Auth = () => {
               {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
             </div>
             <p className="text-white/70 text-sm leading-relaxed mb-3">
-              "Zyrozo helped me earn my first ₹50K within 2 weeks. The platform is incredibly easy to use!"
+              "Cliperus helped me earn my first ₹50K within 2 weeks. The platform is incredibly easy to use!"
             </p>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">R</div>

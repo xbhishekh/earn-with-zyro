@@ -217,7 +217,7 @@ export const AppHeader = memo(() => {
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img 
                 src={logo} 
-                alt="Zyrozo" 
+                alt="Cliperus" 
                 width={36}
                 height={36}
                 decoding="async"
@@ -225,7 +225,7 @@ export const AppHeader = memo(() => {
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
               <span className="hidden sm:block font-display font-bold text-lg gradient-text">
-                Zyrozo
+                Cliperus
               </span>
             </Link>
 
