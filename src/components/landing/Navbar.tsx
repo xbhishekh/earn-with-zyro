@@ -185,6 +185,8 @@ export const Navbar = () => {
             {!user && (
               <button
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label={isOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isOpen}
                 className="sm:hidden p-2 hover:bg-muted rounded-lg transition-colors"
               >
                 {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

@@ -12,7 +12,7 @@ interface SEOProps {
 }
 
 const SITE_NAME = "Cliperus";
-const DEFAULT_TITLE = "Cliperus - #1 Creator Rewards Platform | Earn Money Creating Content";
+const DEFAULT_TITLE = "Cliperus — Creator Rewards Platform";
 const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on Cliperus. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
 const DEFAULT_IMAGE = "https://cliperus.com/og-image.png";
 const SITE_URL = "https://cliperus.com";
