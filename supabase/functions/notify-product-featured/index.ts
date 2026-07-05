@@ -93,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
                   Keep up the great work and continue providing value to your customers!
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://creator-sparkle-74.lovable.app/marketplace/${productId}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View Your Product</a>
+                  <a href="https://cliperus.com/marketplace/${productId}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View Your Product</a>
                 </div>
               </div>
               <div style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
