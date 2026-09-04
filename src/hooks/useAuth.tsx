@@ -135,73 +135,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Send OTP to email using our custom edge function (Gmail SMTP)
+  // Keep login and signup distinct: login must never create an account.
   const sendOtp = useCallback(async (
     email: string,
     metadata?: { username?: string; displayName?: string; referredBy?: string },
   ) => {
     const isSignup = !!metadata;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: isSignup,
+        emailRedirectTo: `${window.location.origin}/auth`,
+        data: metadata
+          ? {
+              username: metadata.username,
+              displayName: metadata.displayName,
+              referredBy: metadata.referredBy,
+            }
+          : undefined,
+      },
+    });
 
-    const sendManagedOtp = async () => {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: isSignup,
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: metadata
-            ? {
-                username: metadata.username,
-                displayName: metadata.displayName,
-                referredBy: metadata.referredBy,
-              }
-            : undefined,
-        },
-      });
-
-      return {
-        error: error as Error | null,
-        otpType: (isSignup ? "signup" : "email") as EmailOtpType,
-        otpLength: 6,
-      };
+    return {
+      error: error as Error | null,
+      otpType: (isSignup ? "signup" : "email") as EmailOtpType,
+      otpLength: 6,
     };
-
-    try {
-      // Call our custom auth-send-code edge function that uses Gmail SMTP
-      const { data, error } = await supabase.functions.invoke("auth-send-code", {
-        body: {
-          email,
-          isSignup,
-          metadata: metadata
-            ? {
-                username: metadata.username,
-                displayName: metadata.displayName,
-                referredBy: metadata.referredBy,
-              }
-            : undefined,
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) {
-        console.error("auth-send-code error:", error);
-        return sendManagedOtp();
-      }
-
-      // Check if the edge function returned an error in the response body
-      if (data?.error) {
-        console.error("auth-send-code response error:", data.error.message);
-        return sendManagedOtp();
-      }
-
-      return {
-        error: null,
-        otpType: (data?.otpType || "email") as EmailOtpType,
-        otpLength: Number(data?.otpLength) || 6,
-      };
-    } catch (err) {
-      console.error("sendOtp exception:", err);
-      return sendManagedOtp();
-    }
   }, []);
 
   // Verify OTP code
