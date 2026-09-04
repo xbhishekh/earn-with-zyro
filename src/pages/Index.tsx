@@ -44,21 +44,11 @@ const Index = () => {
     />
   );
 
-  // Logged in users see the app header, guests see the landing navbar
+  // Logged in users go straight to the campaigns dashboard
   if (user) {
-    return (
-      <MainLayout>
-        {seoContent}
-        <HeroSection />
-        <Marquee />
-        <Features />
-        <HowItWorks />
-        <Testimonials />
-        <CTASection />
-        <Footer />
-      </MainLayout>
-    );
+    return <Navigate to="/campaigns" replace />;
   }
+
 
   // Guest landing page with Navbar
   return (
