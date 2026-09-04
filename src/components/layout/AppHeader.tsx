@@ -224,13 +224,13 @@ export const AppHeader = memo(() => {
                 fetchPriority="high"
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
-              <span className="hidden sm:block font-display font-bold text-lg gradient-text">
+              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-primary">
                 Cliperus
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 ml-4">
+            <nav className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-full bg-muted/60 border border-border/50">
               {desktopNavItems.map((item) => (
                 <Link
                   key={item.label}
@@ -238,10 +238,10 @@ export const AppHeader = memo(() => {
                   onMouseEnter={() => prefetchRoute(item.href)}
                   onFocus={() => prefetchRoute(item.href)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap",
                     isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-primary text-primary-foreground shadow-[0_2px_10px_-2px_hsl(var(--primary)/0.5)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background"
                   )}
                 >
                   <item.icon className="w-4 h-4" />
