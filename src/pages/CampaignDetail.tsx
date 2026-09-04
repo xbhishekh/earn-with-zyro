@@ -577,64 +577,119 @@ const CampaignDetail = () => {
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-8 max-w-lg">
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
           <Button variant="ghost" size="sm" onClick={() => navigate("/campaigns")} className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Campaigns
           </Button>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="glass-card rounded-2xl p-8 text-center"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
           >
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            {/* Banner */}
+            <div className="rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
               {campaign.thumbnail_url ? (
-                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
+                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full aspect-[16/7] object-cover" />
               ) : (
-                <span className="text-white font-bold text-2xl">{campaign.name.charAt(0)}</span>
+                <div className="w-full aspect-[16/7] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <span className="text-white font-bold text-4xl">{campaign.name.charAt(0)}</span>
+                </div>
               )}
             </div>
 
-            <h1 className="font-display text-2xl font-bold mb-2">{campaign.name}</h1>
-            <p className="text-muted-foreground mb-6">
-              {isBanned
-                ? banReason
-                  ? `You are banned from this campaign: ${banReason}`
-                  : "You are banned from this campaign."
-                : waitlistStatus === "pending"
-                  ? "Your application is pending review."
-                  : waitlistStatus === "rejected"
-                    ? "Your application was rejected."
-                    : "Join to unlock the campaign content and submit your work."}
-            </p>
-
-            {isBanned ? (
-              <Button variant="destructive" className="w-full" size="lg" disabled>
-                <XCircle className="w-5 h-5 mr-2" />
-                Banned
-              </Button>
-            ) : waitlistStatus === "pending" ? (
-              <Button variant="outline" className="w-full" size="lg" disabled>
-                <Clock className="w-5 h-5 mr-2" />
-                Waitlisted - Pending
-              </Button>
-            ) : waitlistStatus === "rejected" ? (
-              <Button variant="destructive" className="w-full" size="lg" disabled>
-                <XCircle className="w-5 h-5 mr-2" />
-                Rejected
-              </Button>
-            ) : (
-              <Button onClick={handleJoinCampaign} className="w-full" size="lg" disabled={joiningCampaign}>
-                {joiningCampaign ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isWaitlist ? (
-                  "Join Waitlist"
-                ) : (
-                  "Join for free"
+            {/* Title + status */}
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {campaign.category && (
+                  <span className="text-xs font-semibold uppercase tracking-wider bg-secondary text-secondary-foreground rounded-full px-3 py-1">{campaign.category}</span>
                 )}
-              </Button>
+                <span className="text-xs font-semibold uppercase tracking-wider bg-primary/10 text-primary rounded-full px-3 py-1">
+                  ${campaign.reward_per_1k_views} per 1,000 views
+                </span>
+              </div>
+              <h1 className="font-display text-3xl md:text-4xl font-bold">{campaign.name}</h1>
+              {campaign.description && (
+                <p className="text-muted-foreground mt-3 max-w-3xl leading-relaxed">{campaign.description}</p>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "CPM Rate", value: `$${campaign.reward_per_1k_views}` },
+                { label: "Min Payout", value: `$${campaign.min_payout ?? 0}` },
+                { label: "Max Per Clip", value: campaign.max_payout ? `$${campaign.max_payout}` : "No cap" },
+                { label: "Total Budget", value: `$${campaign.budget_total ?? 0}` },
+              ].map((s) => (
+                <div key={s.label} className="glass-card rounded-2xl p-4 text-center">
+                  <p className="font-display text-xl font-bold text-primary">{s.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Platforms */}
+            {campaign.platforms && campaign.platforms.length > 0 && (
+              <div className="glass-card rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Eligible Platforms</p>
+                <div className="flex flex-wrap gap-2">
+                  {campaign.platforms.map((p: string) => (
+                    <span key={p} className="text-sm bg-secondary text-secondary-foreground rounded-full px-4 py-1.5 capitalize">{p}</span>
+                  ))}
+                </div>
+              </div>
             )}
+
+            {/* Rules */}
+            {campaign.rules_guidelines && (
+              <div className="glass-card rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Rules & Guidelines</p>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{campaign.rules_guidelines}</div>
+              </div>
+            )}
+
+            {/* Join CTA */}
+            <div className="glass-card rounded-2xl p-6 text-center">
+              <p className="text-muted-foreground mb-4">
+                {isBanned
+                  ? banReason
+                    ? `You are banned from this campaign: ${banReason}`
+                    : "You are banned from this campaign."
+                  : waitlistStatus === "pending"
+                    ? "Your application is pending review."
+                    : waitlistStatus === "rejected"
+                      ? "Your application was rejected."
+                      : "Join to unlock the campaign content and submit your work."}
+              </p>
+              {isBanned ? (
+                <Button variant="destructive" className="w-full" size="lg" disabled>
+                  <XCircle className="w-5 h-5 mr-2" />
+                  Banned
+                </Button>
+              ) : waitlistStatus === "pending" ? (
+                <Button variant="outline" className="w-full" size="lg" disabled>
+                  <Clock className="w-5 h-5 mr-2" />
+                  Waitlisted - Pending
+                </Button>
+              ) : waitlistStatus === "rejected" ? (
+                <Button variant="destructive" className="w-full" size="lg" disabled>
+                  <XCircle className="w-5 h-5 mr-2" />
+                  Rejected
+                </Button>
+              ) : (
+                <Button onClick={handleJoinCampaign} className="w-full" size="lg" disabled={joiningCampaign}>
+                  {joiningCampaign ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : isWaitlist ? (
+                    "Join Waitlist"
+                  ) : (
+                    "Join for free"
+                  )}
+                </Button>
+              )}
+            </div>
           </motion.div>
         </div>
 
