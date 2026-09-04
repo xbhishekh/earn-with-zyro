@@ -646,7 +646,22 @@ const CampaignDetail = () => {
             {campaign.rules_guidelines && (
               <div className="glass-card rounded-2xl p-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Rules & Guidelines</p>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{campaign.rules_guidelines}</div>
+                <div className="text-sm leading-relaxed text-foreground/90 space-y-1.5">
+                  {campaign.rules_guidelines.split("\n").map((line: string, i: number) => {
+                    const renderInline = (t: string) =>
+                      t.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+                        part.startsWith("**") && part.endsWith("**")
+                          ? <strong key={j} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+                          : part
+                      );
+                    const trimmed = line.trim();
+                    if (!trimmed) return <div key={i} className="h-2" />;
+                    if (trimmed.startsWith("## ")) return <h3 key={i} className="font-display font-bold text-base pt-3">{renderInline(trimmed.slice(3))}</h3>;
+                    if (trimmed.startsWith("# ")) return <h3 key={i} className="font-display font-bold text-lg pt-3">{renderInline(trimmed.slice(2))}</h3>;
+                    if (trimmed.startsWith("- ")) return <p key={i} className="pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-primary">{renderInline(trimmed.slice(2))}</p>;
+                    return <p key={i}>{renderInline(trimmed)}</p>;
+                  })}
+                </div>
               </div>
             )}
 
