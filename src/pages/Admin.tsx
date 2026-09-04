@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Gauge,
   Flag,
+  Building2,
 } from "lucide-react";
 import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
