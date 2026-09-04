@@ -147,7 +147,6 @@ const CampaignDetail = () => {
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // Form data
   const [videoUrl, setVideoUrl] = useState("");
