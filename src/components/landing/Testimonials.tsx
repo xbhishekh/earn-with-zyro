@@ -31,7 +31,7 @@ export const Testimonials = () => {
         <div className="max-w-3xl mb-16">
           <span className="editorial-eyebrow mb-6 block">Chapter III · The Receipts</span>
           <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
-            What creators are <span className="display-italic text-muted-foreground">actually</span> saying.
+            What creators are <span className="display-italic">actually</span> saying.
           </h2>
         </div>
 

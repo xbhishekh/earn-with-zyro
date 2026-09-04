@@ -47,7 +47,7 @@ export const Features = () => {
         <div className="max-w-3xl mb-16 md:mb-20">
           <span className="editorial-eyebrow mb-6 block">Chapter I · The Platform</span>
           <h2 className="display-serif text-foreground mb-6" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
-            Built for creators who treat content <span className="display-italic text-muted-foreground">like a craft.</span>
+            Built for creators who treat content <span className="display-italic">like a craft.</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
             Every detail is engineered to remove friction between your work and your paycheck.
