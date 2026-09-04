@@ -209,7 +209,7 @@ export const AppHeader = memo(() => {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-40 lg:left-[264px]"
       >
         <div className="container mx-auto px-3 md:px-4 pt-2">
           <div className="flex items-center h-14 md:h-16 gap-2 md:gap-3 px-3 md:px-4 rounded-2xl border border-border/70 bg-background/90 backdrop-blur-xl shadow-[0_4px_24px_-8px_hsl(var(--primary)/0.18)]">
