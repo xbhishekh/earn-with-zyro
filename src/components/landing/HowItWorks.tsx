@@ -27,9 +27,9 @@ export const HowItWorks = () => {
     <section className="py-24 md:py-32 bg-secondary/30 border-t border-border">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mb-16">
-          <span className="editorial-eyebrow mb-6 block">Chapter II · The Process</span>
+          <span className="editorial-eyebrow mb-6">Chapter II · The Process</span>
           <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
-            Three steps, <span className="display-italic text-muted-foreground">no theatrics.</span>
+            Three steps, <span className="display-italic">no theatrics.</span>
           </h2>
         </div>
 
@@ -40,7 +40,7 @@ export const HowItWorks = () => {
               className="group grid grid-cols-12 gap-6 py-10 md:py-14 px-2 md:px-4 hover:bg-background/60 transition-colors duration-500"
             >
               <div className="col-span-2 md:col-span-1">
-                <span className="display-serif display-italic text-3xl md:text-4xl text-muted-foreground">{s.no}</span>
+                <span className="display-serif text-3xl md:text-4xl text-primary/60">{s.no}</span>
               </div>
               <div className="col-span-10 md:col-span-6">
                 <h3 className="display-serif text-3xl md:text-5xl text-foreground mb-3 leading-tight">

@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 export const CTASection = () => {
   return (
-    <section className="relative py-28 md:py-40 bg-card text-foreground overflow-hidden grain border-y border-border">
+    <section className="relative py-24 md:py-32 bg-secondary text-foreground overflow-hidden border-y border-border">
       {/* Editorial grid */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.08] bg-[linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
 
@@ -11,11 +11,11 @@ export const CTASection = () => {
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-8">
             <span className="h-px w-8 bg-primary/60" />
-            Issue No. 01 · 2026
+            Start free today
             <span className="h-px w-8 bg-primary/60" />
           </span>
 
-          <h2 className="display-serif text-balance mb-8" style={{ fontSize: "clamp(2.75rem, 7vw, 6rem)" }}>
+          <h2 className="display-serif text-balance mb-8" style={{ fontSize: "clamp(2.25rem, 5.5vw, 4.25rem)" }}>
             Your next clip
             <br />
             <span className="display-italic text-primary">could be your paycheck.</span>
@@ -28,14 +28,14 @@ export const CTASection = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/auth?mode=signup"
-              className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-8 py-4 text-sm font-medium tracking-tight transition-all duration-300 hover:shadow-[0_0_36px_-6px_hsl(var(--primary)/0.6)] hover:-translate-y-0.5 group"
+              className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-8 py-4 text-sm font-bold tracking-tight transition-all duration-300 hover:shadow-[0_0_36px_-6px_hsl(var(--primary)/0.6)] hover:-translate-y-0.5 group"
             >
               Create my account
               <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               to="/campaigns"
-              className="inline-flex items-center justify-center rounded-full border border-foreground/20 bg-transparent text-foreground px-8 py-4 text-sm font-medium tracking-tight transition-all duration-300 hover:bg-foreground/10"
+              className="inline-flex items-center justify-center rounded-full border border-border bg-card text-foreground px-8 py-4 text-sm font-semibold tracking-tight transition-all duration-300 hover:border-primary/30 shadow-[var(--shadow-elegant)]"
             >
               Browse campaigns
             </Link>
