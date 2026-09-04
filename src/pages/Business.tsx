@@ -89,7 +89,15 @@ const Business = () => {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("business_inquiries").insert({
-        ...parsed.data,
+        company_name: parsed.data.company_name,
+        contact_name: parsed.data.contact_name,
+        email: parsed.data.email,
+        phone: parsed.data.phone || null,
+        website: parsed.data.website || null,
+        budget_range: parsed.data.budget_range || null,
+        campaign_goal: parsed.data.campaign_goal || null,
+        preferred_call_time: parsed.data.preferred_call_time || null,
+        message: parsed.data.message || null,
         user_id: user?.id ?? null,
       });
       if (error) throw error;
