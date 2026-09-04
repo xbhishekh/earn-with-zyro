@@ -166,30 +166,6 @@ const Campaigns = () => {
     navigate(target);
   };
 
-  const handleDirectJoin = async (campaign: Campaign) => {
-    if (!user) return;
-    
-    setJoiningCampaignId(campaign.id);
-    try {
-      const { error } = await supabase.from("campaign_members").insert({
-        user_id: user.id,
-        campaign_id: campaign.id
-      });
-
-      if (error) throw error;
-      toast.success("Successfully joined!");
-      
-      // Update local state
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, isMember: true } : c
-      ));
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to join campaign");
-    } finally {
-      setJoiningCampaignId(null);
-    }
-  };
 
   const handleWaitlistSubmit = async () => {
     if (!selectedCampaign || !user) return;
