@@ -270,12 +270,13 @@
 /* Auth page — mint tone */
 .auth-gradient-bg {
   background:
-    radial-gradient(ellipse at 30% 20%, hsl(152 60% 88% / 0.9) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 80%, hsl(158 55% 86% / 0.75) 0%, transparent 55%),
-    linear-gradient(135deg, hsl(150 45% 98%) 0%, hsl(0 0% 100%) 100%);
+    radial-gradient(ellipse at 25% 15%, hsl(158 70% 30% / 0.9) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 85%, hsl(150 65% 22% / 0.85) 0%, transparent 60%),
+    linear-gradient(135deg, hsl(160 60% 14%) 0%, hsl(158 55% 20%) 100%);
   background-size: 200% 200%;
   animation: auth-gradient-shift 18s ease infinite;
 }
+
 
 @keyframes auth-gradient-shift {
   0%, 100% { background-position: 0% 50%; }
