@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => ({
     assetsInlineLimit: 4096,
     reportCompressedSize: false,
   },
+  esbuild: {
+    // Strip debug logging from production bundles for a smaller, faster payload.
+    drop: mode === "production" ? ["console", "debugger"] : [],
+  },
   optimizeDeps: {
     include: [
       "react",
