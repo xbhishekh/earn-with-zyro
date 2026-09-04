@@ -472,7 +472,7 @@ const MarketplaceCreate = () => {
                   <div className="mt-2">
                     {formData.thumbnail_url ? (
                       <div className="relative w-full max-w-md">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={formData.thumbnail_url}
                           alt="Thumbnail"
                           className="w-full aspect-video object-cover rounded-lg"
@@ -508,7 +508,7 @@ const MarketplaceCreate = () => {
                   <div className="mt-2 grid grid-cols-4 gap-3">
                     {formData.gallery_images.map((img, idx) => (
                       <div key={idx} className="relative aspect-square">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={img}
                           alt={`Gallery ${idx + 1}`}
                           className="w-full h-full object-cover rounded-lg"

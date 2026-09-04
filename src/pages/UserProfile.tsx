@@ -290,7 +290,7 @@ const UserProfile = () => {
                 >
                   {product.thumbnail_url ? (
                     <div className="relative overflow-hidden">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={product.thumbnail_url}
                         alt={product.title}
                         className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"

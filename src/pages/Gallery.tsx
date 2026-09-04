@@ -232,7 +232,7 @@ const Gallery = () => {
                           onClick={(e) => e.stopPropagation()}
                         >
                           {submission.profile?.avatar_url ? (
-                            <img 
+                            <img loading="lazy" decoding="async" 
                               src={submission.profile.avatar_url} 
                               alt={`${submission.profile?.display_name || submission.profile?.username || "Creator"} profile photo`} 
                               className="w-full h-full object-cover"

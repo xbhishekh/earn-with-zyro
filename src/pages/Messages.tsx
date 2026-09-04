@@ -760,7 +760,7 @@ const Messages = () => {
     if (isImage) {
       return (
         <div className="mt-2 rounded-lg overflow-hidden max-w-[200px]">
-          <img
+          <img loading="lazy" decoding="async"
             src={message.attachment_url}
             alt="Attachment"
             className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
@@ -1334,7 +1334,7 @@ const Messages = () => {
                   <div className="px-4 py-2 border-t border-border bg-muted/30 shrink-0">
                     <div className="flex items-center gap-3 p-2 rounded-lg bg-background">
                       {filePreview ? (
-                        <img src={filePreview} alt="Preview" className="w-14 h-14 object-cover rounded" />
+                        <img loading="lazy" decoding="async" src={filePreview} alt="Preview" className="w-14 h-14 object-cover rounded" />
                       ) : (
                         <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
                           <FileText className="w-6 h-6 text-muted-foreground" />

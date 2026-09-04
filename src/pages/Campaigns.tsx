@@ -340,7 +340,7 @@ const Campaigns = () => {
                         {/* Campaign Thumbnail - Prominent Display */}
                         <div className="relative aspect-video w-full overflow-hidden">
                           {campaign.thumbnail_url ? (
-                            <img 
+                            <img loading="lazy" decoding="async" 
                               src={campaign.thumbnail_url} 
                               alt={campaign.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -463,7 +463,7 @@ const Campaigns = () => {
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   {selectedCampaign.thumbnail_url ? (
-                    <img src={selectedCampaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={selectedCampaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-white font-bold">{selectedCampaign.name.charAt(0)}</span>
                   )}

@@ -53,7 +53,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
           {/* Brand */}
           <div className="col-span-2 md:col-span-4">
             <Link to="/" className="flex items-center gap-2.5 w-fit">
-              <img
+              <img loading="lazy" decoding="async"
                 src={logo}
                 alt="CliporaX"
                 className="w-10 h-10 rounded-xl object-contain"

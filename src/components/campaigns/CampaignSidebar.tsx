@@ -327,7 +327,7 @@ export const CampaignSidebar = ({
             <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(campaign.category, campaign.campaign_type)}`} />
             
             {campaign.thumbnail_url ? (
-              <img 
+              <img loading="lazy" decoding="async" 
                 src={campaign.thumbnail_url} 
                 alt={campaign.name}
                 className="w-full h-full object-cover relative z-10"
@@ -343,7 +343,7 @@ export const CampaignSidebar = ({
             <div className="absolute top-3 left-3 right-3 flex items-center gap-2 z-30">
               <div className="w-7 h-7 rounded-lg overflow-hidden bg-black/40 backdrop-blur-sm shrink-0 border border-white/10">
                 {campaign.thumbnail_url ? (
-                  <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                     <span className="text-white font-bold text-xs">{campaign.name.charAt(0)}</span>
@@ -647,7 +647,7 @@ export const FullscreenChatView = ({
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg overflow-hidden">
             {campaign.thumbnail_url ? (
-              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
@@ -802,7 +802,7 @@ export const FullscreenSubmissionsView = ({
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg overflow-hidden">
             {campaign.thumbnail_url ? (
-              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
@@ -902,7 +902,7 @@ export const FullscreenSubmissionsView = ({
                       className="block relative aspect-[9/16] bg-zinc-900 overflow-hidden group cursor-pointer"
                     >
                       {thumbnailUrl ? (
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={thumbnailUrl} 
                           alt="Video thumbnail" 
                           className="w-full h-full object-cover"
@@ -1042,7 +1042,7 @@ export const FullscreenAnnouncementsView = ({
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg overflow-hidden">
             {campaign.thumbnail_url ? (
-              <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{campaign.name.charAt(0)}</span>
@@ -1078,7 +1078,7 @@ export const FullscreenAnnouncementsView = ({
             {/* Campaign Thumbnail */}
             {campaign.thumbnail_url && (
               <div className="rounded-xl overflow-hidden aspect-video bg-muted">
-                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt={campaign.name} className="w-full h-full object-cover" />
               </div>
             )}
 
@@ -1301,7 +1301,7 @@ export const InlineSubmissionsView = ({
                     className="block relative aspect-[9/16] bg-zinc-900 overflow-hidden group cursor-pointer"
                   >
                     {thumbnailUrl ? (
-                      <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
                         <Video className="w-16 h-16 text-muted-foreground/30" />

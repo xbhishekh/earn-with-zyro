@@ -315,7 +315,7 @@ const AdminCampaigns = () => {
             className="glass-card rounded-xl overflow-hidden"
           >
             {campaign.thumbnail_url ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={campaign.thumbnail_url}
                 alt={campaign.name}
                 className="w-full h-40 object-cover"
@@ -577,7 +577,7 @@ const AdminCampaigns = () => {
               <label className="text-sm text-muted-foreground mb-2 block">Campaign Thumbnail</label>
               {formData.thumbnail_url ? (
                 <div className="relative rounded-lg overflow-hidden border bg-muted">
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={formData.thumbnail_url} 
                     alt="Thumbnail preview" 
                     className="w-full h-40 object-cover"

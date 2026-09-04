@@ -315,7 +315,7 @@ const AdminMarketplace = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                           {product.thumbnail_url ? (
-                            <img 
+                            <img loading="lazy" decoding="async" 
                               src={product.thumbnail_url} 
                               alt={product.title}
                               className="w-full h-full object-cover"
@@ -337,7 +337,7 @@ const AdminMarketplace = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {product.seller?.avatar_url ? (
-                          <img 
+                          <img loading="lazy" decoding="async" 
                             src={product.seller.avatar_url} 
                             alt=""
                             className="w-6 h-6 rounded-full"

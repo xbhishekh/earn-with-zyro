@@ -560,7 +560,7 @@ const MarketplaceProductDetail = () => {
                 {allImages.length > 0 ? (
                   <div className="space-y-4">
                     <div className="aspect-video rounded-2xl overflow-hidden bg-muted">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={allImages[selectedImage]}
                         alt={product.title}
                         className="w-full h-full object-cover"
@@ -576,7 +576,7 @@ const MarketplaceProductDetail = () => {
                               selectedImage === idx ? "border-primary" : "border-transparent"
                             }`}
                           >
-                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={img} alt="" className="w-full h-full object-cover" />
                           </button>
                         ))}
                       </div>
@@ -802,7 +802,7 @@ const MarketplaceProductDetail = () => {
                 <Card className="overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-white/50 dark:border-gray-700/50 shadow-2xl">
                   {product.thumbnail_url && (
                     <div className="relative">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={product.thumbnail_url}
                         alt={product.title}
                         className="w-full aspect-video object-cover"
@@ -922,7 +922,7 @@ const MarketplaceProductDetail = () => {
           <div className="py-4">
             <div className="flex items-center gap-4 p-4 bg-muted rounded-lg mb-4">
               {product.thumbnail_url && (
-                <img
+                <img loading="lazy" decoding="async"
                   src={product.thumbnail_url}
                   alt={product.title}
                   className="w-16 h-12 object-cover rounded"

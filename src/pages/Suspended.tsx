@@ -74,7 +74,7 @@ const Suspended = () => {
       >
         {/* Logo */}
         <Link to="/" className="inline-flex items-center gap-2 mb-8">
-          <img 
+          <img loading="lazy" decoding="async" 
             src={logo} 
             alt="CliporaX" 
             className="w-10 h-10 rounded-xl object-contain"

@@ -746,7 +746,7 @@ const Profile = () => {
                               {/* Thumbnail */}
                               <div className="relative aspect-video overflow-hidden bg-muted">
                                 {product.thumbnail_url ? (
-                                  <img
+                                  <img loading="lazy" decoding="async"
                                     src={product.thumbnail_url}
                                     alt={product.title}
                                     className="w-full h-full object-cover"
