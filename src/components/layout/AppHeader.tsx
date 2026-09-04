@@ -4,7 +4,6 @@ import {
   Search, Shield, LogOut, Wallet, Crown, LayoutDashboard, User, MessageCircle, HandCoins, ChevronRight
 } from 'lucide-react';
 import logo from "@/assets/cliporax-mark.png";
-import earnHandshake from "@/assets/earn-handshake-3d.png";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -228,18 +227,6 @@ export const AppHeader = memo(() => {
               <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-foreground">
                 Clipora<span className="gradient-text">X</span>
               </span>
-            </Link>
-
-            {/* Desktop: 3D earn logo in the empty left space */}
-            <Link to="/" className="hidden lg:flex items-center shrink-0" aria-label="CliporaX home">
-              <img
-                src={earnHandshake}
-                alt="Brand pays, clipper earns"
-                width={256}
-                height={96}
-                decoding="async"
-                className="h-10 w-auto object-contain"
-              />
             </Link>
 
             {/* Desktop Navigation (sidebar handles lg+ nav) */}
