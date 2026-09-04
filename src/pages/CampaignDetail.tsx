@@ -883,6 +883,16 @@ const CampaignDetail = () => {
             </Button>
           </div>
 
+          {/* Navigation Tabs */}
+          <Tabs value={mainView} onValueChange={(v) => setMainView(v as 'details' | 'chat' | 'submissions' | 'announcements')} className="mb-6">
+            <TabsList className="w-full grid grid-cols-4 h-11 bg-muted/50">
+              <TabsTrigger value="details" className="text-xs sm:text-sm">Details</TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs sm:text-sm">Chat</TabsTrigger>
+              <TabsTrigger value="submissions" className="text-xs sm:text-sm">Submissions</TabsTrigger>
+              <TabsTrigger value="announcements" className="text-xs sm:text-sm">Announcements</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           {/* Conditional Main Content based on mainView */}
           {mainView === 'details' && (
             <>
