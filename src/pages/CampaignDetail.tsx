@@ -843,47 +843,6 @@ const CampaignDetail = () => {
               <span className="font-display font-bold text-lg gradient-text">Cliperus</span>
             </Link>
             <div className="flex items-center gap-2">
-              {/* Mobile Sidebar Toggle */}
-              <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="lg:hidden">
-                    <Menu className="w-4 h-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 p-0">
-                  <div className="p-4 overflow-y-auto h-full">
-                    <CampaignSidebar
-                      campaign={{
-                        id: campaign.id,
-                        name: campaign.name,
-                        slug: campaign.slug,
-                        thumbnail_url: campaign.thumbnail_url,
-                        rules_guidelines: campaign.rules_guidelines,
-                        reward_per_1k_views: campaign.reward_per_1k_views
-                      }}
-                      chatRoomId={chatRoomId}
-                      isMember={isMember}
-                      submissions={submissions}
-                      onOpenChat={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenChat(true);
-                      }}
-                      onOpenSubmissions={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenSubmissions(true);
-                      }}
-                      onOpenAnnouncements={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenAnnouncements(true);
-                      }}
-                      onSwitchToSubmissionsTab={() => {
-                        setMobileSidebarOpen(false);
-                        setActiveTab('submissions');
-                      }}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/dashboard"><User className="w-4 h-4" /></Link>
               </Button>
