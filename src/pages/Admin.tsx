@@ -55,6 +55,7 @@ const AdminFAQs = lazy(() => import("@/components/admin/AdminFAQs"));
 const AdminEmailBroadcast = lazy(() => import("@/components/admin/AdminEmailBroadcast"));
 const AdminMarketplace = lazy(() => import("@/components/admin/AdminMarketplace"));
 const AdminPerformance = lazy(() => import("@/components/admin/AdminPerformance"));
+const AdminBusinessInquiries = lazy(() => import("@/components/admin/AdminBusinessInquiries"));
 const AdminReports = lazy(() => import("@/components/admin/AdminReports").then(m => ({ default: m.AdminReports })));
 
 // Tab loading fallback
