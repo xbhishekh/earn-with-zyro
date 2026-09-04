@@ -269,6 +269,14 @@
     color: hsl(152 25% 70%);
   }
 
+  .stats-band .editorial-eyebrow {
+    color: hsl(152 60% 65%);
+  }
+
+  .stats-band .editorial-eyebrow::before {
+    background: hsl(152 60% 50% / 0.5);
+  }
+
   .card-hover {
     @apply transition-all duration-300 hover:shadow-[var(--shadow-lift)] hover:-translate-y-0.5;
   }
