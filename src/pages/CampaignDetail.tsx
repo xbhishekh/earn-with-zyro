@@ -35,7 +35,6 @@ import {
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/platform-icons";
 import {
-  CampaignSidebar,
   FullscreenChatView,
   FullscreenSubmissionsView,
   FullscreenAnnouncementsView,
@@ -43,7 +42,6 @@ import {
 } from "@/components/campaigns/CampaignSidebar";
 import { ChatRoom } from "@/components/chat/ChatRoom";
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
