@@ -4,6 +4,14 @@ import { Footer } from "@/components/landing/Footer";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 
+// Renders inline **bold** markers inside a line
+const renderInline = (text: string) => {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i} className="text-foreground font-semibold">{part}</strong> : part
+  );
+};
+
 interface LegalDocProps {
   title: string;
   description: string;
