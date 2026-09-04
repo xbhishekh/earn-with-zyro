@@ -7,6 +7,7 @@ import { Navbar } from "@/components/landing/Navbar";
 const Features = lazy(() => import("@/components/landing/Features").then(m => ({ default: m.Features })));
 const HowItWorks = lazy(() => import("@/components/landing/HowItWorks").then(m => ({ default: m.HowItWorks })));
 const Testimonials = lazy(() => import("@/components/landing/Testimonials").then(m => ({ default: m.Testimonials })));
+const AffiliateCTA = lazy(() => import("@/components/landing/AffiliateCTA").then(m => ({ default: m.AffiliateCTA })));
 const CTASection = lazy(() => import("@/components/landing/CTASection").then(m => ({ default: m.CTASection })));
 const Footer = lazy(() => import("@/components/landing/Footer").then(m => ({ default: m.Footer })));
 import { useAuth } from "@/hooks/useAuth";
@@ -64,6 +65,7 @@ const Index = () => {
           <Features />
           <HowItWorks />
           <Testimonials />
+          <AffiliateCTA />
           <CTASection />
           <Footer />
         </Suspense>
