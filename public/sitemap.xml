@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-  Static fallback sitemap. For the dynamic sitemap with all campaigns and products,
-  access: https://kfrruzoygqilzvfwbdqr.supabase.co/functions/v1/sitemap
-  
-  Configure your server/CDN to serve the edge function at /sitemap.xml for best SEO.
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://earn-with-zyro.lovable.app/</loc>
@@ -65,5 +59,25 @@
     <loc>https://earn-with-zyro.lovable.app/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://earn-with-zyro.lovable.app/business</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://earn-with-zyro.lovable.app/refund</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://earn-with-zyro.lovable.app/cookies</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://earn-with-zyro.lovable.app/security</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>
