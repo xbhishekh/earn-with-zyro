@@ -139,35 +139,7 @@ export const AppSidebar = memo(() => {
           <span className="font-display font-extrabold text-xl tracking-tight text-primary">Cliperus</span>
         </Link>
 
-        {/* Search + quick actions */}
-        <div className="px-3 pb-3 space-y-2">
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="w-full h-9 px-3 flex items-center gap-2 rounded-xl bg-muted/70 border border-border/50 hover:border-primary/40 hover:bg-muted transition-all"
-          >
-            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-sm text-muted-foreground flex-1 text-left">Search...</span>
-            <kbd className="inline-flex h-5 items-center rounded border border-border bg-background px-1.5 font-mono text-[10px] text-muted-foreground">
-              ⌘K
-            </kbd>
-          </button>
-
-          <div className="flex items-center gap-2">
-            {user && (
-              <Link
-                to="/balance"
-                className="flex-1 flex items-center gap-1.5 px-3 h-9 bg-primary/10 border border-primary/20 hover:bg-primary/15 rounded-xl transition-colors"
-              >
-                <Wallet className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold text-primary">${balance.toFixed(2)}</span>
-              </Link>
-            )}
-            {user && <NotificationsBell />}
-            <ThemeToggle />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4 space-y-6">
           <div className="space-y-1">
             <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Explore</p>
             {mainItems.map(renderItem)}
