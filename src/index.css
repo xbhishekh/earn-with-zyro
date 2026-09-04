@@ -396,3 +396,20 @@
       hsl(var(--card));
   }
 }
+
+/* Global animation kill-switch — instant UI, no motion (marquee ticker excluded) */
+*,
+*::before,
+*::after {
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+[class*="animate-[marquee"],
+[class*="animate-[marquee"] * {
+  animation-duration: 70s !important;
+  animation-iteration-count: infinite !important;
+}
