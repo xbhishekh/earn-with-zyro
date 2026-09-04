@@ -6,7 +6,6 @@ import { Testimonials } from "@/components/landing/Testimonials";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { SEO, organizationSchema, websiteSchema, createFAQSchema } from "@/components/SEO";
