@@ -33,6 +33,7 @@ const Balance = lazy(() => import("./pages/Balance"));
 const Suspended = lazy(() => import("./pages/Suspended"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Business = lazy(() => import("./pages/Business"));
 const About = lazy(() => import("./pages/About"));
 const Careers = lazy(() => import("./pages/Careers"));
 const Contact = lazy(() => import("./pages/Contact"));
