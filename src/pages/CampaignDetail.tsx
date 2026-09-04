@@ -854,33 +854,9 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      {/* Two Column Layout - Whop Style (24% sidebar, 76% content) */}
-      <div className="flex min-h-[calc(100vh-3.5rem)]">
-        {/* Left Sidebar - 24% width */}
-        <aside className="hidden lg:block w-[24%] min-w-[280px] max-w-[320px] shrink-0 p-4 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
-          <CampaignSidebar
-            campaign={{
-              id: campaign.id,
-              name: campaign.name,
-              slug: campaign.slug,
-              thumbnail_url: campaign.thumbnail_url,
-              rules_guidelines: campaign.rules_guidelines,
-              reward_per_1k_views: campaign.reward_per_1k_views
-            }}
-            chatRoomId={chatRoomId}
-            isMember={isMember}
-            submissions={submissions}
-            onOpenChat={() => setMainView('chat')}
-            onOpenSubmissions={() => setMainView('submissions')}
-            onOpenAnnouncements={() => setMainView('announcements')}
-            onSwitchToSubmissionsTab={() => setMainView('submissions')}
-            onBackToDetails={() => setMainView('details')}
-            activeView={mainView}
-          />
-        </aside>
-
-        {/* Main Content - Full width (76%), no side whitespace */}
-        <main className="flex-1 px-6 lg:px-8 py-6 pb-24">
+      {/* Single Column Layout - No Sidebar */}
+      <div className="min-h-[calc(100vh-3.5rem)]">
+        <main className="container mx-auto px-4 md:px-6 lg:px-8 py-6 pb-24">
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
