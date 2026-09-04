@@ -73,7 +73,7 @@ export const Navbar = () => {
   const showAdminAccess = isAdmin || role === 'normal_admin';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 nav-landing backdrop-blur-lg">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -94,16 +94,16 @@ export const Navbar = () => {
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
             {/* Side switcher: Clipper / Business */}
-            <div className="hidden md:flex items-center p-1 rounded-full bg-white/10 border border-white/15">
+            <div className="hidden md:flex items-center p-1 rounded-full bg-muted/70 border border-border">
               <Link
                 to="/"
-                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "text-white/70 hover:text-white" : "bg-white text-foreground shadow-sm"}`}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "text-muted-foreground hover:text-foreground" : "bg-background shadow-sm"}`}
               >
                 For Clippers
               </Link>
               <Link
                 to="/business"
-                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "bg-white text-foreground shadow-sm" : "text-white/70 hover:text-white"}`}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 For Business
               </Link>
@@ -114,10 +114,10 @@ export const Navbar = () => {
                 {/* Balance - Desktop & Mobile */}
                 <Link
                   to="/balance"
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
                 >
-                  <Wallet className="w-4 h-4 text-emerald-300" />
-                  <span className="text-sm font-medium text-white">
+                  <Wallet className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">
                     ${balance.toFixed(2)}
                   </span>
                 </Link>
@@ -187,7 +187,7 @@ export const Navbar = () => {
             ) : (
               <>
                 {/* Not logged in - Auth buttons */}
-                <Button variant="ghost" asChild className="hidden sm:flex text-white hover:bg-white/10 hover:text-white">
+                <Button variant="ghost" asChild className="hidden sm:flex">
                   <Link to="/auth">Log In</Link>
                 </Button>
                 <Button variant="hero" asChild>
@@ -205,7 +205,7 @@ export const Navbar = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Close menu" : "Open menu"}
                 aria-expanded={isOpen}
-                className="sm:hidden p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+                className="sm:hidden p-2 hover:bg-muted rounded-lg transition-colors"
               >
                 {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -216,7 +216,7 @@ export const Navbar = () => {
 
       {/* Mobile Menu - Only for non-logged in users */}
       {isOpen && !user && (
-        <div className="sm:hidden nav-landing border-t border-white/10">
+        <div className="sm:hidden bg-background border-t border-border">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
             <Button variant="outline" asChild className="justify-center">
               <Link to="/business" onClick={() => setIsOpen(false)}>
