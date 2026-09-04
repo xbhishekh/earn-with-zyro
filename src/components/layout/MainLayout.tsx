@@ -19,7 +19,7 @@ export const MainLayout = ({
     <div className="min-h-screen bg-background">
       {showHeader && <AppHeader />}
       
-      <main className={`${showHeader ? 'pt-14 md:pt-16' : ''} ${showMobileNav ? 'pb-20 md:pb-0' : ''} ${className}`}>
+      <main className={`${showHeader ? 'pt-16 md:pt-[4.5rem]' : ''} ${showMobileNav ? 'pb-20 md:pb-0' : ''} ${className}`}>
         {children}
       </main>
 

@@ -254,7 +254,7 @@ const Marketplace = () => {
       <div className="container mx-auto px-4 py-4">
           <h1 className="sr-only">Creator Marketplace — Buy and Sell Digital Products from Top Creators</h1>
           {/* Search Header */}
-          <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm py-4 border-b border-border mb-6">
+          <div className="sticky top-[4.5rem] z-40 bg-background/95 backdrop-blur-sm py-4 border-b border-border mb-6">
             <div className="flex items-center gap-4">
               <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
                 <div className="relative">

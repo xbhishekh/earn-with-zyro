@@ -209,10 +209,10 @@ export const AppHeader = memo(() => {
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border"
+        className="fixed top-0 left-0 right-0 z-50"
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center h-14 md:h-16 gap-2 md:gap-4">
+        <div className="container mx-auto px-3 md:px-4 pt-2">
+          <div className="flex items-center h-14 md:h-16 gap-2 md:gap-3 px-3 md:px-4 rounded-2xl border border-border/70 bg-background/90 backdrop-blur-xl shadow-[0_4px_24px_-8px_hsl(var(--primary)/0.18)]">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img 
@@ -224,13 +224,13 @@ export const AppHeader = memo(() => {
                 fetchPriority="high"
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
-              <span className="hidden sm:block font-display font-bold text-lg gradient-text">
+              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-primary">
                 Cliperus
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 ml-4">
+            <nav className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-full bg-muted/60 border border-border/50">
               {desktopNavItems.map((item) => (
                 <Link
                   key={item.label}
@@ -238,10 +238,10 @@ export const AppHeader = memo(() => {
                   onMouseEnter={() => prefetchRoute(item.href)}
                   onFocus={() => prefetchRoute(item.href)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap",
                     isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-primary text-primary-foreground shadow-[0_2px_10px_-2px_hsl(var(--primary)/0.5)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background"
                   )}
                 >
                   <item.icon className="w-4 h-4" />
@@ -256,7 +256,7 @@ export const AppHeader = memo(() => {
             {/* Search Button - Desktop with ⌘K hint */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden md:flex w-56 lg:w-64 h-9 px-3 bg-muted hover:bg-muted/80 rounded-full items-center gap-2 transition-colors shrink-0 group"
+              className="hidden md:flex w-56 lg:w-64 h-9 px-3.5 bg-muted/70 border border-border/50 hover:border-primary/40 hover:bg-muted rounded-full items-center gap-2 transition-all shrink-0 group shadow-sm"
             >
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm text-muted-foreground truncate flex-1 text-left">
@@ -306,10 +306,10 @@ export const AppHeader = memo(() => {
                   {/* Balance - Desktop */}
                   <Link
                     to="/balance"
-                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                    className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 bg-primary/10 border border-primary/20 hover:bg-primary/15 rounded-full transition-colors shadow-sm"
                   >
                     <Wallet className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-bold text-primary">
                       ${balance.toFixed(2)}
                     </span>
                   </Link>
@@ -360,7 +360,7 @@ export const AppHeader = memo(() => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
-                        <Avatar className="w-8 h-8 md:w-9 md:h-9">
+                        <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-primary/25 ring-offset-1 ring-offset-background">
                           <AvatarImage src={profile?.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
                             {profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
