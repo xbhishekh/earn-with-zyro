@@ -313,7 +313,7 @@ const Auth = () => {
         {/* Logo top */}
         <Link to="/" className="inline-flex items-center gap-2.5 group shrink-0">
           <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-border/30 group-hover:shadow-md transition-shadow">
-            <img loading="lazy" decoding="async" src={logo} alt="CliporaX" className="w-full h-full object-contain" />
+            <img loading="eager" decoding="async" fetchPriority="high" src={logo} alt="CliporaX" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-bold text-xl gradient-text">
             CliporaX
@@ -351,7 +351,7 @@ const Auth = () => {
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-10 xl:p-16">
           {/* Logo */}
           <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-primary/20 shadow-2xl mb-10 p-2.5">
-            <img loading="lazy" decoding="async" src={logo} alt="CliporaX" className="w-full h-full object-contain" />
+            <img loading="eager" decoding="async" fetchPriority="high" src={logo} alt="CliporaX" className="w-full h-full object-contain" />
           </div>
           
           <h2 className="font-display text-[2.75rem] font-extrabold text-foreground mb-4 text-center leading-tight tracking-tight">

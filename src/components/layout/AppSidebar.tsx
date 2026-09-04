@@ -135,7 +135,7 @@ export const AppSidebar = memo(() => {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-[264px] flex-col border-r border-border/60 bg-background/80 backdrop-blur-xl">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 px-5 h-[4.5rem] shrink-0">
-          <img loading="lazy" decoding="async" src={logo} alt="CliporaX" width={36} height={36} className="w-9 h-9 rounded-lg object-contain" />
+          <img loading="eager" decoding="async" fetchPriority="high" src={logo} alt="CliporaX" width={36} height={36} className="w-9 h-9 rounded-lg object-contain" />
           <span className="font-display font-extrabold text-xl tracking-tight text-foreground">Clipora<span className="gradient-text">X</span></span>
         </Link>
 
