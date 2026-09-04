@@ -290,25 +290,25 @@ const Campaigns = () => {
         canonical="/campaigns"
       />
       <div className="container mx-auto px-4 py-8">
-          <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 overflow-hidden">
-            <div className="relative z-10">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-4">
-                <Clapperboard className="w-3.5 h-3.5" />
+          <div className="relative flex items-end justify-between gap-3 md:gap-6 mb-8 md:mb-12 overflow-hidden">
+            <div className="relative z-10 min-w-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs font-semibold text-primary mb-2.5 md:mb-4">
+                <Clapperboard className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 Opportunities create bigger creators
               </span>
-              <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
+              <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight mb-1.5 md:mb-3">
                 Active <span className="gradient-text">Campaigns</span>
               </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
+              <p className="text-xs sm:text-sm md:text-lg text-muted-foreground max-w-xl">
                 Browse our active campaigns and start earning from your content today
               </p>
             </div>
-            <div className="relative z-10 hidden md:flex items-center gap-3 pr-2 select-none" aria-hidden="true">
-              <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full" />
-              <p className="relative font-handwritten text-3xl lg:text-4xl leading-tight text-foreground/80 -rotate-2">
+            <div className="relative z-10 flex items-center gap-1.5 md:gap-3 pr-1 md:pr-2 select-none shrink-0" aria-hidden="true">
+              <div className="absolute -inset-4 md:-inset-8 bg-primary/10 blur-2xl md:blur-3xl rounded-full" />
+              <p className="relative font-handwritten text-base sm:text-xl md:text-3xl lg:text-4xl leading-tight text-foreground/80 -rotate-2">
                 Turn<br />Creativity<br />into Income
               </p>
-              <svg className="relative w-8 h-14 text-foreground/70 rotate-12" viewBox="0 0 32 56" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg className="relative w-4 h-7 sm:w-6 sm:h-10 md:w-8 md:h-14 text-foreground/70 rotate-12" viewBox="0 0 32 56" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M16 4 C 10 20, 26 30, 18 46" />
                 <path d="M12 40 L 18 47 L 25 41" />
               </svg>
