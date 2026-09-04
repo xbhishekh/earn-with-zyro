@@ -369,5 +369,6 @@ export const MobileBottomNav = () => {
         })}
       </div>
     </nav>
+    </>
   );
 };
