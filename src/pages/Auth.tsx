@@ -42,6 +42,7 @@ const Auth = () => {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [step, setStep] = useState<AuthStep>("email");
   const [otpType, setOtpType] = useState<EmailOtpType>("email");
+  const [otpLength, setOtpLength] = useState(6);
   const [rememberMe, setRememberMe] = useState(true);
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -114,12 +115,13 @@ const Auth = () => {
     setIsSendingOtp(true);
     try {
       const metadata = isSignup ? { username: username || email.split("@")[0], displayName: displayName || username || email.split("@")[0] } : undefined;
-      const { error, otpType: returnedOtpType } = await sendOtp(email, metadata);
+      const { error, otpType: returnedOtpType, otpLength: returnedOtpLength } = await sendOtp(email, metadata);
       if (error) {
         if (error.message.includes("already registered")) { toast.error("Email already registered. Please login instead."); setIsSignup(false); }
         else toast.error(error.message);
       } else {
         if (returnedOtpType) setOtpType(returnedOtpType);
+        setOtpLength(returnedOtpLength ?? 6);
         setStep("otp"); startResendTimer(); toast.success("Verification code sent to your email!");
       }
     } catch { toast.error("Something went wrong. Please try again."); }
@@ -127,7 +129,7 @@ const Auth = () => {
   };
 
   const handleVerifyOtp = async (value: string) => {
-    if (value.length !== 8) return;
+    if (value.length !== otpLength) return;
     setIsLoading(true);
     try {
       const { error } = await verifyOtp(email, value, otpType);
@@ -156,7 +158,7 @@ const Auth = () => {
           Check your email
         </h1>
         <p className="text-muted-foreground text-sm">
-          We sent an 8-digit code to <span className="text-foreground font-medium">{email}</span>
+          We sent a {otpLength}-digit code to <span className="text-foreground font-medium">{email}</span>
         </p>
       </div>
 
@@ -172,9 +174,9 @@ const Auth = () => {
           </div>
         ) : (
           <div className="flex justify-center">
-            <InputOTP maxLength={8} value={otp} onChange={(value) => { setOtp(value); if (value.length === 8) handleVerifyOtp(value); }} disabled={isLoading}>
+            <InputOTP maxLength={otpLength} value={otp} onChange={(value) => { setOtp(value); if (value.length === otpLength) handleVerifyOtp(value); }} disabled={isLoading}>
               <InputOTPGroup>
-                {[0,1,2,3,4,5,6,7].map(i => <InputOTPSlot key={i} index={i} />)}
+                {Array.from({ length: otpLength }, (_, i) => <InputOTPSlot key={i} index={i} />)}
               </InputOTPGroup>
             </InputOTP>
           </div>
