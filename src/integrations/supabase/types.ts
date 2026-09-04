@@ -290,6 +290,60 @@ export type Database = {
         }
         Relationships: []
       }
+      business_inquiries: {
+        Row: {
+          admin_notes: string | null
+          budget_range: string | null
+          campaign_goal: string | null
+          company_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          phone: string | null
+          preferred_call_time: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          campaign_goal?: string | null
+          company_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          preferred_call_time?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          campaign_goal?: string | null
+          company_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          preferred_call_time?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       campaign_assets: {
         Row: {
           asset_type: string
@@ -1286,6 +1340,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string
           avatar_url: string | null
           bio: string | null
           cover_image_url: string | null
@@ -1305,6 +1360,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          account_type?: string
           avatar_url?: string | null
           bio?: string | null
           cover_image_url?: string | null
@@ -1324,6 +1380,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          account_type?: string
           avatar_url?: string | null
           bio?: string | null
           cover_image_url?: string | null

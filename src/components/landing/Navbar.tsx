@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, Shield, Wallet, LogOut, User, LayoutDashboard } from "lucide-react";
 import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ interface Profile {
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isBusinessSide = location.pathname.startsWith("/business") || location.pathname.startsWith("/for-business");
   const { user, isAdmin, role, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [balance, setBalance] = useState(0);
@@ -91,6 +93,22 @@ export const Navbar = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
+            {/* Side switcher: Clipper / Business */}
+            <div className="hidden md:flex items-center p-1 rounded-full bg-muted/70 border border-border">
+              <Link
+                to="/"
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "text-muted-foreground hover:text-foreground" : "bg-background shadow-sm"}`}
+              >
+                For Clippers
+              </Link>
+              <Link
+                to="/business"
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${isBusinessSide ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                For Business
+              </Link>
+            </div>
+
             {user ? (
               <>
                 {/* Balance - Desktop & Mobile */}
@@ -200,6 +218,11 @@ export const Navbar = () => {
       {isOpen && !user && (
         <div className="sm:hidden bg-background border-t border-border">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            <Button variant="outline" asChild className="justify-center">
+              <Link to="/business" onClick={() => setIsOpen(false)}>
+                For Business
+              </Link>
+            </Button>
             <Button variant="ghost" asChild className="justify-center">
               <Link to="/auth" onClick={() => setIsOpen(false)}>
                 Log In

@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Gauge,
   Flag,
+  Building2,
 } from "lucide-react";
 import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ const AdminFAQs = lazy(() => import("@/components/admin/AdminFAQs"));
 const AdminEmailBroadcast = lazy(() => import("@/components/admin/AdminEmailBroadcast"));
 const AdminMarketplace = lazy(() => import("@/components/admin/AdminMarketplace"));
 const AdminPerformance = lazy(() => import("@/components/admin/AdminPerformance"));
+const AdminBusinessInquiries = lazy(() => import("@/components/admin/AdminBusinessInquiries"));
 const AdminReports = lazy(() => import("@/components/admin/AdminReports").then(m => ({ default: m.AdminReports })));
 
 // Tab loading fallback
@@ -81,6 +83,7 @@ const tabs: Tab[] = [
   { id: "submissions", label: "Submissions", icon: Video, component: AdminSubmissions },
   { id: "campaigns", label: "Campaigns", icon: Video, component: AdminCampaigns },
   { id: "marketplace", label: "Marketplace", icon: DollarSign, component: AdminMarketplace },
+  { id: "business-inquiries", label: "Business Leads", icon: Building2, component: AdminBusinessInquiries },
   { id: "verifications", label: "Verifications", icon: Link2, component: AdminVerifications },
   { id: "announcements", label: "Announcements", icon: Megaphone, component: AdminAnnouncements },
   { id: "withdrawals", label: "Withdrawals", icon: Wallet, component: AdminWithdrawals },

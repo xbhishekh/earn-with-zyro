@@ -8,7 +8,7 @@ interface SuspensionGuardProps {
 }
 
 // Memoized public routes set for O(1) lookup
-const PUBLIC_ROUTES = new Set(["/", "/auth", "/suspended", "/terms", "/privacy", "/about", "/pricing", "/campaigns", "/marketplace", "/contact", "/careers"]);
+const PUBLIC_ROUTES = new Set(["/", "/auth", "/suspended", "/terms", "/privacy", "/about", "/pricing", "/campaigns", "/marketplace", "/contact", "/careers", "/business", "/for-business"]);
 
 const SuspensionGuard = ({ children }: SuspensionGuardProps) => {
   const { user, loading: authLoading } = useAuth();

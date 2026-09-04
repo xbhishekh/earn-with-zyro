@@ -33,6 +33,7 @@ const Balance = lazy(() => import("./pages/Balance"));
 const Suspended = lazy(() => import("./pages/Suspended"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Business = lazy(() => import("./pages/Business"));
 const About = lazy(() => import("./pages/About"));
 const Careers = lazy(() => import("./pages/Careers"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -130,6 +131,8 @@ const App = () => (
                   <Route path="/suspended" element={<Suspended />} />
                   <Route path="/affiliate" element={<RouteErrorBoundary routeName="Affiliate"><Affiliate /></RouteErrorBoundary>} />
                   <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/business" element={<RouteErrorBoundary routeName="Business"><Business /></RouteErrorBoundary>} />
+                  <Route path="/for-business" element={<RouteErrorBoundary routeName="Business"><Business /></RouteErrorBoundary>} />
                   <Route path="/about" element={<About />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/contact" element={<Contact />} />
