@@ -214,7 +214,7 @@ export const AppHeader = memo(() => {
         <div className="container mx-auto px-3 md:px-4 pt-2">
           <div className="flex items-center h-14 md:h-16 gap-2 md:gap-3 px-3 md:px-4 rounded-2xl border border-border/70 bg-background/90 backdrop-blur-xl shadow-[0_4px_24px_-8px_hsl(var(--primary)/0.18)]">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 shrink-0">
+            <Link to="/" className="flex lg:hidden items-center gap-2 shrink-0">
               <img 
                 src={logo} 
                 alt="Cliperus" 
@@ -229,8 +229,8 @@ export const AppHeader = memo(() => {
               </span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-full bg-muted/60 border border-border/50">
+            {/* Desktop Navigation (sidebar handles lg+ nav) */}
+            <nav className="hidden items-center gap-1 ml-4 p-1 rounded-full bg-muted/60 border border-border/50">
               {desktopNavItems.map((item) => (
                 <Link
                   key={item.label}
