@@ -131,7 +131,7 @@ const tickerItems = [
 
 const TrustTicker = () => (
   <div className="flex flex-1 min-w-0 items-center overflow-hidden mx-2" aria-hidden>
-    <div className="flex shrink-0 animate-[marquee_32s_linear_infinite] items-center whitespace-nowrap">
+    <div className="flex shrink-0 animate-[marquee_70s_linear_infinite] items-center whitespace-nowrap">
       {[...tickerItems, ...tickerItems, ...tickerItems].map((t, i) => (
         <span key={i} className="flex items-center gap-1.5 pr-6 lg:pr-10 text-[11px] lg:text-[13px] font-medium text-muted-foreground">
           <Shield className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-primary shrink-0" />
