@@ -6,8 +6,8 @@ import { Testimonials } from "@/components/landing/Testimonials";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 import { SEO, organizationSchema, websiteSchema, createFAQSchema } from "@/components/SEO";
 
 // Homepage FAQ for structured data
@@ -43,21 +43,11 @@ const Index = () => {
     />
   );
 
-  // Logged in users see the app header, guests see the landing navbar
+  // Logged in users go straight to the campaigns dashboard
   if (user) {
-    return (
-      <MainLayout>
-        {seoContent}
-        <HeroSection />
-        <Marquee />
-        <Features />
-        <HowItWorks />
-        <Testimonials />
-        <CTASection />
-        <Footer />
-      </MainLayout>
-    );
+    return <Navigate to="/campaigns" replace />;
   }
+
 
   // Guest landing page with Navbar
   return (

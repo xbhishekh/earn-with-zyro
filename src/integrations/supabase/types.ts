@@ -344,6 +344,50 @@ export type Database = {
         }
         Relationships: []
       }
+      business_inquiry_replies: {
+        Row: {
+          admin_id: string
+          body: string
+          created_at: string
+          error_message: string | null
+          id: string
+          inquiry_id: string
+          status: string
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          admin_id: string
+          body: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          inquiry_id: string
+          status?: string
+          subject: string
+          to_email: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          inquiry_id?: string
+          status?: string
+          subject?: string
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_inquiry_replies_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "business_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_assets: {
         Row: {
           asset_type: string

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { InquiryReplyBox } from "./InquiryReplyBox";
 
 interface Inquiry {
   id: string;
@@ -214,7 +215,15 @@ const AdminBusinessInquiries = () => {
                   <div className="bg-muted/40 rounded-lg p-3 text-sm whitespace-pre-wrap">{i.message}</div>
                 )}
 
+                <InquiryReplyBox
+                  inquiryId={i.id}
+                  companyName={i.company_name}
+                  email={i.email}
+                  onSent={() => setItems((prev) => prev.map((x) => (x.id === i.id && x.status === "new" ? { ...x, status: "contacted" } : x)))}
+                />
+
                 <div className="space-y-2">
+
                   <p className="text-xs text-muted-foreground">Internal notes</p>
                   <Textarea
                     defaultValue={i.admin_notes || ""}
