@@ -65,12 +65,12 @@ export const LegalDoc = ({ title, description, canonical, pageType, defaultConte
                   if (line.startsWith('- ')) {
                     return (
                       <li key={index} className="ml-4">
-                        {line.replace('- ', '')}
+                        {renderInline(line.replace('- ', ''))}
                       </li>
                     );
                   }
                   if (line.trim()) {
-                    return <p key={index} className="mb-4">{line}</p>;
+                    return <p key={index} className="mb-4">{renderInline(line)}</p>;
                   }
                   return null;
                 })}

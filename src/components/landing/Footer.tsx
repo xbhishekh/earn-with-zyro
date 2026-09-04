@@ -51,7 +51,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
       <div className="container mx-auto px-4 pt-14 pb-8">
         <div className="grid grid-cols-2 md:grid-cols-12 gap-10 md:gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-5">
+          <div className="col-span-2 md:col-span-4">
             <Link to="/" className="flex items-center gap-2.5 w-fit">
               <img
                 src={logo}
@@ -111,7 +111,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
           ))}
 
           {/* Contact mini-card */}
-          <div className="col-span-2 md:col-span-3">
+          <div className="col-span-2 md:col-span-2">
             <h3 className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground mb-4">
               Get in touch
             </h3>
