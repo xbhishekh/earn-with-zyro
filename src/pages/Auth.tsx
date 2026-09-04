@@ -110,16 +110,15 @@ const Auth = () => {
     else { localStorage.removeItem(REMEMBER_ME_KEY); sessionStorage.setItem(REMEMBER_ME_KEY, "session"); }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try { emailSchema.parse(email); } catch (error) { if (error instanceof z.ZodError) toast.error(error.errors[0].message); return; }
+    if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setIsLoading(true);
-    setIsSendingOtp(true);
     try {
       if (isSignup) {
-        // Instant signup — no email verification code needed
-        const generatedPassword = `Cl-${crypto.randomUUID()}`;
-        const { error } = await signUpWithPassword(email, generatedPassword, {
+        if (usernameStatus === "taken") { toast.error("Username is already taken"); return; }
+        const { error } = await signUpWithPassword(email, password, {
           username: username || email.split("@")[0],
           displayName: displayName || username || email.split("@")[0],
         });
@@ -127,9 +126,7 @@ const Auth = () => {
           if (/already|registered|exists/i.test(error.message)) {
             toast.error("This email already has an account. Please log in.");
             setIsSignup(false);
-          } else {
-            toast.error(error.message);
-          }
+          } else toast.error(error.message);
         } else {
           saveRememberMe();
           toast.success("Account created! Welcome to Cliperus 🎉");
@@ -137,31 +134,23 @@ const Auth = () => {
         return;
       }
 
-      const { error, otpType: returnedOtpType, otpLength: returnedOtpLength } = await sendOtp(email);
+      const { error } = await signInWithPassword(email, password);
       if (error) {
-        if (/signups not allowed|not found|no user/i.test(error.message)) {
-          toast.error("No account found with this email. Please sign up first.");
-          setIsSignup(true);
-        } else toast.error(error.message);
+        if (/invalid login|credentials/i.test(error.message)) toast.error("Wrong email or password.");
+        else toast.error(error.message);
       } else {
-        if (returnedOtpType) setOtpType(returnedOtpType);
-        setOtpLength(returnedOtpLength ?? 6);
-        setStep("otp"); startResendTimer(); toast.success("Login code sent to your email!");
+        saveRememberMe();
+        toast.success("Logged in successfully!");
       }
     } catch { toast.error("Something went wrong. Please try again."); }
-    finally { setIsLoading(false); setIsSendingOtp(false); }
+    finally { setIsLoading(false); }
   };
 
-
-  const handleVerifyOtp = async (value: string) => {
-    if (value.length !== otpLength) return;
-    setIsLoading(true);
-    try {
-      const { error } = await verifyOtp(email, value, otpType);
-      if (error) { toast.error("Invalid or expired code. Please try again."); setOtp(""); }
-      else { saveRememberMe(); toast.success("Logged in successfully!"); }
-    } catch { toast.error("Something went wrong. Please try again."); setOtp(""); }
-    finally { setIsLoading(false); }
+  const handleForgotPassword = async () => {
+    try { emailSchema.parse(email); } catch { toast.error("Enter your email first"); return; }
+    const { error } = await resetPassword(email);
+    if (error) toast.error(error.message);
+    else toast.success("Password reset link sent to your email!");
   };
 
   if (authLoading) {
@@ -172,72 +161,6 @@ const Auth = () => {
     );
   }
 
-  const renderOtpForm = () => (
-    <div className="space-y-6">
-      <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-5">
-          <Mail className="w-3.5 h-3.5" />
-          Code Sent
-        </div>
-        <h1 className="font-display text-3xl font-bold mb-2 text-foreground">
-          Check your email
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          We sent a {otpLength}-digit code to <span className="text-foreground font-medium">{email}</span>
-        </p>
-      </div>
-
-      <div className="bg-muted/60 border border-border/40 rounded-xl p-4 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">💡 Tip:</span> Check your spam/junk folder if you don't see the email within a minute.
-      </div>
-
-      <div className="space-y-6">
-        {isSendingOtp ? (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Sending code...</p>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <InputOTP maxLength={otpLength} value={otp} onChange={(value) => { setOtp(value); if (value.length === otpLength) handleVerifyOtp(value); }} disabled={isLoading}>
-              <InputOTPGroup>
-                {Array.from({ length: otpLength }, (_, i) => <InputOTPSlot key={i} index={i} />)}
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-        )}
-
-        {isLoading && !isSendingOtp && (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Verifying...</p>
-          </div>
-        )}
-
-        <div className="text-center space-y-3">
-          <button onClick={() => { setStep("email"); setOtp(""); setResendTimer(0); if (timerRef.current) clearInterval(timerRef.current); }} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-            ← Back to email
-          </button>
-          <div>
-            {resendTimer > 0 ? (
-              <p className="text-muted-foreground text-sm">Resend code in <span className="font-medium text-foreground">{resendTimer}s</span></p>
-            ) : (
-              <button onClick={async () => {
-                setIsSendingOtp(true);
-                const metadata = isSignup ? { username: username || email.split("@")[0], displayName: displayName || username || email.split("@")[0] } : undefined;
-                const { error } = await sendOtp(email, metadata);
-                if (error) toast.error("Failed to resend code.");
-                else { startResendTimer(); toast.success("New code sent!"); }
-                setIsSendingOtp(false);
-              }} disabled={isSendingOtp} className="text-primary hover:underline text-sm font-medium">
-                Resend code
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderEmailForm = () => (
     <div className="space-y-6">
@@ -325,10 +248,34 @@ const Auth = () => {
           </>
         )}
 
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider">Password</Label>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors duration-200" />
+            <Input
+              id="password" type={showPassword ? "text" : "password"} placeholder={isSignup ? "At least 6 characters" : "Your password"}
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              className="pl-12 pr-12 h-[52px] bg-muted/30 border-2 border-border/50 rounded-xl text-[15px] placeholder:text-muted-foreground/40 focus:border-primary focus:bg-background focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)] transition-all duration-200"
+              required minLength={6}
+              autoComplete={isSignup ? "new-password" : "current-password"}
+            />
+            <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors">
+              {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+            </button>
+          </div>
+          {!isSignup && (
+            <div className="flex justify-end">
+              <button type="button" onClick={handleForgotPassword} className="text-primary hover:underline text-xs font-medium">
+                Forgot password?
+              </button>
+            </div>
+          )}
+        </div>
+
         <Button type="submit" size="lg" className="w-full h-[52px] rounded-xl text-[15px] font-bold mt-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_36px_-8px_hsl(var(--primary)/0.6)]" disabled={isLoading}>
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
             <>
-              {isSignup ? "Create Account" : "Send Code"}
+              {isSignup ? "Create Account" : "Log In"}
               <ArrowRight className="w-5 h-5 ml-1.5" />
             </>
           )}
@@ -394,8 +341,7 @@ const Auth = () => {
 
         {/* Form center */}
         <div className="w-full max-w-[420px] mx-auto lg:mx-0">
-          {step === "email" && renderEmailForm()}
-          {step === "otp" && renderOtpForm()}
+          {renderEmailForm()}
         </div>
 
         {/* Footer */}
