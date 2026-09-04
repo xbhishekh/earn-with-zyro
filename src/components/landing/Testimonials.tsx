@@ -48,8 +48,8 @@ export const Testimonials = () => {
               </blockquote>
 
               <figcaption className="flex items-center justify-between pt-6 border-t border-border/80">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold tracking-wider">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 text-primary flex items-center justify-center text-xs font-semibold tracking-wider">
                     {t.avatar}
                   </div>
                   <div>
@@ -57,8 +57,8 @@ export const Testimonials = () => {
                     <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{t.role}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="display-serif text-xl text-foreground">{t.payout}</p>
+                <div className="text-right shrink-0 pl-3">
+                  <p className="display-serif text-xl text-primary">{t.payout}</p>
                   <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">last 30d</p>
                 </div>
               </figcaption>
