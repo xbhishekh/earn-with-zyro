@@ -255,6 +255,23 @@ const Auth = () => {
         </p>
       </div>
 
+      {/* Side chooser: Clipper vs Business */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border-2 border-primary bg-primary/5 p-3">
+          <p className="text-sm font-bold text-foreground">I'm a Clipper</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Earn per view on clips</p>
+        </div>
+        <Link
+          to="/business"
+          className="rounded-xl border-2 border-border hover:border-primary/50 p-3 transition-colors"
+        >
+          <p className="text-sm font-bold text-foreground">I'm a Business</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Book a campaign call</p>
+        </Link>
+      </div>
+
+
+
       {/* Form */}
       <form onSubmit={handleSendOtp} className="space-y-5">
         <div className="space-y-1.5">
