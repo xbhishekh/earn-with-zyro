@@ -296,9 +296,9 @@
 /* Auth page — refined paper tone */
 .auth-gradient-bg {
   background:
-    radial-gradient(ellipse at 30% 20%, hsl(30 12% 26%) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 80%, hsl(24 20% 18%) 0%, transparent 55%),
-    linear-gradient(135deg, hsl(30 10% 12%) 0%, hsl(24 12% 8%) 100%);
+    radial-gradient(ellipse at 30% 20%, hsl(76 100% 62% / 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, hsl(76 80% 45% / 0.10) 0%, transparent 55%),
+    linear-gradient(135deg, hsl(0 0% 9%) 0%, hsl(0 0% 4%) 100%);
   background-size: 200% 200%;
   animation: auth-gradient-shift 18s ease infinite;
 }
