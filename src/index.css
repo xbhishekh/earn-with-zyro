@@ -239,42 +239,42 @@
 
   .stats-band {
     background:
-      radial-gradient(ellipse 60% 80% at 0% 0%, hsl(152 65% 30% / 0.35), transparent 60%),
-      radial-gradient(ellipse 50% 70% at 100% 100%, hsl(160 70% 25% / 0.3), transparent 60%),
-      linear-gradient(140deg, hsl(160 40% 10%) 0%, hsl(158 45% 13%) 50%, hsl(155 50% 16%) 100%);
-    border: 1px solid hsl(152 40% 30% / 0.35);
-    box-shadow: 0 24px 60px -24px hsl(158 60% 20% / 0.5);
+      radial-gradient(ellipse 70% 80% at 0% 0%, hsl(152 55% 85% / 0.7), transparent 55%),
+      radial-gradient(ellipse 60% 70% at 100% 100%, hsl(150 50% 82% / 0.6), transparent 55%),
+      linear-gradient(140deg, hsl(150 35% 97%) 0%, hsl(152 40% 94%) 50%, hsl(155 45% 91%) 100%);
+    border: 1px solid hsl(152 35% 80% / 0.5);
+    box-shadow: 0 24px 60px -24px hsl(158 40% 25% / 0.18);
   }
 
   .stats-band .stat-value {
-    color: hsl(150 70% 88%);
-    text-shadow: 0 2px 20px hsl(152 70% 50% / 0.25);
+    color: hsl(158 55% 32%);
+    text-shadow: none;
   }
 
   .stats-band .stat-label {
-    color: hsl(152 20% 65%);
+    color: hsl(160 12% 45%);
   }
 
   .stats-band .stat-icon {
-    background: hsl(152 60% 45% / 0.15);
-    color: hsl(152 70% 60%);
-    border: 1px solid hsl(152 60% 50% / 0.25);
+    background: hsl(152 50% 92% / 0.8);
+    color: hsl(158 55% 40%);
+    border: 1px solid hsl(152 40% 80% / 0.6);
   }
 
   .stats-band .stat-divider {
-    border-color: hsl(152 30% 35% / 0.3);
+    border-color: hsl(152 30% 80% / 0.4);
   }
 
   .stats-band .platform-name {
-    color: hsl(152 25% 70%);
+    color: hsl(160 10% 45%);
   }
 
   .stats-band .editorial-eyebrow {
-    color: hsl(152 60% 65%);
+    color: hsl(158 55% 35%);
   }
 
   .stats-band .editorial-eyebrow::before {
-    background: hsl(152 60% 50% / 0.5);
+    background: hsl(158 55% 45%);
   }
 
   .card-hover {
