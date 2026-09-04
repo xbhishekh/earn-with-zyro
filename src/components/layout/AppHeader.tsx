@@ -224,8 +224,8 @@ export const AppHeader = memo(() => {
                 fetchPriority="high"
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
-              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-primary">
-                CliporaX
+              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-foreground">
+                Clipora<span className="gradient-text">X</span>
               </span>
             </Link>
 

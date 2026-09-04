@@ -136,7 +136,7 @@ export const AppSidebar = memo(() => {
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 px-5 h-[4.5rem] shrink-0">
           <img src={logo} alt="CliporaX" width={36} height={36} className="w-9 h-9 rounded-lg object-contain" />
-          <span className="font-display font-extrabold text-xl tracking-tight text-primary">CliporaX</span>
+          <span className="font-display font-extrabold text-xl tracking-tight text-foreground">Clipora<span className="gradient-text">X</span></span>
         </Link>
 
         <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4 space-y-6">
