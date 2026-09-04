@@ -385,7 +385,7 @@ export const AppHeader = memo(() => {
                             @{profile?.username || 'clipper'}
                           </p>
                           {specialBadge && (
-                            <Badge variant="outline" className={cn("mt-1 text-[10px] px-1.5 py-0 h-4.5 flex w-fit items-center gap-1", specialBadge.className)}>
+                            <Badge variant="outline" className={cn("mt-1 text-[10px] px-1.5 py-0 h-5 flex w-fit items-center gap-1", specialBadge.className)}>
                               <specialBadge.icon className="w-2.5 h-2.5" />
                               {specialBadge.label}
                             </Badge>
@@ -399,7 +399,7 @@ export const AppHeader = memo(() => {
                         className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/15 hover:border-primary/30 transition-colors mb-2 group"
                       >
                         <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                          <Wallet className="w-4.5 h-4.5 text-primary" />
+                          <Wallet className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Balance</p>
