@@ -27,95 +27,93 @@ const TrustTickerStrip = () => (
   </div>
 );
 
-// Colorful Home Icon
+/* ---- Premium duotone gradient icon set ---- */
+
+const Grad = ({ id, from, to }: { id: string; from: string; to: string }) => (
+  <linearGradient id={id} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+    <stop stopColor={from} />
+    <stop offset="1" stopColor={to} />
+  </linearGradient>
+);
+
+// Home — solid house with glowing roof
 const HomeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-home-grad" x1="3" y1="3" x2="21" y2="21">
-        <stop stopColor="#F97316" />
-        <stop offset="1" stopColor="#EF4444" />
-      </linearGradient>
+      <Grad id="ic-home-a" from="#FB923C" to="#EF4444" />
+      <Grad id="ic-home-b" from="#FDBA74" to="#FCA5A5" />
     </defs>
-    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="url(#mob-home-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M11.02 2.79a1.6 1.6 0 011.96 0l7.4 5.76c.39.3.62.77.62 1.27v9.43a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 19.25V9.82c0-.5.23-.97.62-1.27l7.4-5.76z" fill="url(#ic-home-a)"/>
+    <path d="M9.5 21v-5.1c0-.77.63-1.4 1.4-1.4h2.2c.77 0 1.4.63 1.4 1.4V21H9.5z" fill="#fff" fillOpacity="0.92"/>
+    <path d="M2.4 10.3L12 2.8l9.6 7.5" stroke="url(#ic-home-b)" strokeWidth="2.1" strokeLinecap="round"/>
   </svg>
 );
 
-// Colorful Marketplace Icon
+// Marketplace — shopping bag with sparkle
 const MarketplaceIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-market-grad" x1="2" y1="2" x2="22" y2="22">
-        <stop stopColor="#8B5CF6" />
-        <stop offset="1" stopColor="#EC4899" />
-      </linearGradient>
+      <Grad id="ic-mkt-a" from="#A78BFA" to="#EC4899" />
     </defs>
-    <circle cx="12" cy="12" r="10" stroke="url(#mob-market-grad)" strokeWidth="2"/>
-    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" stroke="url(#mob-market-grad)" strokeWidth="2"/>
-    <path d="M2 12h20" stroke="url(#mob-market-grad)" strokeWidth="2"/>
+    <path d="M4.6 8h14.8c.62 0 1.14.47 1.2 1.09l.92 9.5A2.5 2.5 0 0119.03 21H4.97a2.5 2.5 0 01-2.49-2.41l.92-9.5A1.2 1.2 0 014.6 8z" fill="url(#ic-mkt-a)"/>
+    <path d="M8.2 9.5V7a3.8 3.8 0 017.6 0v2.5" stroke="url(#ic-mkt-a)" strokeWidth="2.1" strokeLinecap="round"/>
+    <circle cx="9" cy="13" r="1.15" fill="#fff" fillOpacity="0.95"/>
+    <circle cx="15" cy="13" r="1.15" fill="#fff" fillOpacity="0.95"/>
   </svg>
 );
 
-// Colorful Messages Icon (filled style for center button)
+// Messages — filled chat bubble
 const MessagesIcon = ({ className = "w-6 h-6", filled = false }: { className?: string; filled?: boolean }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-msg-grad" x1="3" y1="3" x2="21" y2="21">
-        <stop stopColor="#3B82F6" />
-        <stop offset="1" stopColor="#06B6D4" />
-      </linearGradient>
+      <Grad id="ic-msg-a" from="#38BDF8" to="#2563EB" />
     </defs>
-    {filled ? (
-      <>
-        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" fill="url(#mob-msg-grad)"/>
-        <circle cx="8.5" cy="11.5" r="1" fill="white"/>
-        <circle cx="12" cy="11.5" r="1" fill="white"/>
-        <circle cx="15.5" cy="11.5" r="1" fill="white"/>
-      </>
-    ) : (
-      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="url(#mob-msg-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    )}
+    <path
+      d="M12 2.6c5.3 0 9.4 3.7 9.4 8.5 0 4.8-4.1 8.5-9.4 8.5-.98 0-1.93-.12-2.8-.35l-4.4 2.02a.7.7 0 01-.98-.79l.83-3.86C3.06 15.1 2.6 13.4 2.6 11.1c0-4.8 4.1-8.5 9.4-8.5z"
+      fill={filled ? "url(#ic-msg-a)" : "url(#ic-msg-a)"}
+      fillOpacity={filled ? 1 : 0.9}
+    />
+    <circle cx="8.3" cy="11.2" r="1.15" fill="#fff"/>
+    <circle cx="12" cy="11.2" r="1.15" fill="#fff"/>
+    <circle cx="15.7" cy="11.2" r="1.15" fill="#fff"/>
   </svg>
 );
 
-// Colorful Clipping/Campaigns Icon
+// Clipping — film clip / scissors-on-reel
 const ClippingIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-clip-grad" x1="2" y1="20" x2="22" y2="4">
-        <stop stopColor="#10B981" />
-        <stop offset="1" stopColor="#06B6D4" />
-      </linearGradient>
+      <Grad id="ic-clip-a" from="#34D399" to="#0891B2" />
     </defs>
-    <path d="M2 20h20M5 20V10l5-4 4 4v10M14 20V8l5-4v16" stroke="url(#mob-clip-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect x="2.4" y="4.6" width="19.2" height="14.8" rx="3.2" fill="url(#ic-clip-a)"/>
+    <path d="M10 9.4l5.4 2.6L10 14.6V9.4z" fill="#fff"/>
+    <path d="M5.4 4.6v14.8M18.6 4.6v14.8" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.4"/>
   </svg>
 );
 
-// Colorful Profile Icon
+// Profile — avatar chip
 const ProfileIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-profile-grad" x1="4" y1="4" x2="20" y2="20">
-        <stop stopColor="#F59E0B" />
-        <stop offset="1" stopColor="#EF4444" />
-      </linearGradient>
+      <Grad id="ic-prof-a" from="#FBBF24" to="#F43F5E" />
     </defs>
-    <circle cx="12" cy="8" r="4" stroke="url(#mob-profile-grad)" strokeWidth="2"/>
-    <path d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="url(#mob-profile-grad)" strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="12" cy="12" r="9.4" fill="url(#ic-prof-a)"/>
+    <circle cx="12" cy="9.7" r="3.1" fill="#fff"/>
+    <path d="M5.6 19.2a6.9 6.9 0 0112.8 0A9.36 9.36 0 0112 21.4a9.36 9.36 0 01-6.4-2.2z" fill="#fff"/>
   </svg>
 );
 
-// Colorful Sign In Icon
+// Sign In — arrow into door
 const SignInIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
     <defs>
-      <linearGradient id="mob-signin-grad" x1="3" y1="3" x2="21" y2="21">
-        <stop stopColor="#10B981" />
-        <stop offset="1" stopColor="#3B82F6" />
-      </linearGradient>
+      <Grad id="ic-in-a" from="#34D399" to="#3B82F6" />
     </defs>
-    <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="url(#mob-signin-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect x="11.6" y="2.6" width="9.8" height="18.8" rx="3" fill="url(#ic-in-a)"/>
+    <path d="M2.6 12h8.2M7.6 8.2L11.4 12l-3.8 3.8" stroke="url(#ic-in-a)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+
 
 interface NavItem {
   label: string;
