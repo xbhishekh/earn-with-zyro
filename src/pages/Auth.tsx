@@ -30,7 +30,9 @@ const Auth = () => {
     isOwner, 
     sendOtp, 
     verifyOtp,
+    signUpWithPassword,
     signInWithGoogle,
+
   } = useAuth();
 
   const mode = searchParams.get("mode");
