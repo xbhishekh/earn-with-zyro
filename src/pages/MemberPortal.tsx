@@ -416,7 +416,7 @@ const MemberPortal = () => {
               </Link>
               <div className="flex items-center gap-3">
                 {product.thumbnail_url ? (
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={product.thumbnail_url} 
                     alt={product.title}
                     className="w-12 h-12 rounded-lg object-cover"

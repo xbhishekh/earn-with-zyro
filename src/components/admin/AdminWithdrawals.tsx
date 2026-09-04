@@ -296,7 +296,7 @@ const AdminWithdrawals = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         {getProfile(w.user_id)?.avatar_url ? (
-                          <img 
+                          <img loading="lazy" decoding="async" 
                             src={getProfile(w.user_id)?.avatar_url!} 
                             alt="" 
                             className="w-8 h-8 rounded-full object-cover" 
@@ -364,7 +364,7 @@ const AdminWithdrawals = () => {
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 {getProfile(selectedWithdrawal?.user_id || "")?.avatar_url ? (
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={getProfile(selectedWithdrawal?.user_id || "")?.avatar_url!} 
                     alt="" 
                     className="w-10 h-10 rounded-full object-cover" 

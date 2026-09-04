@@ -69,7 +69,7 @@ export const useChatNotification = (options: NotificationOptions = {}) => {
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={senderName} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={avatarUrl} alt={senderName} className="w-full h-full object-cover" />
           ) : (
             <span className="text-xs font-medium text-primary">
               {senderName?.charAt(0)?.toUpperCase() || '?'}

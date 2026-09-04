@@ -608,7 +608,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
       return (
         <div className="mt-2 max-w-xs">
           <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-            <img 
+            <img loading="lazy" decoding="async" 
               src={msg.attachment_url} 
               alt={msg.attachment_name || 'Image'} 
               className="rounded-lg border border-border max-h-64 object-cover hover:opacity-90 transition-opacity cursor-pointer"
@@ -794,7 +794,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                             <Link to={`/u/${msg.profiles?.username || msg.user_id}`} className="flex-shrink-0">
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-sm font-semibold overflow-hidden ring-2 ring-background hover:ring-primary/50 transition-all">
                                 {msg.profiles?.avatar_url ? (
-                                  <img src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                                  <img loading="lazy" decoding="async" src={msg.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
                                   msg.profiles?.username?.[0]?.toUpperCase() || '?'
                                 )}
@@ -976,7 +976,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
           >
             <div className="flex items-center gap-3 p-2 bg-background rounded-lg border border-border">
               {filePreview ? (
-                <img src={filePreview} alt="Preview" className="w-12 h-12 rounded-md object-cover" />
+                <img loading="lazy" decoding="async" src={filePreview} alt="Preview" className="w-12 h-12 rounded-md object-cover" />
               ) : (
                 <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
                   <FileText className="h-6 w-6 text-muted-foreground" />
@@ -1068,7 +1068,7 @@ export const ChatRoom = ({ roomId, roomName }: Props) => {
                   >
                     <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-medium overflow-hidden">
                       {member.avatar_url ? (
-                        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         member.username?.[0]?.toUpperCase() || '?'
                       )}

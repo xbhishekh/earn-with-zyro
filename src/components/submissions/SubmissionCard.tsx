@@ -158,7 +158,7 @@ export const SubmissionCard = ({ submission, campaign, profile, onViewPayouts }:
               preload="metadata"
             />
           ) : submission.thumbnail_url ? (
-            <img 
+            <img loading="lazy" decoding="async" 
               src={submission.thumbnail_url} 
               alt="Video thumbnail" 
               className="w-full h-full object-cover"

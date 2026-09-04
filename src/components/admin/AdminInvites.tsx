@@ -481,7 +481,7 @@ const AdminInvites = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {roleEntry.profiles?.avatar_url ? (
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={roleEntry.profiles.avatar_url}
                             alt=""
                             className="w-8 h-8 rounded-full object-cover"

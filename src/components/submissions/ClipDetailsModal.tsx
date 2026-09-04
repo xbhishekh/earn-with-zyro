@@ -126,7 +126,7 @@ export const ClipDetailsModal = ({
             </div>
             {thumbnailUrl && (
               <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted shrink-0">
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={thumbnailUrl} 
                   alt="" 
                   className="w-full h-full object-cover"
@@ -147,7 +147,7 @@ export const ClipDetailsModal = ({
             <span>•</span>
             <div className="flex items-center gap-1">
               {campaign.thumbnail_url ? (
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={campaign.thumbnail_url} 
                   alt="" 
                   className="w-4 h-4 rounded object-cover"

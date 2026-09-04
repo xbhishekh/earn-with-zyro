@@ -23,11 +23,16 @@ export default defineConfig(({ mode }) => ({
     // production-only TDZ crashes before React could mount, leaving the site blank.
     chunkSizeWarningLimit: 600,
     minify: "esbuild",
+    cssMinify: "esbuild",
     target: "es2020",
     sourcemap: mode === "development",
     cssCodeSplit: true,
     assetsInlineLimit: 4096,
     reportCompressedSize: false,
+  },
+  esbuild: {
+    // Strip debug logging from production bundles for a smaller, faster payload.
+    drop: mode === "production" ? ["console", "debugger"] : [],
   },
   optimizeDeps: {
     include: [

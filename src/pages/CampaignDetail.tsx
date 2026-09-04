@@ -587,7 +587,7 @@ const CampaignDetail = () => {
             {/* Banner */}
             <div className="rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
               {campaign.thumbnail_url ? (
-                <img src={campaign.thumbnail_url} alt={campaign.name} className="w-full aspect-[16/7] object-cover" />
+                <img loading="lazy" decoding="async" src={campaign.thumbnail_url} alt={campaign.name} className="w-full aspect-[16/7] object-cover" />
               ) : (
                 <div className="w-full aspect-[16/7] bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <span className="text-white font-bold text-4xl">{campaign.name.charAt(0)}</span>
@@ -904,7 +904,7 @@ const CampaignDetail = () => {
               >
                 <div className="relative rounded-2xl overflow-hidden">
                   {campaign.thumbnail_url ? (
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={campaign.thumbnail_url} 
                       alt={campaign.name} 
                       className="w-full aspect-video object-cover"

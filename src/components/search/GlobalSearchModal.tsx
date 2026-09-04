@@ -280,7 +280,7 @@ export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => 
                         >
                           <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">
                             {campaign.thumbnail_url ? (
-                              <img
+                              <img loading="lazy" decoding="async"
                                 src={campaign.thumbnail_url}
                                 alt={campaign.name}
                                 className="w-full h-full object-cover"
@@ -320,7 +320,7 @@ export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => 
                         >
                           <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">
                             {product.thumbnail_url ? (
-                              <img
+                              <img loading="lazy" decoding="async"
                                 src={product.thumbnail_url}
                                 alt={product.title}
                                 className="w-full h-full object-cover"
