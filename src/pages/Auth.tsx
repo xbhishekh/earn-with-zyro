@@ -1,24 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Mail, User, ArrowRight, Loader2, Check, X, Sparkles, Zap, TrendingUp, Shield, Star } from "lucide-react";
+import { Mail, User, Lock, Eye, EyeOff, ArrowRight, Loader2, Check, X, Sparkles, Zap, TrendingUp, Shield, Star } from "lucide-react";
 import logo from "@/assets/cliperus-mark.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { consumeRedirectIntent, getRedirectIntent, sanitizeRedirectPath, setRedirectIntent } from "@/lib/redirect-intent";
 import { supabase } from "@/integrations/supabase/client";
-import type { EmailOtpType } from "@supabase/supabase-js";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
-type AuthStep = "email" | "otp";
-
 const REMEMBER_ME_KEY = "cliperus_remember_me";
-const RESEND_COOLDOWN = 30;
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -28,9 +23,9 @@ const Auth = () => {
     loading: authLoading, 
     isAdmin, 
     isOwner, 
-    sendOtp, 
-    verifyOtp,
     signUpWithPassword,
+    signInWithPassword,
+    resetPassword,
     signInWithGoogle,
 
   } = useAuth();
@@ -41,18 +36,13 @@ const Auth = () => {
 
   const [isSignup, setIsSignup] = useState(mode === "signup");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [step, setStep] = useState<AuthStep>("email");
-  const [otpType, setOtpType] = useState<EmailOtpType>("email");
-  const [otpLength, setOtpLength] = useState(6);
   const [rememberMe, setRememberMe] = useState(true);
-  const [resendTimer, setResendTimer] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [otp, setOtp] = useState("");
 
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -86,15 +76,6 @@ const Auth = () => {
 
   useEffect(() => { return () => { if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current); }; }, []);
   useEffect(() => { if (redirectTo) setRedirectIntent(redirectTo); }, [redirectTo]);
-  useEffect(() => { return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, []);
-
-  const startResendTimer = () => {
-    setResendTimer(RESEND_COOLDOWN);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setResendTimer((prev) => { if (prev <= 1) { if (timerRef.current) clearInterval(timerRef.current); return 0; } return prev - 1; });
-    }, 1000);
-  };
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -196,7 +177,7 @@ const Auth = () => {
 
 
       {/* Form */}
-      <form onSubmit={handleSendOtp} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider">Email</Label>
           <div className="relative group">
