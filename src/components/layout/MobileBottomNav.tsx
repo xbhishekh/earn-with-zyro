@@ -349,7 +349,7 @@ export const MobileBottomNav = () => {
               className="relative flex flex-col items-center justify-center py-2 px-3"
             >
               <div className="relative active:scale-95 transition-transform">
-                <Icon className="w-5 h-5" />
+                <Icon className="w-[26px] h-[26px] drop-shadow-sm" />
                 {badgeCount > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                     {badgeCount > 9 ? '9+' : badgeCount}
