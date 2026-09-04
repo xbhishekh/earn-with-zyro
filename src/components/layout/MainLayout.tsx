@@ -23,7 +23,7 @@ export const MainLayout = ({
 
       <main
         className={`${showHeader ? 'pt-16 md:pt-[4.5rem] lg:pl-[264px]' : ''} ${
-          showMobileNav ? 'pb-20 md:pb-0' : ''
+          showMobileNav ? 'pb-24 lg:pb-0' : ''
         } ${className}`}
       >
         {children}
