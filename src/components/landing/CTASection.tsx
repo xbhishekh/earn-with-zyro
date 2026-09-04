@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Gift, Scissors, Wallet } from "lucide-react";
 
 export const CTASection = () => {
   return (
-    <section className="relative py-24 md:py-32 bg-secondary text-foreground overflow-hidden border-y border-border">
+    <section className="relative py-24 md:py-32 overflow-hidden border-y border-border bg-secondary">
+      {/* Mint glow orbs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[720px] h-[420px] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute -bottom-32 -left-24 w-[420px] h-[320px] rounded-full bg-primary/8 blur-[100px]" />
+        <div className="absolute -bottom-32 -right-24 w-[420px] h-[320px] rounded-full bg-primary/8 blur-[100px]" />
+      </div>
+
       {/* Editorial grid */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.08] bg-[linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
 
@@ -21,9 +28,26 @@ export const CTASection = () => {
             <span className="display-italic text-primary">could be your paycheck.</span>
           </h2>
 
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-12 leading-relaxed">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-10 leading-relaxed">
             Join thousands of creators turning views into income. No application fee. No subscription. Just craft and get paid.
           </p>
+
+          {/* Mini value chips */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-10">
+            {[
+              { icon: Scissors, label: "Get paid per clip" },
+              { icon: Gift, label: "$5 per referral + 10% forever" },
+              { icon: Wallet, label: "Withdraw anytime" },
+            ].map((c) => (
+              <span
+                key={c.label}
+                className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/80 px-4 py-2 text-xs font-semibold text-foreground shadow-sm"
+              >
+                <c.icon className="w-3.5 h-3.5 text-primary" />
+                {c.label}
+              </span>
+            ))}
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -41,7 +65,16 @@ export const CTASection = () => {
             </Link>
           </div>
 
-          <p className="mt-10 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          {/* Referral hint */}
+          <p className="mt-8 text-sm text-muted-foreground">
+            Already signed up?{" "}
+            <Link to="/affiliate" className="font-semibold text-primary underline-offset-4 hover:underline">
+              Grab your referral link
+            </Link>{" "}
+            and earn from every creator you bring in.
+          </p>
+
+          <p className="mt-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
             Free forever · Withdraw anytime · Built by creators
           </p>
         </div>
