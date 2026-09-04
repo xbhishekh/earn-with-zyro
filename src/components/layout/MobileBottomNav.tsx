@@ -15,7 +15,7 @@ const tickerItems = [
 ];
 
 const TrustTickerStrip = () => (
-  <div className="md:hidden overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md py-1.5">
+  <div className="md:hidden fixed bottom-16 left-0 right-0 z-50 overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md py-1.5">
     <div className="flex animate-[marquee_28s_linear_infinite] items-center whitespace-nowrap">
       {[...tickerItems, ...tickerItems, ...tickerItems].map((t, i) => (
         <span key={i} className="flex items-center gap-1.5 pr-6 text-[11px] font-medium text-muted-foreground">
