@@ -91,6 +91,22 @@ export const Navbar = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
+            {/* Side switcher: Clipper / Business */}
+            <div className="hidden md:flex items-center p-1 rounded-full bg-muted/70 border border-border">
+              <Link
+                to="/"
+                className="px-3.5 py-1.5 rounded-full text-sm font-medium bg-background shadow-sm"
+              >
+                For Clippers
+              </Link>
+              <Link
+                to="/business"
+                className="px-3.5 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                For Business
+              </Link>
+            </div>
+
             {user ? (
               <>
                 {/* Balance - Desktop & Mobile */}
