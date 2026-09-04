@@ -236,18 +236,18 @@ export const AppHeader = memo(() => {
       >
         <div className="w-full h-full">
           <div className="flex items-center h-14 md:h-16 gap-2 md:gap-3 px-3 md:px-4 border-b border-border/70 bg-gradient-to-r from-primary/[0.08] via-background to-secondary/90 backdrop-blur-xl shadow-[0_4px_20px_-10px_hsl(var(--primary)/0.14)]">
-            {/* Logo */}
-            <Link to="/" className="flex lg:hidden items-center gap-2 shrink-0">
+            {/* Logo — stacked brand on mobile */}
+            <Link to="/" className="flex lg:hidden flex-col items-center justify-center shrink-0 py-1 -ml-1">
               <img 
                 src={logo} 
                 alt="CliporaX" 
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 decoding="async"
                 fetchPriority="high"
-                className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
+                className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg object-contain"
               />
-              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-foreground">
+              <span className="font-display font-extrabold text-[11px] sm:text-[13px] leading-none tracking-tight text-foreground mt-0.5 whitespace-nowrap">
                 Clipora<span className="gradient-text">X</span>
               </span>
             </Link>
