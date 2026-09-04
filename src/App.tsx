@@ -152,6 +152,8 @@ const App = () => (
                   <Route path="/gallery" element={<RouteErrorBoundary routeName="Gallery"><Gallery /></RouteErrorBoundary>} />
                   <Route path="/admin" element={<RouteErrorBoundary routeName="Admin"><Admin /></RouteErrorBoundary>} />
                   <Route path="/profile" element={<RouteErrorBoundary routeName="Profile"><Profile /></RouteErrorBoundary>} />
+                  <Route path="/settings" element={<RouteErrorBoundary routeName="Settings"><Profile /></RouteErrorBoundary>} />
+                  <Route path="/account" element={<RouteErrorBoundary routeName="Settings"><Profile /></RouteErrorBoundary>} />
                   <Route path="/u/:username" element={<RouteErrorBoundary routeName="User Profile"><UserProfile /></RouteErrorBoundary>} />
                   <Route path="/messages" element={<RouteErrorBoundary routeName="Messages"><Messages /></RouteErrorBoundary>} />
                   <Route path="/support" element={<RouteErrorBoundary routeName="Support"><Support /></RouteErrorBoundary>} />
