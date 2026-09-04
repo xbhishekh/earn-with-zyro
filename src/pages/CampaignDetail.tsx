@@ -1205,7 +1205,7 @@ const CampaignDetail = () => {
           )}
 
         {/* Fixed Bottom Bar - Whop Style */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card border-t border-border px-8 py-5 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-8 py-5 z-40">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-lg text-foreground">{campaign.name}</h3>
