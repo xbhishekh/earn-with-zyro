@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -213,16 +212,16 @@ const Affiliate = () => {
 
   if (authLoading || loading) {
     return (
-      <MainLayout>
+      <>
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container mx-auto px-4 pt-6 pb-2 flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold">Affiliate Center</h1>
@@ -692,7 +691,7 @@ const Affiliate = () => {
           </Card>
         </motion.div>
       </main>
-    </MainLayout>
+    </>
   );
 };
 

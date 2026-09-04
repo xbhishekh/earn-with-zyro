@@ -22,7 +22,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { lazy, Suspense } from "react";
 
 // Lazy load heavy components
@@ -216,7 +215,7 @@ const Dashboard = () => {
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container mx-auto px-4 py-8">
         {/* Welcome */}
         <div className="mb-8">
@@ -450,7 +449,7 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 };
 

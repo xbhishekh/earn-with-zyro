@@ -1,10 +1,11 @@
 import { ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 
 interface MainLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
   showHeader?: boolean;
   showMobileNav?: boolean;
   className?: string;
@@ -26,7 +27,7 @@ export const MainLayout = ({
           showMobileNav ? 'pb-24 lg:pb-0' : ''
         } ${className}`}
       >
-        {children}
+        {children ?? <Outlet />}
       </main>
 
       {showMobileNav && <MobileBottomNav />}
