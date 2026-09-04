@@ -337,27 +337,27 @@ const Auth = () => {
         <div className="absolute inset-0 auth-gradient-bg" />
         
         {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.06]" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+        <div className="absolute inset-0 opacity-[0.05]" style={{
+          backgroundImage: `linear-gradient(hsl(var(--foreground) / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.15) 1px, transparent 1px)`,
           backgroundSize: '40px 40px',
         }} />
 
         {/* Floating orbs */}
-        <div className="absolute top-[8%] left-[12%] w-72 h-72 bg-white/8 rounded-full blur-3xl auth-float-1" />
-        <div className="absolute bottom-[10%] right-[8%] w-96 h-96 bg-white/6 rounded-full blur-3xl auth-float-2" />
-        <div className="absolute top-[45%] right-[25%] w-48 h-48 bg-white/10 rounded-full blur-2xl auth-float-3" />
+        <div className="absolute top-[8%] left-[12%] w-72 h-72 bg-primary/15 rounded-full blur-3xl auth-float-1" />
+        <div className="absolute bottom-[10%] right-[8%] w-96 h-96 bg-secondary/40 rounded-full blur-3xl auth-float-2" />
+        <div className="absolute top-[45%] right-[25%] w-48 h-48 bg-primary/20 rounded-full blur-2xl auth-float-3" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-10 xl:p-16">
           {/* Logo */}
-          <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20 shadow-2xl mb-10 p-2.5">
+          <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-primary/20 shadow-2xl mb-10 p-2.5">
             <img src={logo} alt="Cliperus" className="w-full h-full object-contain" />
           </div>
           
-          <h2 className="font-display text-[2.75rem] font-extrabold text-white mb-4 text-center leading-tight tracking-tight">
+          <h2 className="font-display text-[2.75rem] font-extrabold text-foreground mb-4 text-center leading-tight tracking-tight">
             Start Earning<br />Today
           </h2>
-          <p className="text-white/60 max-w-sm mx-auto text-base text-center leading-relaxed mb-12">
+          <p className="text-muted-foreground max-w-sm mx-auto text-base text-center leading-relaxed mb-12">
             Join 5,000+ creators who are already monetizing their content with Cliperus
           </p>
 
@@ -368,9 +368,9 @@ const Auth = () => {
               { value: "100+", label: "Campaigns" },
               { value: "5K+", label: "Creators" },
             ].map((stat) => (
-              <div key={stat.label} className="text-center px-5 py-4 bg-white/[0.07] rounded-2xl backdrop-blur-sm border border-white/[0.08] min-w-[100px]">
-                <div className="font-display text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-white/50 text-xs mt-1 font-medium">{stat.label}</div>
+              <div key={stat.label} className="text-center px-5 py-4 bg-white/70 rounded-2xl backdrop-blur-sm border border-primary/15 min-w-[100px]">
+                <div className="font-display text-2xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-muted-foreground text-xs mt-1 font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -378,12 +378,12 @@ const Auth = () => {
           {/* Feature pills */}
           <div className="flex flex-wrap gap-2.5 justify-center max-w-md">
             {[
-              { icon: <Zap className="w-3.5 h-3.5 text-yellow-300" />, label: "Instant Payouts" },
-              { icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />, label: "Real-time Analytics" },
-              { icon: <Shield className="w-3.5 h-3.5 text-blue-300" />, label: "Secure Payments" },
-              { icon: <Star className="w-3.5 h-3.5 text-amber-300" />, label: "Top Brands" },
+              { icon: <Zap className="w-3.5 h-3.5 text-yellow-500" />, label: "Instant Payouts" },
+              { icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />, label: "Real-time Analytics" },
+              { icon: <Shield className="w-3.5 h-3.5 text-blue-500" />, label: "Secure Payments" },
+              { icon: <Star className="w-3.5 h-3.5 text-amber-500" />, label: "Top Brands" },
             ].map((pill) => (
-              <div key={pill.label} className="flex items-center gap-2 px-4 py-2 bg-white/[0.07] rounded-full backdrop-blur-sm border border-white/[0.08] text-white/70 text-[13px] font-medium">
+              <div key={pill.label} className="flex items-center gap-2 px-4 py-2 bg-white/70 rounded-full backdrop-blur-sm border border-primary/15 text-foreground text-[13px] font-medium">
                 {pill.icon}
                 {pill.label}
               </div>
@@ -391,18 +391,18 @@ const Auth = () => {
           </div>
 
           {/* Testimonial card */}
-          <div className="mt-12 bg-white/[0.07] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-5 max-w-sm w-full">
+          <div className="mt-12 bg-white/70 backdrop-blur-sm border border-primary/15 rounded-2xl p-5 max-w-sm w-full">
             <div className="flex gap-1 mb-3">
               {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
             </div>
-            <p className="text-white/70 text-sm leading-relaxed mb-3">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-3">
               "Cliperus helped me earn my first ₹50K within 2 weeks. The platform is incredibly easy to use!"
             </p>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">R</div>
+              <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-foreground text-xs font-bold">R</div>
               <div>
-                <p className="text-white/90 text-sm font-semibold">Rahul K.</p>
-                <p className="text-white/40 text-xs">Content Creator</p>
+                <p className="text-foreground text-sm font-semibold">Rahul K.</p>
+                <p className="text-muted-foreground text-xs">Content Creator</p>
               </div>
             </div>
           </div>
@@ -410,6 +410,6 @@ const Auth = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Auth;

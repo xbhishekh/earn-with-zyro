@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Fresh Mint — light white & green theme */
-    --background: 150 45% 95%;
+    --background: 150 25% 97%;
     --foreground: 160 12% 10%;
 
     --card: 0 0% 100%;
@@ -16,40 +16,40 @@
     --popover: 0 0% 100%;
     --popover-foreground: 160 12% 10%;
 
-    /* Primary = organic green */
-    --primary: 158 72% 36%;
+    /* Primary = normal organic green */
+    --primary: 158 55% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 150 40% 91%;
+    --secondary: 150 25% 94%;
     --secondary-foreground: 160 20% 16%;
 
-    --muted: 152 32% 92%;
+    --muted: 152 20% 95%;
     --muted-foreground: 160 8% 40%;
 
-    --accent: 152 55% 92%;
-    --accent-foreground: 158 72% 24%;
+    --accent: 152 40% 94%;
+    --accent-foreground: 158 55% 28%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 152 22% 90%;
-    --input: 152 22% 90%;
-    --ring: 158 72% 36%;
+    --border: 152 18% 91%;
+    --input: 152 18% 91%;
+    --ring: 158 55% 42%;
 
     --radius: 1rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 160 12% 16%;
-    --sidebar-primary: 158 72% 36%;
+    --sidebar-primary: 158 55% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 152 46% 96%;
-    --sidebar-accent-foreground: 158 72% 24%;
-    --sidebar-border: 152 22% 90%;
-    --sidebar-ring: 158 72% 36%;
+    --sidebar-accent-foreground: 158 55% 28%;
+    --sidebar-border: 152 18% 91%;
+    --sidebar-ring: 158 55% 42%;
 
-    --gradient-start: 158 72% 40%;
-    --gradient-end: 150 65% 50%;
-    --success: 158 72% 36%;
+    --gradient-start: 158 55% 45%;
+    --gradient-end: 150 55% 55%;
+    --success: 158 55% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -239,42 +239,42 @@
 
   .stats-band {
     background:
-      radial-gradient(ellipse 60% 80% at 0% 0%, hsl(152 65% 30% / 0.35), transparent 60%),
-      radial-gradient(ellipse 50% 70% at 100% 100%, hsl(160 70% 25% / 0.3), transparent 60%),
-      linear-gradient(140deg, hsl(160 40% 10%) 0%, hsl(158 45% 13%) 50%, hsl(155 50% 16%) 100%);
-    border: 1px solid hsl(152 40% 30% / 0.35);
-    box-shadow: 0 24px 60px -24px hsl(158 60% 20% / 0.5);
+      radial-gradient(ellipse 70% 80% at 0% 0%, hsl(152 55% 85% / 0.7), transparent 55%),
+      radial-gradient(ellipse 60% 70% at 100% 100%, hsl(150 50% 82% / 0.6), transparent 55%),
+      linear-gradient(140deg, hsl(150 35% 97%) 0%, hsl(152 40% 94%) 50%, hsl(155 45% 91%) 100%);
+    border: 1px solid hsl(152 35% 80% / 0.5);
+    box-shadow: 0 24px 60px -24px hsl(158 40% 25% / 0.18);
   }
 
   .stats-band .stat-value {
-    color: hsl(150 70% 88%);
-    text-shadow: 0 2px 20px hsl(152 70% 50% / 0.25);
+    color: hsl(158 55% 32%);
+    text-shadow: none;
   }
 
   .stats-band .stat-label {
-    color: hsl(152 20% 65%);
+    color: hsl(160 12% 45%);
   }
 
   .stats-band .stat-icon {
-    background: hsl(152 60% 45% / 0.15);
-    color: hsl(152 70% 60%);
-    border: 1px solid hsl(152 60% 50% / 0.25);
+    background: hsl(152 50% 92% / 0.8);
+    color: hsl(158 55% 40%);
+    border: 1px solid hsl(152 40% 80% / 0.6);
   }
 
   .stats-band .stat-divider {
-    border-color: hsl(152 30% 35% / 0.3);
+    border-color: hsl(152 30% 80% / 0.4);
   }
 
   .stats-band .platform-name {
-    color: hsl(152 25% 70%);
+    color: hsl(160 10% 45%);
   }
 
   .stats-band .editorial-eyebrow {
-    color: hsl(152 60% 65%);
+    color: hsl(158 55% 35%);
   }
 
   .stats-band .editorial-eyebrow::before {
-    background: hsl(152 60% 50% / 0.5);
+    background: hsl(158 55% 45%);
   }
 
   .card-hover {
@@ -342,12 +342,12 @@
   animation: shimmer 1.5s infinite;
 }
 
-/* Auth page — mint tone */
+/* Auth page — normal mint tone */
 .auth-gradient-bg {
   background:
-    radial-gradient(ellipse at 25% 15%, hsl(158 70% 30% / 0.9) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 85%, hsl(150 65% 22% / 0.85) 0%, transparent 60%),
-    linear-gradient(135deg, hsl(160 60% 14%) 0%, hsl(158 55% 20%) 100%);
+    radial-gradient(ellipse at 25% 15%, hsl(158 55% 72% / 0.55) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 85%, hsl(150 50% 68% / 0.5) 0%, transparent 60%),
+    linear-gradient(135deg, hsl(150 30% 96%) 0%, hsl(152 35% 92%) 100%);
   background-size: 200% 200%;
   animation: auth-gradient-shift 18s ease infinite;
 }
