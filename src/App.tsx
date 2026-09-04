@@ -158,11 +158,11 @@ const App = () => (
                     <Route path="/settings" element={<RouteErrorBoundary routeName="Settings"><Profile /></RouteErrorBoundary>} />
                     <Route path="/account" element={<RouteErrorBoundary routeName="Settings"><Profile /></RouteErrorBoundary>} />
                     <Route path="/u/:username" element={<RouteErrorBoundary routeName="User Profile"><UserProfile /></RouteErrorBoundary>} />
-                    <Route path="/messages" element={<RouteErrorBoundary routeName="Messages"><Messages /></RouteErrorBoundary>} />
                     <Route path="/support" element={<RouteErrorBoundary routeName="Support"><Support /></RouteErrorBoundary>} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
 
+                  <Route path="/messages" element={<RouteErrorBoundary routeName="Messages"><Messages /></RouteErrorBoundary>} />
                   <Route path="/admin" element={<RouteErrorBoundary routeName="Admin"><Admin /></RouteErrorBoundary>} />
                 </Routes>
               </SuspensionGuard>
