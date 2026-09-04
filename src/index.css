@@ -198,6 +198,13 @@
       linear-gradient(180deg, hsl(150 45% 97%) 0%, hsl(0 0% 100%) 100%);
   }
 
+  .dark .hero-gradient {
+    background:
+      radial-gradient(ellipse 70% 55% at 50% -10%, hsl(158 60% 22% / 0.55), transparent 65%),
+      radial-gradient(ellipse 55% 45% at 100% 100%, hsl(152 55% 18% / 0.4), transparent 60%),
+      linear-gradient(180deg, hsl(160 24% 7%) 0%, hsl(160 22% 6%) 100%);
+  }
+
   .grain {
     position: relative;
   }
@@ -313,6 +320,11 @@
   .tile-accent {
     background:
       radial-gradient(ellipse 90% 70% at 20% 0%, hsl(152 60% 92% / 0.9), transparent 60%),
+      hsl(var(--card));
+  }
+  .dark .tile-accent {
+    background:
+      radial-gradient(ellipse 90% 70% at 20% 0%, hsl(152 45% 18% / 0.5), transparent 60%),
       hsl(var(--card));
   }
 }

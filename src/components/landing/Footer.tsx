@@ -40,7 +40,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
           </nav>
 
           {/* Copyright */}
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground pr-16 md:pr-20">
             © {new Date().getFullYear()} Cliperus
           </p>
         </div>
