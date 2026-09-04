@@ -29,7 +29,7 @@ export const Testimonials = () => {
     <section className="py-24 md:py-32 bg-background border-t border-border">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mb-16">
-          <span className="editorial-eyebrow mb-6 block">Chapter III · The Receipts</span>
+          <span className="editorial-eyebrow mb-6">Chapter III · The Receipts</span>
           <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
             What creators are <span className="display-italic">actually</span> saying.
           </h2>

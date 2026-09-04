@@ -27,7 +27,7 @@ export const HowItWorks = () => {
     <section className="py-24 md:py-32 bg-secondary/30 border-t border-border">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mb-16">
-          <span className="editorial-eyebrow mb-6 block">Chapter II · The Process</span>
+          <span className="editorial-eyebrow mb-6">Chapter II · The Process</span>
           <h2 className="display-serif text-foreground" style={{ fontSize: "clamp(2.25rem, 5vw, 4.5rem)" }}>
             Three steps, <span className="display-italic">no theatrics.</span>
           </h2>
