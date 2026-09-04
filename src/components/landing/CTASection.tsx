@@ -41,7 +41,7 @@ export const CTASection = () => {
             </Link>
           </div>
 
-          <p className="mt-10 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/60">
+          <p className="mt-10 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
             Free forever · Withdraw anytime · Built by creators
           </p>
         </div>
