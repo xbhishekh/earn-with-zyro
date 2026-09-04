@@ -29,14 +29,12 @@ import {
   Video,
   Share2,
   Copy,
-  Menu,
   MessageCircle,
   ClipboardList,
   ChevronRight,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/platform-icons";
 import {
-  CampaignSidebar,
   FullscreenChatView,
   FullscreenSubmissionsView,
   FullscreenAnnouncementsView,
@@ -44,7 +42,6 @@ import {
 } from "@/components/campaigns/CampaignSidebar";
 import { ChatRoom } from "@/components/chat/ChatRoom";
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +147,6 @@ const CampaignDetail = () => {
   // Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   
   // Form data
   const [videoUrl, setVideoUrl] = useState("");
@@ -847,47 +843,6 @@ const CampaignDetail = () => {
               <span className="font-display font-bold text-lg gradient-text">Cliperus</span>
             </Link>
             <div className="flex items-center gap-2">
-              {/* Mobile Sidebar Toggle */}
-              <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="lg:hidden">
-                    <Menu className="w-4 h-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 p-0">
-                  <div className="p-4 overflow-y-auto h-full">
-                    <CampaignSidebar
-                      campaign={{
-                        id: campaign.id,
-                        name: campaign.name,
-                        slug: campaign.slug,
-                        thumbnail_url: campaign.thumbnail_url,
-                        rules_guidelines: campaign.rules_guidelines,
-                        reward_per_1k_views: campaign.reward_per_1k_views
-                      }}
-                      chatRoomId={chatRoomId}
-                      isMember={isMember}
-                      submissions={submissions}
-                      onOpenChat={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenChat(true);
-                      }}
-                      onOpenSubmissions={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenSubmissions(true);
-                      }}
-                      onOpenAnnouncements={() => {
-                        setMobileSidebarOpen(false);
-                        setShowFullscreenAnnouncements(true);
-                      }}
-                      onSwitchToSubmissionsTab={() => {
-                        setMobileSidebarOpen(false);
-                        setActiveTab('submissions');
-                      }}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/dashboard"><User className="w-4 h-4" /></Link>
               </Button>
@@ -899,33 +854,9 @@ const CampaignDetail = () => {
         </div>
       </header>
 
-      {/* Two Column Layout - Whop Style (24% sidebar, 76% content) */}
-      <div className="flex min-h-[calc(100vh-3.5rem)]">
-        {/* Left Sidebar - 24% width */}
-        <aside className="hidden lg:block w-[24%] min-w-[280px] max-w-[320px] shrink-0 p-4 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
-          <CampaignSidebar
-            campaign={{
-              id: campaign.id,
-              name: campaign.name,
-              slug: campaign.slug,
-              thumbnail_url: campaign.thumbnail_url,
-              rules_guidelines: campaign.rules_guidelines,
-              reward_per_1k_views: campaign.reward_per_1k_views
-            }}
-            chatRoomId={chatRoomId}
-            isMember={isMember}
-            submissions={submissions}
-            onOpenChat={() => setMainView('chat')}
-            onOpenSubmissions={() => setMainView('submissions')}
-            onOpenAnnouncements={() => setMainView('announcements')}
-            onSwitchToSubmissionsTab={() => setMainView('submissions')}
-            onBackToDetails={() => setMainView('details')}
-            activeView={mainView}
-          />
-        </aside>
-
-        {/* Main Content - Full width (76%), no side whitespace */}
-        <main className="flex-1 px-6 lg:px-8 py-6 pb-24">
+      {/* Single Column Layout - No Sidebar */}
+      <div className="min-h-[calc(100vh-3.5rem)]">
+        <main className="container mx-auto px-4 md:px-6 lg:px-8 py-6 pb-24">
           {/* Back Button & Title + Share - Whop Style */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -951,6 +882,16 @@ const CampaignDetail = () => {
               Share
             </Button>
           </div>
+
+          {/* Navigation Tabs */}
+          <Tabs value={mainView} onValueChange={(v) => setMainView(v as 'details' | 'chat' | 'submissions' | 'announcements')} className="mb-6">
+            <TabsList className="w-full grid grid-cols-4 h-11 bg-muted/50">
+              <TabsTrigger value="details" className="text-xs sm:text-sm">Details</TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs sm:text-sm">Chat</TabsTrigger>
+              <TabsTrigger value="submissions" className="text-xs sm:text-sm">Submissions</TabsTrigger>
+              <TabsTrigger value="announcements" className="text-xs sm:text-sm">Announcements</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {/* Conditional Main Content based on mainView */}
           {mainView === 'details' && (
@@ -1264,7 +1205,7 @@ const CampaignDetail = () => {
           )}
 
         {/* Fixed Bottom Bar - Whop Style */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-72 bg-card border-t border-border px-8 py-5 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-8 py-5 z-40">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-lg text-foreground">{campaign.name}</h3>
