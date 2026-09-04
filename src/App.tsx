@@ -110,6 +110,7 @@ const DeferredChrome = () => {
 
 const App = () => (
   <ErrorBoundary>
+    <MotionConfig reducedMotion="always">
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
