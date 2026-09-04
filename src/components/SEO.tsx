@@ -11,11 +11,11 @@ interface SEOProps {
   structuredData?: object | object[];
 }
 
-const SITE_NAME = "Cliperus";
-const DEFAULT_TITLE = "Cliperus — Creator Rewards Platform";
-const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on Cliperus. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
-const DEFAULT_IMAGE = "https://cliperus.com/og-image.png";
-const SITE_URL = "https://cliperus.com";
+const SITE_NAME = "CliporaX";
+const DEFAULT_TITLE = "CliporaX — Creator Rewards Platform";
+const DEFAULT_DESCRIPTION = "Join 5,000+ creators earning real money on CliporaX. Get paid for every view on TikTok, YouTube & Instagram. $50K+ already paid out. Start earning today!";
+const DEFAULT_IMAGE = "https://cliporax.com/og-image.png";
+const SITE_URL = "https://cliporax.com";
 
 export const SEO = ({
   title,
@@ -62,8 +62,8 @@ export const SEO = ({
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@Cliperus" />
-      <meta name="twitter:creator" content="@Cliperus" />
+      <meta name="twitter:site" content="@CliporaX" />
+      <meta name="twitter:creator" content="@CliporaX" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
@@ -82,27 +82,27 @@ export const SEO = ({
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Cliperus",
-  alternateName: "Cliperus Media",
-  url: "https://cliperus.com",
+  name: "CliporaX",
+  alternateName: "CliporaX Media",
+  url: "https://cliporax.com",
   logo: {
     "@type": "ImageObject",
-    url: "https://cliperus.com/favicon-512.png",
+    url: "https://cliporax.com/favicon-512.png",
     width: 512,
     height: 512
   },
-  image: "https://cliperus.com/og-image.png",
-  description: "Cliperus is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
+  image: "https://cliporax.com/og-image.png",
+  description: "CliporaX is the #1 creator rewards platform where content creators earn money for their videos on TikTok, YouTube, and Instagram.",
   foundingDate: "2022",
   sameAs: [
-    "https://twitter.com/cliperus",
-    "https://instagram.com/cliperus",
-    "https://youtube.com/@cliperus",
-    "https://tiktok.com/@cliperus"
+    "https://twitter.com/cliporax",
+    "https://instagram.com/cliporax",
+    "https://youtube.com/@cliporax",
+    "https://tiktok.com/@cliporax"
   ],
   contactPoint: {
     "@type": "ContactPoint",
-    email: "hello@cliperus.com",
+    email: "hello@cliporax.com",
     contactType: "customer service",
     availableLanguage: ["English"]
   },
@@ -119,15 +119,15 @@ export const organizationSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Cliperus",
-  alternateName: "Cliperus Creator Platform",
-  url: "https://cliperus.com",
+  name: "CliporaX",
+  alternateName: "CliporaX Creator Platform",
+  url: "https://cliporax.com",
   description: "The #1 creator rewards platform. Earn money for your content.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://cliperus.com/campaigns?q={search_term_string}"
+      urlTemplate: "https://cliporax.com/campaigns?q={search_term_string}"
     },
     "query-input": "required name=search_term_string"
   }
@@ -151,7 +151,7 @@ export const createProductSchema = (product: {
   url: `${SITE_URL}${product.url}`,
   brand: {
     "@type": "Brand",
-    name: product.seller || "Cliperus"
+    name: product.seller || "CliporaX"
   },
   offers: {
     "@type": "Offer",
@@ -160,7 +160,7 @@ export const createProductSchema = (product: {
     availability: "https://schema.org/InStock",
     seller: {
       "@type": "Organization",
-      name: product.seller || "Cliperus"
+      name: product.seller || "CliporaX"
     }
   },
   ...(product.rating && product.reviewCount && {
@@ -188,7 +188,7 @@ export const createCampaignSchema = (campaign: {
   url: `${SITE_URL}${campaign.url}`,
   provider: {
     "@type": "Organization",
-    name: campaign.creator || "Cliperus"
+    name: campaign.creator || "CliporaX"
   },
   offers: {
     "@type": "Offer",

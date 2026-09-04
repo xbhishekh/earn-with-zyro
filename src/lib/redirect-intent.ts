@@ -1,7 +1,7 @@
 // Redirect intent helpers (campaign deep-link -> auth -> back)
 
-const REDIRECT_KEY = "cliperus_post_auth_redirect";
-const REDIRECT_TS_KEY = "cliperus_post_auth_redirect_ts";
+const REDIRECT_KEY = "cliporax_post_auth_redirect";
+const REDIRECT_TS_KEY = "cliporax_post_auth_redirect_ts";
 const MAX_AGE_MS = 1000 * 60 * 60; // 1 hour
 
 export const sanitizeRedirectPath = (input?: string | null): string | null => {

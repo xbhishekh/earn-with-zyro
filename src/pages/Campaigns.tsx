@@ -110,7 +110,7 @@ const Campaigns = () => {
         const creatorProfile = campaign.created_by ? profilesMap.get(campaign.created_by) : null;
         return {
           ...campaign,
-          creator_name: creatorProfile?.display_name || "Cliperus",
+          creator_name: creatorProfile?.display_name || "CliporaX",
           creator_avatar: creatorProfile?.avatar_url || null,
           stats: { total_submissions: 0, approved_submissions: 0, total_views: 0 },
           isMember: false,
@@ -286,7 +286,7 @@ const Campaigns = () => {
     <MainLayout>
       <SEO
         title="Active Campaigns - Earn Money Creating Content"
-        description="Browse active clipping campaigns on Cliperus. Earn $1-5 per 1,000 views creating content for top brands. Join campaigns for TikTok, YouTube, and Instagram."
+        description="Browse active clipping campaigns on CliporaX. Earn $1-5 per 1,000 views creating content for top brands. Join campaigns for TikTok, YouTube, and Instagram."
         keywords="clipping campaigns, UGC campaigns, earn money TikTok, YouTube monetization, creator campaigns, content creation jobs"
         canonical="/campaigns"
       />

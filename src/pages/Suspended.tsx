@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Ban, MessageCircle, LogOut, Mail } from "lucide-react";
-import logo from "@/assets/cliperus-mark.png";
+import logo from "@/assets/cliporax-mark.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,11 +76,11 @@ const Suspended = () => {
         <Link to="/" className="inline-flex items-center gap-2 mb-8">
           <img 
             src={logo} 
-            alt="Cliperus" 
+            alt="CliporaX" 
             className="w-10 h-10 rounded-xl object-contain"
           />
           <span className="font-display font-bold text-xl gradient-text">
-            Cliperus
+            CliporaX
           </span>
         </Link>
 
@@ -114,7 +114,7 @@ const Suspended = () => {
               className="w-full" 
               asChild
             >
-              <a href="mailto:cliperusofficial@gmail.com?subject=Account%20Suspension%20Appeal&body=Hi%20Cliperus%20Team%2C%0A%0AI%20would%20like%20to%20appeal%20my%20account%20suspension.%0A%0AAccount%20Email%3A%20%0AReason%20for%20appeal%3A%20%0A%0AThank%20you.">
+              <a href="mailto:cliporaxofficial@gmail.com?subject=Account%20Suspension%20Appeal&body=Hi%20CliporaX%20Team%2C%0A%0AI%20would%20like%20to%20appeal%20my%20account%20suspension.%0A%0AAccount%20Email%3A%20%0AReason%20for%20appeal%3A%20%0A%0AThank%20you.">
                 <Mail className="w-5 h-5 mr-2" />
                 Email Support
               </a>
@@ -134,8 +134,8 @@ const Suspended = () => {
 
         <p className="text-sm text-muted-foreground mt-6">
           If you believe this is a mistake, email us at{" "}
-          <a href="mailto:cliperusofficial@gmail.com" className="text-primary hover:underline">
-            cliperusofficial@gmail.com
+          <a href="mailto:cliporaxofficial@gmail.com" className="text-primary hover:underline">
+            cliporaxofficial@gmail.com
           </a>
         </p>
       </motion.div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, Shield, Wallet, LogOut, User, LayoutDashboard } from "lucide-react";
-import logo from "@/assets/cliperus-mark.png";
+import logo from "@/assets/cliporax-mark.png";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -81,7 +81,7 @@ export const Navbar = () => {
             <div className="relative">
               <img 
                 src={logo} 
-                alt="Cliperus" 
+                alt="CliporaX" 
                 width={40}
                 height={40}
                 decoding="async"
@@ -90,8 +90,8 @@ export const Navbar = () => {
               />
               <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
             </div>
-            <span className="font-display font-bold text-xl md:text-2xl gradient-text">
-              Cliperus
+            <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight text-foreground">
+              Clipora<span className="gradient-text">X</span>
             </span>
           </Link>
 

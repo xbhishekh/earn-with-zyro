@@ -71,8 +71,8 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Pricing - Free & Pro Plans for Creators"
-        description="Cliperus pricing plans for creators. Start free, upgrade to Pro for unlimited submissions, priority access, and 10% bonus earnings. Simple, transparent pricing."
-        keywords="Cliperus pricing, creator plans, Pro subscription, free creator platform"
+        description="CliporaX pricing plans for creators. Start free, upgrade to Pro for unlimited submissions, priority access, and 10% bonus earnings. Simple, transparent pricing."
+        keywords="CliporaX pricing, creator plans, Pro subscription, free creator platform"
         canonical="/pricing"
       />
       <Navbar />

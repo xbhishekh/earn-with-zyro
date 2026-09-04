@@ -247,7 +247,7 @@ const Marketplace = () => {
     <MainLayout>
       <SEO
         title="Creator Marketplace - Buy & Sell Digital Products"
-        description="Discover courses, templates, and digital products from top creators. Buy or sell on Cliperus's marketplace. Coaching, software, communities, and more."
+        description="Discover courses, templates, and digital products from top creators. Buy or sell on CliporaX's marketplace. Coaching, software, communities, and more."
         keywords="creator marketplace, digital products, online courses, creator economy, templates, coaching, memberships"
         canonical="/marketplace"
       />

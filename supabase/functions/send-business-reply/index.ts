@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     if (inqError || !inquiry) return json({ error: "Inquiry not found" }, 404);
 
     const apiKey = Deno.env.get("RESEND_API_KEY");
-    const fromAddress = Deno.env.get("BUSINESS_FROM_EMAIL") || "Cliperus <onboarding@resend.dev>";
+    const fromAddress = Deno.env.get("BUSINESS_FROM_EMAIL") || "CliporaX <onboarding@resend.dev>";
 
     let status = "sent";
     let errorMessage: string | null = null;
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
           <div style="font-family:Inter,Arial,sans-serif;color:#111;line-height:1.6">
             <p>Hi ${inquiry.contact_name || "there"},</p>
             <div style="white-space:pre-wrap">${String(message).replace(/</g, "&lt;")}</div>
-            <p style="margin-top:24px;color:#666;font-size:13px">— Team Cliperus</p>
+            <p style="margin-top:24px;color:#666;font-size:13px">— Team CliporaX</p>
           </div>`;
         const { error } = await resend.emails.send({
           from: fromAddress,

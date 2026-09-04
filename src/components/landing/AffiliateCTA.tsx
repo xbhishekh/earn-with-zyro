@@ -49,7 +49,7 @@ export const AffiliateCTA = () => {
               <span className="display-italic text-primary">keep earning</span> from them.
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Cliperus pays you twice: once when a creator joins with your link, and again every
+              CliporaX pays you twice: once when a creator joins with your link, and again every
               single time they get paid.
             </p>
           </div>
@@ -102,7 +102,7 @@ export const AffiliateCTA = () => {
                 <div className="mt-8 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                   <span className="text-xs text-muted-foreground shrink-0">Your link</span>
                   <code className="text-xs md:text-sm font-mono text-foreground truncate">
-                    cliperus.com/?ref=yourname
+                    cliporax.com/?ref=yourname
                   </code>
                 </div>
               </div>

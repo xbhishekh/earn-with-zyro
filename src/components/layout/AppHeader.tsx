@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, Shield, LogOut, Wallet, Crown, LayoutDashboard, User, MessageCircle, HandCoins, ChevronRight
 } from 'lucide-react';
-import logo from "@/assets/cliperus-mark.png";
+import logo from "@/assets/cliporax-mark.png";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -217,15 +217,15 @@ export const AppHeader = memo(() => {
             <Link to="/" className="flex lg:hidden items-center gap-2 shrink-0">
               <img 
                 src={logo} 
-                alt="Cliperus" 
+                alt="CliporaX" 
                 width={36}
                 height={36}
                 decoding="async"
                 fetchPriority="high"
                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg object-contain"
               />
-              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-primary">
-                Cliperus
+              <span className="hidden sm:block font-display font-extrabold text-lg tracking-tight text-foreground">
+                Clipora<span className="gradient-text">X</span>
               </span>
             </Link>
 

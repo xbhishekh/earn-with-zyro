@@ -5,15 +5,15 @@ const refundContent = `
 
 **Last Updated: September 4, 2026**
 
-At Cliperus, we want every creator and business to have a fair and transparent experience. This Refund Policy explains when refunds apply and how to request one.
+At CliporaX, we want every creator and business to have a fair and transparent experience. This Refund Policy explains when refunds apply and how to request one.
 
 ## 1. General Principle
 
-Cliperus is free to join for creators — there is no sign-up fee, subscription fee, or application fee. Because creators never pay to use the core platform, creator accounts are not eligible for refunds simply because there is nothing to refund.
+CliporaX is free to join for creators — there is no sign-up fee, subscription fee, or application fee. Because creators never pay to use the core platform, creator accounts are not eligible for refunds simply because there is nothing to refund.
 
 ## 2. Marketplace Purchases
 
-Digital products, courses, communities, and services sold through the Cliperus Marketplace are subject to the following rules:
+Digital products, courses, communities, and services sold through the CliporaX Marketplace are subject to the following rules:
 
 - You may request a full refund within **14 days** of purchase if you have not accessed, downloaded, or consumed more than 20% of the product
 - Products marked "non-refundable" at checkout are final sale
@@ -24,7 +24,7 @@ Digital products, courses, communities, and services sold through the Cliperus M
 
 - Unused campaign budget that has not been allocated to verified views may be refunded in full upon written request
 - Amounts already earned by creators for verified, approved views are **non-refundable**
-- If a campaign is cancelled by Cliperus for policy reasons, all unspent funds are returned automatically within 10 business days
+- If a campaign is cancelled by CliporaX for policy reasons, all unspent funds are returned automatically within 10 business days
 
 ## 4. Creator Earnings
 
@@ -34,7 +34,7 @@ Digital products, courses, communities, and services sold through the Cliperus M
 
 ## 5. How to Request a Refund
 
-1. Email **billing@cliperus.com** from your registered email address
+1. Email **billing@cliporax.com** from your registered email address
 2. Include your order ID or campaign ID and the reason for the request
 3. Our team reviews every request within **3 business days**
 4. Approved refunds are issued to the original payment method within **5–10 business days**
@@ -45,13 +45,13 @@ Filing a chargeback without first contacting us may result in account suspension
 
 ## 7. Contact
 
-Questions about this policy? Email **billing@cliperus.com** or visit our Help & Support page.
+Questions about this policy? Email **billing@cliporax.com** or visit our Help & Support page.
 `;
 
 const Refund = () => (
   <LegalDoc
     title="Refund Policy"
-    description="Cliperus Refund Policy - Learn how refunds work for marketplace purchases, campaign budgets, and creator earnings."
+    description="CliporaX Refund Policy - Learn how refunds work for marketplace purchases, campaign budgets, and creator earnings."
     canonical="/refund"
     pageType="refund"
     defaultContent={refundContent}

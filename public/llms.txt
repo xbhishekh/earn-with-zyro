@@ -1,8 +1,8 @@
-# Cliperus
+# CliporaX
 
-> Cliperus is a creator rewards platform where content creators earn real money for views on TikTok, YouTube, and Instagram — through clipping campaigns, an affiliate program, and a creator marketplace.
+> CliporaX is a creator rewards platform where content creators earn real money for views on TikTok, YouTube, and Instagram — through clipping campaigns, an affiliate program, and a creator marketplace.
 
-Cliperus connects brands with creators. Creators discover paid campaigns, submit clips of their work, and get paid per 1,000 verified views. A marketplace lets creators buy and sell digital products (courses, templates, communities, coaching), and an affiliate program rewards referrals.
+CliporaX connects brands with creators. Creators discover paid campaigns, submit clips of their work, and get paid per 1,000 verified views. A marketplace lets creators buy and sell digital products (courses, templates, communities, coaching), and an affiliate program rewards referrals.
 
 ## Pages
 
@@ -13,7 +13,7 @@ Cliperus connects brands with creators. Creators discover paid campaigns, submit
 - [Affiliate](/affiliate): Referral program details, commission structure, and share links.
 - [Pricing](/pricing): Plans, fees, and payout terms.
 - [About](/about): Company mission and story.
-- [Careers](/careers): Open roles at Cliperus.
+- [Careers](/careers): Open roles at CliporaX.
 - [Contact](/contact): Support and business contact channels.
 - [Support](/support): Help centre and frequently asked questions.
 

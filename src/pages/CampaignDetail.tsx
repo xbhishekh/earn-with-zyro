@@ -518,7 +518,7 @@ const CampaignDetail = () => {
   const campaignUrl = campaign.slug ? `/c/${campaign.slug}` : `/campaign/${campaign.id}`;
   const campaignDescription = campaign.description 
     ? campaign.description.substring(0, 155) + (campaign.description.length > 155 ? '...' : '')
-    : `Earn $${campaign.reward_per_1k_views} per 1,000 views on ${campaign.name}. Join this ${campaign.category || 'creator'} campaign on Cliperus and start earning today!`;
+    : `Earn $${campaign.reward_per_1k_views} per 1,000 views on ${campaign.name}. Join this ${campaign.category || 'creator'} campaign on CliporaX and start earning today!`;
   
   const seoTitle = `${campaign.name} - Earn $${campaign.reward_per_1k_views}/1K Views`;
   const seoKeywords = [
@@ -557,7 +557,7 @@ const CampaignDetail = () => {
           description={campaignDescription}
           keywords={seoKeywords}
           canonical={campaignUrl}
-          image={campaign.thumbnail_url || "https://cliperus.com/og-image.png"}
+          image={campaign.thumbnail_url || "https://cliporax.com/og-image.png"}
           structuredData={[campaignSchema, breadcrumbSchema]}
         />
         <header className="glass-card border-b border-border sticky top-0 z-50">
@@ -567,7 +567,7 @@ const CampaignDetail = () => {
                 <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                   <Zap className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-display font-bold text-lg gradient-text">Cliperus</span>
+                <span className="font-display font-bold text-lg gradient-text">CliporaX</span>
               </Link>
             </div>
           </div>
@@ -829,7 +829,7 @@ const CampaignDetail = () => {
         description={campaignDescription}
         keywords={seoKeywords}
         canonical={campaignUrl}
-        image={campaign.thumbnail_url || "https://cliperus.com/og-image.png"}
+        image={campaign.thumbnail_url || "https://cliporax.com/og-image.png"}
         structuredData={[campaignSchema, breadcrumbSchema]}
       />
       {/* Header */}
@@ -840,7 +840,7 @@ const CampaignDetail = () => {
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="font-display font-bold text-lg gradient-text">Cliperus</span>
+              <span className="font-display font-bold text-lg gradient-text">CliporaX</span>
             </Link>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
@@ -873,7 +873,7 @@ const CampaignDetail = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                const shareUrl = `https://cliperus.com/${campaign.slug || campaign.id}`;
+                const shareUrl = `https://cliporax.com/${campaign.slug || campaign.id}`;
                 navigator.clipboard.writeText(shareUrl);
                 toast.success("Campaign link copied!");
               }}

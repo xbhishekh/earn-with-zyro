@@ -70,7 +70,7 @@ export const HeroSection = () => {
 
         {/* Stats band */}
         <div className="mt-16 max-w-5xl mx-auto stats-band rounded-[2rem] px-6 py-12 md:px-12 relative overflow-hidden">
-          <span className="editorial-eyebrow mb-10 flex justify-center">The Cliperus standard</span>
+          <span className="editorial-eyebrow mb-10 flex justify-center">The CliporaX standard</span>
           <div className="grid grid-cols-2 md:grid-cols-4">
             {stats.map((s, i) => (
               <div

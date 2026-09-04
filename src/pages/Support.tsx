@@ -110,7 +110,7 @@ const Support = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Help Centre & FAQs"
-        description="Find answers to frequently asked questions about Cliperus campaigns, payouts, and the creator marketplace."
+        description="Find answers to frequently asked questions about CliporaX campaigns, payouts, and the creator marketplace."
         canonical="/support"
         structuredData={faqs.length > 0 ? createFAQSchema(faqs.map(f => ({ question: f.question, answer: f.answer }))) : undefined}
       />
@@ -319,7 +319,7 @@ const Support = () => {
                     size="lg" 
                     variant="outline"
                     className="border-white/30 text-white hover:bg-white/10"
-                    onClick={() => window.location.href = "mailto:support@cliperus.com"}
+                    onClick={() => window.location.href = "mailto:support@cliporax.com"}
                   >
                     <Mail className="w-5 h-5 mr-2" />
                     Email Us

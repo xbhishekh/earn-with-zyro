@@ -9,15 +9,15 @@ const termsContent = `
 
 **Last Updated: January 15, 2026**
 
-Welcome to Cliperus! These Terms of Service ("Terms") govern your use of the Cliperus platform and services.
+Welcome to CliporaX! These Terms of Service ("Terms") govern your use of the CliporaX platform and services.
 
 ## 1. Acceptance of Terms
 
-By accessing or using Cliperus, you agree to be bound by these Terms. If you do not agree, please do not use our services.
+By accessing or using CliporaX, you agree to be bound by these Terms. If you do not agree, please do not use our services.
 
 ## 2. Eligibility
 
-You must be at least 18 years old to use Cliperus. By using our platform, you represent that you meet this requirement.
+You must be at least 18 years old to use CliporaX. By using our platform, you represent that you meet this requirement.
 
 ## 3. Account Registration
 
@@ -50,7 +50,7 @@ You must be at least 18 years old to use Cliperus. By using our platform, you re
 
 - You retain ownership of your original content
 - By submitting content, you grant brands license to use it per campaign terms
-- Cliperus branding and technology remain our property
+- CliporaX branding and technology remain our property
 
 ## 8. Prohibited Activities
 
@@ -65,7 +65,7 @@ We may suspend or terminate accounts that violate these Terms or engage in activ
 
 ## 10. Disclaimers
 
-Cliperus is provided "as is" without warranties. We do not guarantee earnings or campaign availability.
+CliporaX is provided "as is" without warranties. We do not guarantee earnings or campaign availability.
 
 ## 11. Limitation of Liability
 
@@ -77,7 +77,7 @@ We may update these Terms at any time. Continued use after changes constitutes a
 
 ## 13. Contact
 
-For questions about these Terms, contact us at legal@cliperus.com
+For questions about these Terms, contact us at legal@cliporax.com
 `;
 
 const Terms = () => {
@@ -102,7 +102,7 @@ const Terms = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Terms of Service"
-        description="Cliperus Terms of Service - Review the terms and conditions for using the Cliperus creator rewards platform."
+        description="CliporaX Terms of Service - Review the terms and conditions for using the CliporaX creator rewards platform."
         canonical="/terms"
       />
       <Navbar />
