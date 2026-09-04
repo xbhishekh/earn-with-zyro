@@ -8,7 +8,6 @@ import {
 import { ProductCardSkeleton, FeaturedProductSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OptimizedImage } from "@/components/ui/optimized-image";
@@ -244,7 +243,7 @@ const Marketplace = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <SEO
         title="Creator Marketplace - Buy & Sell Digital Products"
         description="Discover courses, templates, and digital products from top creators. Buy or sell on CliporaX's marketplace. Coaching, software, communities, and more."
@@ -557,7 +556,7 @@ const Marketplace = () => {
             </div>
           )}
         </div>
-    </MainLayout>
+    </>
   );
 };
 

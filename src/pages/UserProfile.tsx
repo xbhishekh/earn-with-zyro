@@ -17,7 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { format } from "date-fns";
 import PayUserModal from "@/components/profile/PayUserModal";
 import { calculateAvailableBalance } from "@/lib/balance-utils";
@@ -149,17 +148,17 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <MainLayout>
+      <>
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!profile) {
     return (
-      <MainLayout>
+      <>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">User not found</h1>
@@ -167,12 +166,12 @@ const UserProfile = () => {
             <Button onClick={() => navigate(-1)}>Go Back</Button>
           </div>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Back Button */}
         <motion.div
@@ -344,7 +343,7 @@ const UserProfile = () => {
           }}
         />
       )}
-    </MainLayout>
+    </>
   );
 };
 

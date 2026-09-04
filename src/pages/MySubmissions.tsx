@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { SubmissionCard } from '@/components/submissions/SubmissionCard';
 import { ClipDetailsModal } from '@/components/submissions/ClipDetailsModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -202,16 +201,16 @@ const MySubmissions = () => {
 
   if (authLoading || loading) {
     return (
-      <MainLayout>
+      <>
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -334,7 +333,7 @@ const MySubmissions = () => {
         submission={selectedSubmission}
         campaign={selectedSubmission ? campaigns.get(selectedSubmission.campaign_id) || null : null}
       />
-    </MainLayout>
+    </>
   );
 };
 

@@ -41,7 +41,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LinkedSocialAccounts from "@/components/dashboard/LinkedSocialAccounts";
-import { MainLayout } from "@/components/layout/MainLayout";
 import SupportChatWidget from "@/components/SupportChatWidget";
 import SellerAnalytics from "@/components/dashboard/SellerAnalytics";
 import SellerBuyersManager from "@/components/dashboard/SellerBuyersManager";
@@ -426,7 +425,7 @@ const Profile = () => {
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Page Title */}
         <div className="mb-8">
@@ -1171,7 +1170,7 @@ const Profile = () => {
 
       {/* Support Chat Widget - Only shown when triggered from this page */}
       {showSupportChat && <SupportChatWidget forceOpen onClose={() => setShowSupportChat(false)} />}
-    </MainLayout>
+    </>
   );
 };
 

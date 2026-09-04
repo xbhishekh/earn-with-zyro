@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Link2, Users, DollarSign, MousePointer, Copy, Check, 
-  Share2, ArrowLeft, RefreshCw, ExternalLink, TrendingUp,
+  Share2, RefreshCw, ExternalLink, TrendingUp,
   Twitter, MessageCircle, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -212,34 +212,26 @@ const Affiliate = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
+      <>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass-card border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/dashboard">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="font-display text-xl font-bold">Affiliate Center</h1>
-              <p className="text-sm text-muted-foreground">Manage your referral links and earnings</p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
+    <>
+      <div className="container mx-auto px-4 pt-6 pb-2 flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Affiliate Center</h1>
+          <p className="text-sm text-muted-foreground">Manage your referral links and earnings</p>
         </div>
-      </header>
+        <Button variant="outline" size="sm" onClick={fetchData}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
@@ -699,7 +691,7 @@ const Affiliate = () => {
           </Card>
         </motion.div>
       </main>
-    </div>
+    </>
   );
 };
 

@@ -5,7 +5,6 @@ import { PlatformIcon } from "@/components/ui/platform-icons";
 import { CampaignCardSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -283,7 +282,7 @@ const Campaigns = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <SEO
         title="Active Campaigns - Earn Money Creating Content"
         description="Browse active clipping campaigns on CliporaX. Earn $1-5 per 1,000 views creating content for top brands. Join campaigns for TikTok, YouTube, and Instagram."
@@ -509,7 +508,7 @@ const Campaigns = () => {
           </Button>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </>
   );
 };
 

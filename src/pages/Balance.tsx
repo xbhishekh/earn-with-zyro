@@ -26,7 +26,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { calculateBalances } from "@/lib/balance-utils";
 
 interface BalanceData {
@@ -229,7 +228,7 @@ const Balance = () => {
   const filteredTransactions = getFilteredTransactions();
 
   return (
-    <MainLayout>
+    <>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -479,7 +478,7 @@ const Balance = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </>
   );
 };
 
