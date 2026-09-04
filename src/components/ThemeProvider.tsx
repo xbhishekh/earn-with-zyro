@@ -10,7 +10,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const STORAGE_KEY = "cliperus-theme";
+const STORAGE_KEY = "cliporax-theme";
 
 function getSystemTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";

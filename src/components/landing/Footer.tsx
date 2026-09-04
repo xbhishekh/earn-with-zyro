@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, Youtube, Twitter, Mail, ShieldCheck, ArrowUpRight } from "lucide-react";
-import logo from "@/assets/cliperus-mark.png";
+import logo from "@/assets/cliporax-mark.png";
 
 const columns = [
   {
@@ -39,7 +39,7 @@ const socials = [
   { name: "Instagram", href: "https://instagram.com", icon: Instagram },
   { name: "YouTube", href: "https://youtube.com", icon: Youtube },
   { name: "X", href: "https://x.com", icon: Twitter },
-  { name: "Email", href: "mailto:support@cliperus.com", icon: Mail },
+  { name: "Email", href: "mailto:support@cliporax.com", icon: Mail },
 ];
 
 export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
@@ -55,11 +55,11 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
             <Link to="/" className="flex items-center gap-2.5 w-fit">
               <img
                 src={logo}
-                alt="Cliperus"
+                alt="CliporaX"
                 className="w-10 h-10 rounded-xl object-contain"
               />
               <span className="font-display font-extrabold text-xl text-primary tracking-tight">
-                Cliperus
+                CliporaX
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
@@ -117,10 +117,10 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
             </h3>
             <div className="rounded-2xl border border-border bg-background p-4 space-y-3">
               <a
-                href="mailto:support@cliperus.com"
+                href="mailto:support@cliporax.com"
                 className="block text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
-                support@cliperus.com
+                support@cliporax.com
               </a>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Average response time under 24 hours, 7 days a week.
@@ -139,7 +139,7 @@ export const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Cliperus. All rights reserved.
+            © {new Date().getFullYear()} CliporaX. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Built for creators · Paid for views · Trusted worldwide

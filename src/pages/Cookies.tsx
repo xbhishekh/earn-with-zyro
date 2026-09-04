@@ -5,7 +5,7 @@ const cookiesContent = `
 
 **Last Updated: September 4, 2026**
 
-This Cookie Policy explains how Cliperus uses cookies and similar technologies when you visit our platform.
+This Cookie Policy explains how CliporaX uses cookies and similar technologies when you visit our platform.
 
 ## 1. What Are Cookies
 
@@ -58,13 +58,13 @@ We may update this policy as our platform evolves. Material changes will be anno
 
 ## 7. Contact
 
-Questions about cookies? Email **privacy@cliperus.com**.
+Questions about cookies? Email **privacy@cliporax.com**.
 `;
 
 const Cookies = () => (
   <LegalDoc
     title="Cookie Policy"
-    description="Cliperus Cookie Policy - How we use essential, preference, and analytics cookies, and how you can control them."
+    description="CliporaX Cookie Policy - How we use essential, preference, and analytics cookies, and how you can control them."
     canonical="/cookies"
     pageType="cookies"
     defaultContent={cookiesContent}

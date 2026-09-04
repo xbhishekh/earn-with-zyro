@@ -1,5 +1,5 @@
-# Cliperus Robots.txt
-# https://cliperus.com
+# CliporaX Robots.txt
+# https://cliporax.com
 
 User-agent: *
 Allow: /

@@ -153,8 +153,8 @@ const Affiliate = () => {
   };
 
   const getFullLink = (code: string, campaignId: string | null) => {
-    // Use cliperus.com domain with campaign slug from database
-    const baseUrl = "https://cliperus.com";
+    // Use cliporax.com domain with campaign slug from database
+    const baseUrl = "https://cliporax.com";
     
     if (campaignId) {
       const campaign = campaigns.find(c => c.id === campaignId);

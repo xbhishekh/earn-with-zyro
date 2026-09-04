@@ -35,7 +35,7 @@ interface AccountSwitcherProps {
   compact?: boolean;
 }
 
-const ACCOUNTS_STORAGE_KEY = "cliperus_saved_accounts";
+const ACCOUNTS_STORAGE_KEY = "cliporax_saved_accounts";
 
 export const AccountSwitcher = ({
   currentEmail,

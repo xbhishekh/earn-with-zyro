@@ -46,16 +46,16 @@ const contactMethods = [
     icon: Mail,
     title: "Email Us",
     description: "For general inquiries",
-    value: "hello@cliperus.com",
-    action: "mailto:hello@cliperus.com",
+    value: "hello@cliporax.com",
+    action: "mailto:hello@cliporax.com",
     color: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
   },
   {
     icon: Headphones,
     title: "Support",
     description: "For account & technical help",
-    value: "support@cliperus.com",
-    action: "mailto:support@cliperus.com",
+    value: "support@cliporax.com",
+    action: "mailto:support@cliporax.com",
     color: "from-green-500/20 to-green-600/20 border-green-500/30",
   },
   {
@@ -69,9 +69,9 @@ const contactMethods = [
 ];
 
 const socialLinks = [
-  { icon: Twitter, label: "Twitter", href: "https://twitter.com/cliperus" },
-  { icon: Instagram, label: "Instagram", href: "https://instagram.com/cliperus" },
-  { icon: Youtube, label: "YouTube", href: "https://youtube.com/@cliperus" },
+  { icon: Twitter, label: "Twitter", href: "https://twitter.com/cliporax" },
+  { icon: Instagram, label: "Instagram", href: "https://instagram.com/cliporax" },
+  { icon: Youtube, label: "YouTube", href: "https://youtube.com/@cliporax" },
 ];
 
 const inquiryTypes = [
@@ -136,9 +136,9 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Contact Us - Get in Touch with Cliperus"
-        description="Have questions about Cliperus? Contact our team for support, partnerships, or general inquiries. We typically respond within 24-48 hours."
-        keywords="contact Cliperus, creator support, partnership inquiry, customer service"
+        title="Contact Us - Get in Touch with CliporaX"
+        description="Have questions about CliporaX? Contact our team for support, partnerships, or general inquiries. We typically respond within 24-48 hours."
+        keywords="contact CliporaX, creator support, partnership inquiry, customer service"
         canonical="/contact"
       />
       <Navbar />
@@ -324,7 +324,7 @@ const Contact = () => {
                       <div>
                         <p className="font-medium">Address</p>
                         <p className="text-sm text-muted-foreground">
-                          Cliperus Inc.<br />
+                          CliporaX Inc.<br />
                           123 Creator Lane, Suite 100<br />
                           San Francisco, CA 94105<br />
                           USA

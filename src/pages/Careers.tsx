@@ -89,9 +89,9 @@ const Careers = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Careers at Cliperus - Join the Creator Economy"
-        description="Join Cliperus and help build the future of creator monetization. We're hiring engineers, designers, and marketing professionals. Remote-first, global team."
-        keywords="Cliperus careers, creator economy jobs, remote jobs, startup jobs, tech jobs"
+        title="Careers at CliporaX - Join the Creator Economy"
+        description="Join CliporaX and help build the future of creator monetization. We're hiring engineers, designers, and marketing professionals. Remote-first, global team."
+        keywords="CliporaX careers, creator economy jobs, remote jobs, startup jobs, tech jobs"
         canonical="/careers"
       />
       <Navbar />
@@ -131,7 +131,7 @@ const Careers = () => {
             className="text-center mb-12"
           >
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Why <span className="gradient-text">Cliperus</span>?
+              Why <span className="gradient-text">CliporaX</span>?
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               We're not just building a product—we're building a movement to empower creators.
@@ -263,7 +263,7 @@ const Careers = () => {
                         </div>
                       </div>
                       <Button variant="outline" className="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                        <a href={`mailto:careers@cliperus.com?subject=${encodeURIComponent("Application: " + position.title)}&body=${encodeURIComponent("Hi Cliperus team,\n\nI'd like to apply for the " + position.title + " position.\n\nMy background:\n\nResume / LinkedIn:\n\nThanks!")}`}>
+                        <a href={`mailto:careers@cliporax.com?subject=${encodeURIComponent("Application: " + position.title)}&body=${encodeURIComponent("Hi CliporaX team,\n\nI'd like to apply for the " + position.title + " position.\n\nMy background:\n\nResume / LinkedIn:\n\nThanks!")}`}>
                           Apply Now
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </a>
@@ -293,7 +293,7 @@ const Careers = () => {
               tell us how you can contribute to our mission.
             </p>
             <Button variant="hero" size="xl" asChild>
-              <a href="mailto:careers@cliperus.com">
+              <a href="mailto:careers@cliporax.com">
                 Send Your Resume
                 <ArrowRight className="w-5 h-5 ml-2" />
               </a>

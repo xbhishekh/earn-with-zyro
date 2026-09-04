@@ -33,7 +33,7 @@ interface Product {
 }
 
 const TRENDING_SEARCHES = ['Clipper', 'Gaming', 'Lifestyle', 'Tech Review', 'Fitness'];
-const STORAGE_KEY = 'cliperus-recent-searches';
+const STORAGE_KEY = 'cliporax-recent-searches';
 
 export const GlobalSearchModal = ({ open, onClose }: GlobalSearchModalProps) => {
   const navigate = useNavigate();
