@@ -17,6 +17,7 @@ export default {
         sans: ['Work Sans', 'sans-serif'],
         display: ['Instrument Serif', 'serif'],
         serif: ['Instrument Serif', 'serif'],
+        handwritten: ['Caveat', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",

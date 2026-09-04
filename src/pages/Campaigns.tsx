@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, CheckCircle, Ban, Clock, Loader2 } from "lucide-react";
+import { Search, CheckCircle, Ban, Clock, Loader2, Clapperboard } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/platform-icons";
 import { CampaignCardSkeleton } from "@/components/ui/card-skeleton";
 import { Button } from "@/components/ui/button";
