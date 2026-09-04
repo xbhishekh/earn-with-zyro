@@ -76,8 +76,8 @@ export const Navbar = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          {/* Logo — stacked on mobile, side-by-side on desktop */}
+          <Link to="/" className="flex flex-col md:flex-row items-center md:gap-2 shrink-0">
             <div className="relative">
               <img 
                 src={logo} 
@@ -86,11 +86,11 @@ export const Navbar = () => {
                 height={40}
                 decoding="async"
                 fetchPriority="high"
-                className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-xl object-contain"
               />
-              <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+              <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-30" />
             </div>
-            <span className="font-display font-extrabold text-xl md:text-2xl tracking-tight text-foreground">
+            <span className="font-display font-extrabold text-[13px] md:text-2xl tracking-tight text-foreground mt-0.5 md:mt-0 whitespace-nowrap">
               Clipora<span className="gradient-text">X</span>
             </span>
           </Link>
