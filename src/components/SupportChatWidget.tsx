@@ -230,7 +230,7 @@ const SupportChatWidget = ({ forceOpen = false, onClose }: SupportChatWidgetProp
                 <AvatarFallback className="bg-white/20 text-white">Z</AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-semibold text-white">Cliperus Support</h3>
+                <h3 className="font-semibold text-white">CliporaX Support</h3>
                 <p className="text-xs text-white/70">We typically reply within minutes</p>
               </div>
             </div>

@@ -148,7 +148,7 @@ const AdminEmailBroadcast = () => {
 
       <div className="glass-card rounded-xl p-4 border-l-4 border-l-warning">
         <p className="text-sm text-muted-foreground">
-          <strong>⚠️ Warning:</strong> This will send a DM from Team Cliperus to ALL users. Use for important announcements only.
+          <strong>⚠️ Warning:</strong> This will send a DM from Team CliporaX to ALL users. Use for important announcements only.
         </p>
       </div>
 
@@ -180,7 +180,7 @@ const AdminEmailBroadcast = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Delivery Method</p>
-              <p className="font-display text-xl font-bold">Team Cliperus DM</p>
+              <p className="font-display text-xl font-bold">Team CliporaX DM</p>
             </div>
           </div>
         </motion.div>
@@ -211,7 +211,7 @@ const AdminEmailBroadcast = () => {
               rows={6}
             />
             <p className="text-xs text-muted-foreground mt-2">
-              This message will appear as a DM from Team Cliperus with verified badge.
+              This message will appear as a DM from Team CliporaX with verified badge.
             </p>
           </div>
 
@@ -222,7 +222,7 @@ const AdminEmailBroadcast = () => {
               <div className="bg-gradient-to-br from-orange-500/10 to-purple-500/10 rounded-lg p-4 border">
                 <p className="font-semibold">📢 {formData.title}</p>
                 <p className="text-sm mt-2 whitespace-pre-wrap">{formData.content}</p>
-                <p className="text-xs text-muted-foreground mt-3 italic">_Team Cliperus_</p>
+                <p className="text-xs text-muted-foreground mt-3 italic">_Team CliporaX_</p>
               </div>
             </div>
           )}

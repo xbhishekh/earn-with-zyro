@@ -77,11 +77,11 @@ Deno.serve(async (req) => {
       : "";
 
     // Determine email subject based on action type
-    let subject = "Your Cliperus Verification Code";
+    let subject = "Your CliporaX Verification Code";
     if (email_action_type === "signup") {
-      subject = "Welcome to Cliperus - Your Verification Code";
+      subject = "Welcome to CliporaX - Your Verification Code";
     } else if (email_action_type === "magiclink" || email_action_type === "recovery") {
-      subject = "Your Cliperus Login Code";
+      subject = "Your CliporaX Login Code";
     }
 
     // Beautiful HTML email with OTP code prominently displayed
@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
                 <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #ff6b35, #f7c59f); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                   <span style="font-size: 24px;">⚡</span>
                 </div>
-                <span style="font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #ff6b35, #f7c59f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Cliperus</span>
+                <span style="font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #ff6b35, #f7c59f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">CliporaX</span>
               </div>
             </td>
           </tr>
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
                 Your Verification Code
               </h1>
               <p style="margin: 0 0 32px 0; font-size: 15px; color: #888888; text-align: center;">
-                Enter this code to ${email_action_type === "signup" ? "complete your signup" : "sign in"} to Cliperus
+                Enter this code to ${email_action_type === "signup" ? "complete your signup" : "sign in"} to CliporaX
               </p>
               
               <!-- OTP Code Box -->
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
                 If you didn't request this code, you can safely ignore this email.
               </p>
               <p style="margin: 0; font-size: 12px; color: #444444;">
-                © ${new Date().getFullYear()} Cliperus. All rights reserved.
+                © ${new Date().getFullYear()} CliporaX. All rights reserved.
               </p>
             </td>
           </tr>
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error } = await resend.emails.send({
-      from: "Cliperus <onboarding@resend.dev>",
+      from: "CliporaX <onboarding@resend.dev>",
       to: [user.email],
       subject: subject,
       html: html,

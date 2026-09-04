@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
         const username = profile?.username || profile?.display_name || "Creator";
 
-        // Send Team Cliperus DM using the SQL function
+        // Send Team CliporaX DM using the SQL function
         const { error: dmError } = await supabase.rpc("send_payment_release_dm", {
           p_user_id: userId,
           p_amount: data.total,

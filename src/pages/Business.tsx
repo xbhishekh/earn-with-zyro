@@ -114,8 +114,8 @@ const Business = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="For Business — Book a Campaign Call | Cliperus"
-        description="Launch a pay-per-view clipping campaign with Cliperus. Tell us your goals and book a call with our campaign team."
+        title="For Business — Book a Campaign Call | CliporaX"
+        description="Launch a pay-per-view clipping campaign with CliporaX. Tell us your goals and book a call with our campaign team."
       />
       <Navbar />
 

@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
     console.log(`OTP generated: ${finalOtp.length} digits`);
 
     const subject = body.isSignup
-      ? "Cliperus - Signup Verification Code"
-      : "Cliperus - Login Verification Code";
+      ? "CliporaX - Signup Verification Code"
+      : "CliporaX - Login Verification Code";
 
     const htmlContent = `
 <!doctype html>
@@ -180,12 +180,12 @@ Deno.serve(async (req) => {
         </div>
         <p style="margin:16px 0 0 0;color:#7a7a7a;font-size:12px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
       </div>
-      <p style="text-align:center;color:#555;font-size:11px;margin-top:20px;">© Cliperus</p>
+      <p style="text-align:center;color:#555;font-size:11px;margin-top:20px;">© CliporaX</p>
     </div>
   </body>
 </html>`;
 
-    const textContent = `Your Cliperus verification code is: ${finalOtp}\n\nThis code expires in 10 minutes. If you didn't request this, please ignore this email.`;
+    const textContent = `Your CliporaX verification code is: ${finalOtp}\n\nThis code expires in 10 minutes. If you didn't request this, please ignore this email.`;
 
     // Send email using Gmail SMTP - optimized with connection pooling
     console.log("Connecting to SMTP...");
@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
 
     try {
       await client.send({
-        from: `Cliperus <${gmailUser}>`,
+        from: `CliporaX <${gmailUser}>`,
         to: email,
         subject,
         content: textContent,
