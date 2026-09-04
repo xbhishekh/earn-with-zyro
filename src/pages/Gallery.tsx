@@ -180,7 +180,7 @@ const Gallery = () => {
                     <div className="relative">
                       <OptimizedImage
                         src={thumbnailUrl}
-                        alt="Video thumbnail"
+                        alt={`${submission.campaign?.name || "Campaign"} clip by ${submission.profile?.display_name || submission.profile?.username || "a Cliperus creator"}`}
                         aspectRatio="video"
                         className="group-hover:scale-105"
                         fallback={
@@ -234,7 +234,7 @@ const Gallery = () => {
                           {submission.profile?.avatar_url ? (
                             <img 
                               src={submission.profile.avatar_url} 
-                              alt="Creator" 
+                              alt={`${submission.profile?.display_name || submission.profile?.username || "Creator"} profile photo`} 
                               className="w-full h-full object-cover"
                             />
                           ) : (

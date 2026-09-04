@@ -29,7 +29,7 @@ const values = [
 ];
 
 const stats = [
-  { value: "$500K+", label: "Paid to Creators" },
+  { value: "$50K+", label: "Paid to Creators" },
   { value: "5,000+", label: "Active Creators" },
   { value: "100+", label: "Brand Partners" },
   { value: "10M+", label: "Total Views" },
@@ -40,7 +40,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="About Cliperus - Empowering Creators to Earn More"
-        description="Learn about Cliperus's mission to democratize creator monetization. We've paid $500K+ to 5,000+ creators. Discover our values, story, and how we help creators succeed."
+        description="Learn about Cliperus's mission to democratize creator monetization. We've paid $50K+ to 5,000+ creators. Discover our values, story, and how we help creators succeed."
         keywords="about Cliperus, creator platform, content creator earnings, UGC monetization, creator economy"
         canonical="/about"
         structuredData={organizationSchema}
