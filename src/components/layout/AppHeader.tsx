@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Search, Shield, LogOut, Wallet, Crown
+  Search, Shield, LogOut, Wallet, Crown, LayoutDashboard, User, MessageCircle, HandCoins, ChevronRight
 } from 'lucide-react';
 import logo from "@/assets/cliperus-mark.png";
 import { Button } from '@/components/ui/button';
@@ -368,34 +368,86 @@ export const AppHeader = memo(() => {
                         </Avatar>
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link to="/dashboard">Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/profile">Profile</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/balance">Balance</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/messages">Messages</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/affiliate">Affiliate</Link>
-                      </DropdownMenuItem>
-                      {(isAdmin || role === 'normal_admin') && (
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin">
-                            <Shield className="w-4 h-4 mr-2" />
-                            Admin Panel
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
+                    <DropdownMenuContent align="end" sideOffset={10} className="w-72 p-2 rounded-2xl border-border/70 shadow-[0_16px_48px_-12px_hsl(var(--primary)/0.25)]">
+                      {/* User info header */}
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 mb-2">
+                        <Avatar className="w-11 h-11 ring-2 ring-primary/25">
+                          <AvatarImage src={profile?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-sm truncate">
+                            {profile?.display_name || 'User'}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{profile?.username || 'clipper'}
+                          </p>
+                          {specialBadge && (
+                            <Badge variant="outline" className={cn("mt-1 text-[10px] px-1.5 py-0 h-5 flex w-fit items-center gap-1", specialBadge.className)}>
+                              <specialBadge.icon className="w-2.5 h-2.5" />
+                              {specialBadge.label}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Balance card */}
+                      <Link
+                        to="/balance"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/15 hover:border-primary/30 transition-colors mb-2 group"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                          <Wallet className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Balance</p>
+                          <p className="text-base font-extrabold text-primary leading-tight">${balance.toFixed(2)}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </Link>
+
+                      {/* Menu items */}
+                      <div className="space-y-0.5">
+                        {[
+                          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                          { to: '/profile', label: 'Profile', icon: User },
+                          { to: '/messages', label: 'Messages', icon: MessageCircle },
+                          { to: '/affiliate', label: 'Affiliate', icon: HandCoins },
+                        ].map((item) => (
+                          <DropdownMenuItem key={item.to} asChild className="rounded-lg px-3 py-2.5 cursor-pointer focus:bg-primary/10 focus:text-primary">
+                            <Link to={item.to} className="flex items-center gap-3">
+                              <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
+                                <item.icon className="w-4 h-4" />
+                              </div>
+                              <span className="font-medium text-sm">{item.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                        {(isAdmin || role === 'normal_admin') && (
+                          <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer focus:bg-primary/10 focus:text-primary">
+                            <Link to="/admin" className="flex items-center gap-3">
+                              <div className="w-7 h-7 rounded-md bg-primary/15 flex items-center justify-center">
+                                <Shield className="w-4 h-4 text-primary" />
+                              </div>
+                              <span className="font-medium text-sm">Admin Panel</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </div>
+
+                      <DropdownMenuSeparator className="my-2" />
+                      <DropdownMenuItem
+                        onClick={handleSignOut}
+                        className="rounded-lg px-3 py-2.5 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
+                            <LogOut className="w-4 h-4" />
+                          </div>
+                          <span className="font-medium text-sm">Sign Out</span>
+                        </div>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
