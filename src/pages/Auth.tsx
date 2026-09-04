@@ -30,7 +30,9 @@ const Auth = () => {
     isOwner, 
     sendOtp, 
     verifyOtp,
+    signUpWithPassword,
     signInWithGoogle,
+
   } = useAuth();
 
   const mode = searchParams.get("mode");
@@ -114,19 +116,42 @@ const Auth = () => {
     setIsLoading(true);
     setIsSendingOtp(true);
     try {
-      const metadata = isSignup ? { username: username || email.split("@")[0], displayName: displayName || username || email.split("@")[0] } : undefined;
-      const { error, otpType: returnedOtpType, otpLength: returnedOtpLength } = await sendOtp(email, metadata);
+      if (isSignup) {
+        // Instant signup — no email verification code needed
+        const generatedPassword = `Cl-${crypto.randomUUID()}`;
+        const { error } = await signUpWithPassword(email, generatedPassword, {
+          username: username || email.split("@")[0],
+          displayName: displayName || username || email.split("@")[0],
+        });
+        if (error) {
+          if (/already|registered|exists/i.test(error.message)) {
+            toast.error("This email already has an account. Please log in.");
+            setIsSignup(false);
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          saveRememberMe();
+          toast.success("Account created! Welcome to Cliperus 🎉");
+        }
+        return;
+      }
+
+      const { error, otpType: returnedOtpType, otpLength: returnedOtpLength } = await sendOtp(email);
       if (error) {
-        if (error.message.includes("already registered")) { toast.error("Email already registered. Please login instead."); setIsSignup(false); }
-        else toast.error(error.message);
+        if (/signups not allowed|not found|no user/i.test(error.message)) {
+          toast.error("No account found with this email. Please sign up first.");
+          setIsSignup(true);
+        } else toast.error(error.message);
       } else {
         if (returnedOtpType) setOtpType(returnedOtpType);
         setOtpLength(returnedOtpLength ?? 6);
-        setStep("otp"); startResendTimer(); toast.success("Verification code sent to your email!");
+        setStep("otp"); startResendTimer(); toast.success("Login code sent to your email!");
       }
     } catch { toast.error("Something went wrong. Please try again."); }
     finally { setIsLoading(false); setIsSendingOtp(false); }
   };
+
 
   const handleVerifyOtp = async (value: string) => {
     if (value.length !== otpLength) return;
