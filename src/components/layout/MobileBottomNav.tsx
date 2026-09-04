@@ -1,8 +1,31 @@
 import { Link, useLocation } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+const tickerItems = [
+  "CliporaX is a safe & trusted platform",
+  "Clip videos & earn real money",
+  "Top brands post campaigns daily",
+  "Buy & sell digital products",
+  "100% guaranteed payouts",
+  "Fully trusted by 10,000+ clippers",
+];
+
+const TrustTickerStrip = () => (
+  <div className="md:hidden overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md py-1.5">
+    <div className="flex animate-[marquee_28s_linear_infinite] items-center whitespace-nowrap">
+      {[...tickerItems, ...tickerItems, ...tickerItems].map((t, i) => (
+        <span key={i} className="flex items-center gap-1.5 pr-6 text-[11px] font-medium text-muted-foreground">
+          <Shield className="w-3 h-3 text-primary shrink-0" />
+          {t}
+        </span>
+      ))}
+    </div>
+  </div>
+);
 
 // Colorful Home Icon
 const HomeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
