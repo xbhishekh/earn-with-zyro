@@ -1,5 +1,5 @@
 # CliporaX Robots.txt
-# https://cliporax.com
+# https://earn-with-zyro.lovable.app
 
 User-agent: *
 Allow: /
@@ -15,6 +15,11 @@ Allow: /contact
 Allow: /terms
 Allow: /privacy
 Allow: /affiliate
+Allow: /support
+Allow: /business
+Allow: /refund
+Allow: /cookies
+Allow: /security
 Allow: /c/
 Allow: /u/
 
@@ -25,7 +30,6 @@ Disallow: /balance
 Disallow: /profile
 Disallow: /my-submissions
 Disallow: /messages
-Disallow: /support
 Disallow: /suspended
 Disallow: /auth
 
