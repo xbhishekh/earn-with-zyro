@@ -293,8 +293,10 @@ export const MobileBottomNav = () => {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
-      <div className="flex items-center justify-around h-16 px-2">
+    <>
+      <TrustTickerStrip />
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
+        <div className="flex items-center justify-around h-16 px-2">
         {items.map((item) => {
           const active = isActive(item.href);
           const badgeCount = getBadgeCount(item.badgeKey);
