@@ -153,21 +153,17 @@ const Campaigns = () => {
   const handleJoinClick = (campaign: Campaign, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    const target = `/c/${campaign.slug || campaign.id}`;
+
     if (!user) {
-      const target = `/c/${campaign.slug || campaign.id}`;
       setRedirectIntent(target);
       navigate(`/auth?redirectTo=${encodeURIComponent(target)}`);
       return;
     }
-    
-    if (campaign.join_type === "waitlist") {
-      setSelectedCampaign(campaign);
-      setWaitlistAnswers(new Array(campaign.waitlist_questions?.length || 0).fill(""));
-      setShowWaitlistModal(true);
-    } else {
-      handleDirectJoin(campaign);
-    }
+
+    // Logged-in users go straight to the full campaign page (no small popup)
+    navigate(target);
   };
 
   const handleDirectJoin = async (campaign: Campaign) => {
