@@ -1,31 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const tickerItems = [
-  "CliporaX is a safe & trusted platform",
-  "Clip videos & earn real money",
-  "Top brands post campaigns daily",
-  "Buy & sell digital products",
-  "100% guaranteed payouts",
-  "Fully trusted by 10,000+ clippers",
-];
-
-const TrustTickerStrip = () => (
-  <div className="md:hidden fixed bottom-16 left-0 right-0 z-50 overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md py-1.5">
-    <div className="flex animate-[marquee_28s_linear_infinite] items-center whitespace-nowrap">
-      {[...tickerItems, ...tickerItems, ...tickerItems].map((t, i) => (
-        <span key={i} className="flex items-center gap-1.5 pr-6 text-[11px] font-medium text-muted-foreground">
-          <Shield className="w-3 h-3 text-primary shrink-0" />
-          {t}
-        </span>
-      ))}
-    </div>
-  </div>
-);
 
 /* ---- Premium duotone gradient icon set ---- */
 
@@ -292,7 +270,6 @@ export const MobileBottomNav = () => {
 
   return (
     <>
-      <TrustTickerStrip />
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-2">
         {items.map((item) => {
