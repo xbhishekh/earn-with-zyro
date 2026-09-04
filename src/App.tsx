@@ -39,6 +39,9 @@ const Careers = lazy(() => import("./pages/Careers"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const Refund = lazy(() => import("./pages/Refund"));
+const Cookies = lazy(() => import("./pages/Cookies"));
+const Security = lazy(() => import("./pages/Security"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const MarketplaceProductDetail = lazy(() => import("./pages/MarketplaceProductDetail"));
 const MarketplaceCreate = lazy(() => import("./pages/MarketplaceCreate"));
@@ -138,6 +141,9 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/refund" element={<Refund />} />
+                  <Route path="/cookies" element={<Cookies />} />
+                  <Route path="/security" element={<Security />} />
                   <Route path="/marketplace" element={<RouteErrorBoundary routeName="Marketplace"><Marketplace /></RouteErrorBoundary>} />
                   <Route path="/marketplace/create" element={<RouteErrorBoundary routeName="Create Product"><MarketplaceCreate /></RouteErrorBoundary>} />
                   <Route path="/marketplace/edit/:id" element={<RouteErrorBoundary routeName="Edit Product"><MarketplaceCreate /></RouteErrorBoundary>} />
