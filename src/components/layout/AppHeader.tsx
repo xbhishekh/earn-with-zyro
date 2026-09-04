@@ -274,7 +274,10 @@ export const AppHeader = memo(() => {
             </nav>
 
             {/* Spacer */}
-            <div className="flex-1" />
+            <div className="flex-1 lg:hidden" />
+
+            {/* Running trust ticker (desktop) */}
+            <TrustTicker />
 
             {/* Search Button - Desktop with ⌘K hint */}
             <button
