@@ -1,11 +1,14 @@
+import { lazy, Suspense } from "react";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { Marquee } from "@/components/landing/Marquee";
-import { Features } from "@/components/landing/Features";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { Testimonials } from "@/components/landing/Testimonials";
-import { CTASection } from "@/components/landing/CTASection";
-import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
+
+// Below-the-fold sections load after first paint so the hero renders instantly.
+const Features = lazy(() => import("@/components/landing/Features").then(m => ({ default: m.Features })));
+const HowItWorks = lazy(() => import("@/components/landing/HowItWorks").then(m => ({ default: m.HowItWorks })));
+const Testimonials = lazy(() => import("@/components/landing/Testimonials").then(m => ({ default: m.Testimonials })));
+const CTASection = lazy(() => import("@/components/landing/CTASection").then(m => ({ default: m.CTASection })));
+const Footer = lazy(() => import("@/components/landing/Footer").then(m => ({ default: m.Footer })));
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { SEO, organizationSchema, websiteSchema, createFAQSchema } from "@/components/SEO";
@@ -57,11 +60,13 @@ const Index = () => {
       <main className="pt-16 md:pt-20">
         <HeroSection />
         <Marquee />
-        <Features />
-        <HowItWorks />
-        <Testimonials />
-        <CTASection />
-        <Footer />
+        <Suspense fallback={<div className="min-h-[60vh]" />}>
+          <Features />
+          <HowItWorks />
+          <Testimonials />
+          <CTASection />
+          <Footer />
+        </Suspense>
       </main>
     </div>
   );

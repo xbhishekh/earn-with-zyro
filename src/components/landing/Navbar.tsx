@@ -82,6 +82,10 @@ export const Navbar = () => {
               <img 
                 src={logo} 
                 alt="Cliperus" 
+                width={40}
+                height={40}
+                decoding="async"
+                fetchPriority="high"
                 className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform"
               />
               <div className="absolute inset-0 gradient-bg rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
