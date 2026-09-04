@@ -82,6 +82,7 @@ const tabs: Tab[] = [
   { id: "submissions", label: "Submissions", icon: Video, component: AdminSubmissions },
   { id: "campaigns", label: "Campaigns", icon: Video, component: AdminCampaigns },
   { id: "marketplace", label: "Marketplace", icon: DollarSign, component: AdminMarketplace },
+  { id: "business-inquiries", label: "Business Leads", icon: Building2, component: AdminBusinessInquiries },
   { id: "verifications", label: "Verifications", icon: Link2, component: AdminVerifications },
   { id: "announcements", label: "Announcements", icon: Megaphone, component: AdminAnnouncements },
   { id: "withdrawals", label: "Withdrawals", icon: Wallet, component: AdminWithdrawals },
