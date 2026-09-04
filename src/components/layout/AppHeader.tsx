@@ -119,6 +119,29 @@ const desktopNavItems: NavItem[] = [
 const profileCache = new Map<string, { profile: Profile; balance: number; timestamp: number }>();
 const PROFILE_CACHE_TTL = 30000; // 30 seconds
 
+// Running trust ticker (desktop header)
+const tickerItems = [
+  "CliporaX is a safe & trusted platform",
+  "Clip videos & earn real money",
+  "Top brands post campaigns daily",
+  "Buy & sell digital products",
+  "100% guaranteed payouts",
+  "Fully trusted by 10,000+ clippers",
+];
+
+const TrustTicker = () => (
+  <div className="hidden lg:flex flex-1 min-w-0 items-center overflow-hidden mx-2" aria-hidden>
+    <div className="flex shrink-0 animate-[marquee_32s_linear_infinite] items-center whitespace-nowrap">
+      {[...tickerItems, ...tickerItems].map((t, i) => (
+        <span key={i} className="flex items-center gap-2 pr-10 text-[13px] font-medium text-muted-foreground">
+          <Shield className="w-3.5 h-3.5 text-primary" />
+          {t}
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
 export const AppHeader = memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
