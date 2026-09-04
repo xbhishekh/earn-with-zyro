@@ -256,7 +256,7 @@ export const AppHeader = memo(() => {
             {/* Search Button - Desktop with ⌘K hint */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden md:flex w-56 lg:w-64 h-9 px-3 bg-muted hover:bg-muted/80 rounded-full items-center gap-2 transition-colors shrink-0 group"
+              className="hidden md:flex w-56 lg:w-64 h-9 px-3.5 bg-muted/70 border border-border/50 hover:border-primary/40 hover:bg-muted rounded-full items-center gap-2 transition-all shrink-0 group shadow-sm"
             >
               <Search className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm text-muted-foreground truncate flex-1 text-left">
@@ -306,10 +306,10 @@ export const AppHeader = memo(() => {
                   {/* Balance - Desktop */}
                   <Link
                     to="/balance"
-                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                    className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 bg-primary/10 border border-primary/20 hover:bg-primary/15 rounded-full transition-colors shadow-sm"
                   >
                     <Wallet className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-bold text-primary">
                       ${balance.toFixed(2)}
                     </span>
                   </Link>
@@ -360,7 +360,7 @@ export const AppHeader = memo(() => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
-                        <Avatar className="w-8 h-8 md:w-9 md:h-9">
+                        <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-primary/25 ring-offset-1 ring-offset-background">
                           <AvatarImage src={profile?.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
                             {profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
