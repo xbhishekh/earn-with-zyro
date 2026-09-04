@@ -153,47 +153,19 @@ const Campaigns = () => {
   const handleJoinClick = (campaign: Campaign, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    const target = `/c/${campaign.slug || campaign.id}`;
+
     if (!user) {
-      const target = `/c/${campaign.slug || campaign.id}`;
       setRedirectIntent(target);
       navigate(`/auth?redirectTo=${encodeURIComponent(target)}`);
       return;
     }
-    
-    if (campaign.join_type === "waitlist") {
-      setSelectedCampaign(campaign);
-      setWaitlistAnswers(new Array(campaign.waitlist_questions?.length || 0).fill(""));
-      setShowWaitlistModal(true);
-    } else {
-      handleDirectJoin(campaign);
-    }
+
+    // Logged-in users go straight to the full campaign page (no small popup)
+    navigate(target);
   };
 
-  const handleDirectJoin = async (campaign: Campaign) => {
-    if (!user) return;
-    
-    setJoiningCampaignId(campaign.id);
-    try {
-      const { error } = await supabase.from("campaign_members").insert({
-        user_id: user.id,
-        campaign_id: campaign.id
-      });
-
-      if (error) throw error;
-      toast.success("Successfully joined!");
-      
-      // Update local state
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaign.id ? { ...c, isMember: true } : c
-      ));
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to join campaign");
-    } finally {
-      setJoiningCampaignId(null);
-    }
-  };
 
   const handleWaitlistSubmit = async () => {
     if (!selectedCampaign || !user) return;
