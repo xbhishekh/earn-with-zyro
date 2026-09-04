@@ -283,7 +283,7 @@ const Auth = () => {
           </>
         )}
 
-        <Button type="submit" variant="hero" size="lg" className="w-full h-[52px] rounded-xl text-[15px] font-bold mt-1 shadow-xl shadow-primary/20" disabled={isLoading}>
+        <Button type="submit" size="lg" className="w-full h-[52px] rounded-xl text-[15px] font-bold mt-1 bg-foreground text-background hover:bg-foreground/90 shadow-lg shadow-foreground/10" disabled={isLoading}>
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
             <>
               {isSignup ? "Create Account" : "Send Code"}
