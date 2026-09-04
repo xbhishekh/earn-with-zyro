@@ -68,27 +68,31 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Stats card */}
-        <div className="mt-16 max-w-5xl mx-auto rounded-[2rem] border border-border bg-card shadow-[var(--shadow-lift)] px-4 py-10 md:px-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((s) => (
-              <div key={s.label} className="flex flex-col items-center text-center">
-                <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <s.icon className="w-5 h-5 text-primary" />
+        {/* Stats band */}
+        <div className="mt-16 max-w-5xl mx-auto stats-band rounded-[2rem] px-6 py-12 md:px-12 relative overflow-hidden">
+          <span className="editorial-eyebrow !text-[hsl(152_60%_65%)] mb-10 flex justify-center">The Cliperus standard</span>
+          <div className="grid grid-cols-2 md:grid-cols-4">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                className={`flex flex-col items-center text-center px-4 py-6 md:py-2 ${i > 0 ? "md:border-l stat-divider" : ""} ${i >= 2 ? "max-md:border-t stat-divider" : ""} ${i % 2 === 1 ? "max-md:border-l stat-divider" : ""}`}
+              >
+                <span className="stat-icon w-11 h-11 rounded-2xl flex items-center justify-center mb-4">
+                  <s.icon className="w-5 h-5" />
                 </span>
-                <span className="display-serif text-3xl md:text-4xl text-foreground">{s.value}</span>
-                <span className="text-sm text-muted-foreground mt-1">{s.label}</span>
+                <span className="stat-value display-serif text-3xl md:text-4xl">{s.value}</span>
+                <span className="stat-label text-xs md:text-sm font-medium uppercase tracking-wider mt-2">{s.label}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-10 pt-8 border-t border-border text-center">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="mt-10 pt-8 border-t stat-divider text-center">
+            <span className="stat-label text-[11px] font-semibold uppercase tracking-[0.24em]">
               Works across every major platform
             </span>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-semibold text-foreground/70">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-semibold">
               {["TikTok", "Instagram Reels", "YouTube Shorts", "X", "Snapchat"].map((p) => (
-                <span key={p}>{p}</span>
+                <span key={p} className="platform-name">{p}</span>
               ))}
             </div>
           </div>
