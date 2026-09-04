@@ -131,6 +131,8 @@ const App = () => (
                   <Route path="/suspended" element={<Suspended />} />
                   <Route path="/affiliate" element={<RouteErrorBoundary routeName="Affiliate"><Affiliate /></RouteErrorBoundary>} />
                   <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/business" element={<RouteErrorBoundary routeName="Business"><Business /></RouteErrorBoundary>} />
+                  <Route path="/for-business" element={<RouteErrorBoundary routeName="Business"><Business /></RouteErrorBoundary>} />
                   <Route path="/about" element={<About />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/contact" element={<Contact />} />
