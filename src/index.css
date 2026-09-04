@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Fresh Mint — light white & green theme */
-    --background: 152 45% 96%;
+    --background: 150 45% 92%;
     --foreground: 160 12% 10%;
 
     --card: 0 0% 100%;
@@ -20,11 +20,11 @@
     --primary: 158 72% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 152 46% 96%;
+    --secondary: 150 42% 88%;
     --secondary-foreground: 160 20% 16%;
 
-    --muted: 152 30% 96%;
-    --muted-foreground: 160 8% 42%;
+    --muted: 152 32% 90%;
+    --muted-foreground: 160 8% 38%;
 
     --accent: 152 55% 92%;
     --accent-foreground: 158 72% 24%;
